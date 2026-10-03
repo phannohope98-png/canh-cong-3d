@@ -180,7 +180,7 @@
       this.state = 'ended';
       const S = CONFIG.match.stars, stars = this.lives >= S.three ? 3 : this.lives >= S.two ? 2 : 1;
       const newStars = Progress.recordWin(this.levelIndex, stars);
-      const hid = Progress.selectedHero(), lv0 = Progress.heroLevel(hid); Progress.addHeroXp(hid, this.xp); const coins = Math.floor(this.xp * 0.5 + 60 + stars * 25); Progress.addCoins(coins); const lvUp = Progress.heroLevel(hid) > lv0;
+      const hid = Progress.selectedHero(), lv0 = Progress.heroLevel(hid); Progress.addHeroXp(hid, this.xp); const coins = Math.floor(this.xp * 0.3 + 50 + stars * 20); Progress.addCoins(coins); const lvUp = Progress.heroLevel(hid) > lv0;
       Effects.confetti(Camera.x, Camera.y - 200, 500); AudioSys.play('victory');
       setTimeout(() => UI.showResult({ win: true, stars, newStars, xp: this.xp, lvUp, coins }), 1100);
     },
