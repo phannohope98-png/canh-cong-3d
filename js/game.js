@@ -25,7 +25,7 @@
       this.map = Level.build(i);
       const L = this.map.def;
       Effects.clear(); Combat.clear(); Enemies.clear(); Units.clear();
-      Towers.init(this.map); Waves.init(L, i);
+      Towers.init(this.map); Waves.init(L, i); Spells.reset();
       this.gold = L.gold; this.lives = CONFIG.match.lives; this.kills = 0; this.xp = 0;
       this.sel = null; this.heroSelected = false; this.rallyFor = null; this.speed = 1; this.time = 0; this.paused = false;
       this.measure();
@@ -72,7 +72,7 @@
     },
     update(dt) {
       this.time += dt;
-      Waves.update(dt); Towers.update(dt); Units.update(dt); Enemies.update(dt); Combat.update(dt); Effects.update(dt);
+      Waves.update(dt); Spells.update(dt); Towers.update(dt); Units.update(dt); Enemies.update(dt); Combat.update(dt); Effects.update(dt);
     },
 
     /* ================= VẼ ================= */
@@ -88,6 +88,7 @@
       // ô trống
       const showAll = this.sel && this.sel.kind === 'spot';
       for (const s of Towers.spots) if (!s.tower) Painter.plot(c, s.x, s.y, this.sel && this.sel.ref === s, now);
+      Effects.drawCorpses(c);
       this.drawSelection(c, now);
       // theo chiều sâu
       const L = this.drawList; L.length = 0;
@@ -96,7 +97,7 @@
       for (const e of Enemies.list) L.push(e);
       L.sort((a, b) => a.drawY - b.drawY);
       for (const o of L) o.draw(c, t);
-      Combat.draw(c); Effects.draw(c);
+      Combat.draw(c); Spells.draw(c); Effects.draw(c);
       this.drawAtmosphere(c, now);
       for (const e of Enemies.list) e.drawBar(c);
       for (const u of Units.list) u.drawBar(c);
@@ -146,6 +147,7 @@
     killEnemy(e) {
       if (!e.alive) return;
       e.alive = false; this.gold += e.reward; this.kills++; this.xp += e.reward;
+      Effects.corpse(e.type, e.x, e.y + e.radius * 0.5, e.scale, e.face, e.flying);
       Effects.death(e.x, e.y - e.height * 0.4, e.boss ? '#c0303a' : '#a89a8a');
       Effects.coin(e.x, e.y - e.height, e.reward);
       AudioSys.play('death');
@@ -235,6 +237,7 @@
     onTap(x, y) {
       if (this.state !== 'playing') return;
       const h = Units.hero;
+      if (Spells.armed && Spells.tap(x, y)) return;
       // dời điểm tập kết
       if (this.rallyFor) {
         const r = Towers.setRally(this.rallyFor, x, y);

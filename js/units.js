@@ -9,7 +9,7 @@
   class Unit {
     constructor(o) {
       Object.assign(this, { uid: ++uid, face: 1, walk: 0, atk: -1, cd: 0.3, idleT: Math.random() * 3, flash: 0, stun: 0, alpha: 1,
-        target: null, tUid: -1, scan: 0, moving: false, state: 'post', calm: 0 }, o);
+        target: null, tUid: -1, scan: 0, moving: false, state: 'post', calm: 0, hits: 0 }, o);
     }
     get active() { return this.state === 'post' || this.state === 'move'; }
     get alive() { return this.active; }
@@ -39,7 +39,10 @@
         const t = this.target;
         if (prev < 0.5 && this.atk >= 0.5 && t && t.alive && t.uid === this.tUid) {
           if (this.range) { Combat.fire(this.proj, this.x + this.face * 9, this.y - 26, t, { damage: this.damage, type: this.dtype || 'physical' }); AudioSys.play(this.proj === 'bolt' ? 'magic' : 'arrow'); }
-          else { Combat.hitEnemy(t, this.damage, 'physical'); AudioSys.play('sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0'); }
+          else {
+            Combat.hitEnemy(t, this.damage, 'physical'); AudioSys.play(this.tower && this.tower.type === 'orc' ? 'orc' : 'sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0');
+            if (this.special === 'stun' && ++this.hits % 3 === 0 && !t.boss) { t.stunT = Math.max(t.stunT || 0, 1.0); Effects.ring(t.x, t.y, 6, 30, 0.3, '#ffe58a', 3); }
+          }
         }
         if (this.atk >= 1) this.atk = -1;
       }
@@ -88,7 +91,7 @@
     draw(ctx, time) {
       if (this.state === 'dead') return;
       const fy = this.y + this.radius * 0.5;
-      ctx.globalAlpha = this.alpha;
+      ctx.globalAlpha = this.alpha * (this.temp ? Math.max(0, Math.min(1, this.life)) : 1);
       if (this.isHero) {
         ArtKit.shadow(ctx, this.x, fy, 22, 7, 0.25);
         ctx.strokeStyle = Game.heroSelected ? '#ffe58a' : 'rgba(255,229,138,0.55)'; ctx.lineWidth = Game.heroSelected ? 3 : 2;
@@ -96,7 +99,7 @@
       }
       const mode = this.atk >= 0 ? 'atk' : this.moving ? 'walk' : 'idle';
       Painter.char(ctx, this.art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT);
-      if (this.flash > 0) ArtKit.glow(ctx, this.x, fy - 20, 22, '#ff4040', this.flash * 5);
+      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.6, this.flash * 6); Painter.char(ctx, this.art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT); ctx.restore(); }
       if (this.stun > 0) for (let i = 0; i < 3; i++) { const a = time * 5 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * 9, fy - 46 + Math.sin(a) * 3, 2, '#ffe58a'); }
       ctx.globalAlpha = 1;
     }
@@ -173,7 +176,7 @@
     list: [], hero: null,
     clear() { this.list.length = 0; this.hero = null; },
     addHero(map) { this.hero = Hero.create(map); this.list.push(this.hero); return this.hero; },
-    count(towerType) { let n = 0; for (const u of this.list) if (u.active && !u.isHero && (!towerType || u.tower.type === towerType)) n++; return n; },
+    count(towerType) { let n = 0; for (const u of this.list) if (u.active && !u.isHero && (!towerType || (u.tower && u.tower.type === towerType))) n++; return n; },
 
     /** Doanh trại vừa xây: tạo lính 1 lần */
     createFor(T) {
@@ -181,11 +184,11 @@
       this.refresh(T, true); this.placePosts(T);
     },
     refresh(T, full) {
-      const lv = T.def.levels[T.level - 1], hb = 1 + Progress.bonus('barracks', 'hp'), db = 1 + Progress.bonus('barracks', 'damage');
+      const lv = T.def.levels[T.level - 1], hb = 1 + Progress.bonus(T.type, 'hp'), db = 1 + Progress.bonus(T.type, 'damage');
       for (const u of this.list) if (u.tower === T) {
         const r = full || !u.maxHp ? 1 : u.hp / u.maxHp;
         u.maxHp = Math.round(lv.hp * hb); u.hp = Math.max(1, Math.round(u.maxHp * r)); u.damage = [lv.damage[0] * db, lv.damage[1] * db];
-        u.armor = lv.armor; u.art = lv.art; u.scale = 12 / ArtChars[lv.art].dr * 1.05; u.regen = u.maxHp * 0.08;
+        u.armor = lv.armor; u.art = lv.art; u.special = lv.special; u.scale = 12 / ArtChars[lv.art].dr * 1.05; u.regen = u.maxHp * 0.08;
       }
     },
     remove(T) { for (let i = this.list.length - 1; i >= 0; i--) if (this.list[i].tower === T) this.list.splice(i, 1); },
@@ -203,11 +206,18 @@
     kill(u) {
       if (!u.active) return;
       u.state = 'dead'; u.target = null; u.tUid = -1; u.atk = -1;
-      u.respawnT = u.isHero ? u.heroDef.respawn : u.tower.def.respawn;
+      u.respawnT = u.isHero ? u.heroDef.respawn : u.tower ? u.tower.def.respawn : 0;
+      Effects.corpse(u.art, u.x, u.y + u.radius * 0.5, u.scale, u.face);
       Effects.death(u.x, u.y - 14, u.isHero ? '#f2c14e' : '#9aa3b2');
       AudioSys.play('death');
     },
-    update(dt) { for (const u of this.list) u.update(dt); }
+    update(dt) {
+      for (let i = this.list.length - 1; i >= 0; i--) {
+        const u = this.list[i];
+        if (u.temp) { u.life -= dt; if (u.state === 'dead' || u.life <= 0) { if (u.state !== 'dead') Effects.ring(u.x, u.y, 4, 26, 0.4, '#8ac8ff', 3); this.list.splice(i, 1); continue; } }
+        u.update(dt);
+      }
+    }
   };
   window.Units = Units; window.Hero = Hero; window.Unit = Unit;
 })();

@@ -84,7 +84,7 @@
       if (this.boss) ArtKit.glow(ctx, this.x, fy - this.height * 0.5, this.radius * 3.2, '#c01e3a', 0.3 + Math.sin(this.anim * 4) * 0.08);
       const mode = this.atk >= 0 ? 'atk' : this.state === 'walk' ? 'walk' : 'idle';
       Painter.char(ctx, this.type, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim);
-      if (this.flash > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.45, this.radius * 1.6, '#ffffff', this.flash * 6);
+      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.75, this.flash * 7); Painter.char(ctx, this.type, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim); ctx.restore(); }
       if (this.slowT > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.4, this.radius * 2.2, '#8fe0ff', 0.45);
       if (this.stunT > 0) for (let i = 0; i < 3; i++) { const a = this.anim * 6 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * this.radius * 0.7, fy - this.height - 4 + Math.sin(a) * 3, 2.2, '#ffe58a'); }
     }

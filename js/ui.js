@@ -63,6 +63,7 @@
         case 'next-level': this.closeOverlay(); Game.start(Math.min(CONFIG.levels.length - 1, Game.levelIndex + 1)); break;
         case 'hero': Game.selectHero(); break;
         case 'skill': Game.castHero(); break;
+        case 'spell': Spells.arm(d.k); break;
         case 'call-wave': Waves.callNext(); break;
         case 'ring-build': { const s = this.ringSel && this.ringSel.ref; if (s && Towers.build(s, d.type)) { Game.sel = null; this.closeRing(); } else this.openRing(this.ringSel); break; }
         case 'ring-up': { const T = this.ringSel.ref; if (Towers.upgrade(T)) this.openRing(this.ringSel); break; }
@@ -244,7 +245,8 @@
       $('hero-lvl').textContent = H.level;
       $('hero-skill').innerHTML = I(H.heroDef.skill.icon) + '<i class="cd" id="skill-cd"></i>';
       $('hero-skill').title = H.heroDef.skill.name;
-      this.hud = { lives: $('hud-lives'), gold: $('hud-gold'), wave: $('hud-wave'), speed: $('btn-speed'), hp: $('hero-hp'), face: $('hero-face'), dead: $('hero-dead'), skill: $('hero-skill'), cd: $('skill-cd'), boss: $('boss-bar'), bossFill: $('boss-fill'), waves: $('wave-btns'), cache: {} };
+      this.hud = { lives: $('hud-lives'), gold: $('hud-gold'), wave: $('hud-wave'), speed: $('btn-speed'), hp: $('hero-hp'), face: $('hero-face'), dead: $('hero-dead'), skill: $('hero-skill'), cd: $('skill-cd'), boss: $('boss-bar'), bossFill: $('boss-fill'), waves: $('wave-btns'), cache: {},
+        spells: { reinforce: { el: $('spell-reinforce'), cd: $('spell-reinforce').querySelector('.cd') }, meteor: { el: $('spell-meteor'), cd: $('spell-meteor').querySelector('.cd') } } };
       this.hud.waves.innerHTML = '';
     },
     tick() {
@@ -261,6 +263,11 @@
         set('sel', Game.heroSelected, v => h.face.classList.toggle('sel', v));
         const p = H.skillCd > 0 ? Math.round(H.skillCd / H.heroDef.skill.cooldown * 100) : 0;
         set('cd', p, v => { h.cd.style.setProperty('--p', v + '%'); h.skill.classList.toggle('ready', v === 0); });
+      }
+      if (window.Spells) for (const k in Spells.DEF) {
+        const b = h.spells[k]; if (!b) continue;
+        set('sp' + k, Math.round(Spells.cd[k] / Spells.DEF[k].cd * 100), v => { b.cd.style.setProperty('--p', v + '%'); b.el.classList.toggle('ready', v === 0); });
+        set('arm' + k, Spells.armed === k, v => b.el.classList.toggle('armed', v));
       }
       const B = Enemies.boss();
       set('boss', !!B, v => h.boss.classList.toggle('hidden', !v));
@@ -281,7 +288,7 @@
       if (!can) return;
       const vw = Game.viewW, vh = Game.viewH;
       box.querySelectorAll('.wave-btn').forEach(b => {
-        const p = Game.map.paths[+b.dataset.p].pointAt(70, {}), s = Camera.toScreen(p.x, p.y);
+        const p = Game.map.paths[+b.dataset.p].pointAt(Game.map.entry ? Game.map.entry[+b.dataset.p] : 70, {}), s = Camera.toScreen(p.x, p.y);
         const sy = Math.max(110, Math.min(vh - 70, s.y)); b.style.left = Math.max(40, Math.min(vw - 44, s.x + 26)) + 'px'; b.style.top = sy + 'px';
         const circ = b.querySelector('circle');
         if (Waves.state === 'waiting') { circ.style.strokeDashoffset = 220 * (1 - Waves.timer / CONFIG.match.nextWaveDelay); b.querySelector('b').textContent = '+' + Math.floor(Waves.timer * CONFIG.match.earlyCallBonusPerSec); }

@@ -80,19 +80,19 @@ window.CONFIG = {
       desc: 'Phép thuật xuyên giáp, cực mạnh với quái giáp dày. Cấp 4: tia phép nảy sang 3 quái.'
     },
     orc: {
-      name: 'Orc', short: 'Orc', role: 'TRỤ THỦ - TẤN CÔNG CẬN CHIẾN', icon: 'axe', color: '#7a9a2a', kind: 'brawler',
+      name: 'Orc', short: 'Orc', role: 'HANG CHIẾN BINH - TRIỆU HỒI LÍNH ORC', icon: 'axe', color: '#7a9a2a', kind: 'barracks',
       art: 'orct', palette: ['#6a2a22', '#a84a38', '#7a9a2a', '#8a8a82', '#d8d0c0'],
-      targetsAir: false, damageType: 'physical',
+      soldiers: 3, respawn: 9, engage: 90, rallyRange: 170,
       cost: [90, 130, 180, 250],
       tierNames: ['Chòi Gai Nhọn', 'Lô Cốt Xương', 'Pháo Đài Chiến Tranh', 'Hang Chiến Thần'],
       levels: [
-        { damage: [14, 22], range: 92, rate: 0.95, aoe: 48 },
-        { damage: [26, 40], range: 100, rate: 0.9, aoe: 54 },
-        { damage: [44, 66], range: 108, rate: 0.85, aoe: 60 },
-        { damage: [70, 100], range: 118, rate: 0.8, aoe: 68, special: 'stun' }
+        { hp: 80, damage: [6, 10], armor: 0, art: 'orct1' },
+        { hp: 135, damage: [11, 16], armor: 0.1, art: 'orct2' },
+        { hp: 210, damage: [18, 26], armor: 0.2, art: 'orct3' },
+        { hp: 320, damage: [28, 38], armor: 0.3, art: 'orct4', special: 'stun' }
       ],
       gear: ['Rìu chiến', 'Mũ sừng', 'Đầu sói', 'Áo lông thú'],
-      desc: 'Chiến binh Orc vung rìu chém lan cả nhóm quái trong tầm ngắn. Không đánh được quân bay. Cấp 4: cứ 3 đòn làm choáng quái.'
+      desc: 'Hang chiến binh: tù trưởng gọi 3 lính Orc cầm rìu lao ra chặn đường, máu trâu, chém mạnh hơn lính người. Lính chết hồi sinh sau 9 giây. Cấp 4: cứ 3 nhát rìu làm choáng quái.'
     }
   },
 
@@ -180,7 +180,7 @@ window.CONFIG = {
     archer:    { name: 'Elf',       icon: 'bow',    cost: [1, 1, 2, 2], perLevel: { damage: 0.08, range: 0.04 }, text: '+8% sát thương, +4% tầm' },
     artillery: { name: 'Người Lùn', icon: 'bomb',   cost: [1, 1, 2, 2], perLevel: { damage: 0.08, aoe: 0.05 },  text: '+8% sát thương, +5% vùng nổ' },
     mage:      { name: 'Phù Thủy',  icon: 'staff',  cost: [1, 1, 2, 2], perLevel: { damage: 0.08, range: 0.04 }, text: '+8% sát thương, +4% tầm' },
-    orc:       { name: 'Orc',       icon: 'axe',    cost: [1, 1, 2, 2], perLevel: { damage: 0.08, range: 0.04 }, text: '+8% sát thương, +4% tầm chém' }
+    orc:       { name: 'Orc',       icon: 'axe',    cost: [1, 1, 2, 2], perLevel: { hp: 0.1, damage: 0.08 },   text: '+10% máu lính Orc, +8% sát thương' }
   },
 
   /* ---------------- CHIẾN DỊCH: 6 vùng đất ----------------
@@ -209,11 +209,11 @@ window.CONFIG = {
       paths: [[[-80, 150], [300, 200], [500, 380], [400, 560], [640, 700], [900, 600], [1010, 400], [1250, 300], [1450, 450], [1350, 650], [1550, 760], [1790, 600]],
               [[-80, 820], [350, 820], [640, 700], [900, 600], [1010, 400], [1250, 300], [1450, 450], [1350, 650], [1550, 760], [1790, 600]]],
       waves: ['imp:8', 'blackOrc:2,imp:6', 'magmaGolem:1,imp:6', 'drake:2,imp:6', 'blackOrc:4,imp:8', 'magmaGolem:2,drake:2', 'drake:3,imp:10,blackOrc:3', 'magmaGolem:2,drake:3', 'trollKing:1,magmaGolem:1,imp:10'] },
-    { name: 'Cổng Hỗn Mang', theme: 'chaos', diff: 'Boss cuối', gold: 760, spots: 16,
+    { name: 'Cổng Hỗn Mang', theme: 'chaos', diff: 'Boss cuối', gold: 860, hpMul: 0.9, spots: 16,
       story: 'Trận chiến cuối cùng bên rìa thế giới. Chúa Tể Hỗn Mang đang mở cổng!',
       paths: [[[-80, 450], [250, 450], [400, 250], [700, 200], [900, 350], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]],
               [[-80, 790], [250, 790], [500, 710], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]]],
-      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:6,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:3,voidWalker:4', 'magmaGolem:2,voidWalker:5,voidling:8', 'iceGolem:3,drake:5,voidWalker:6', 'deathKnight:4,voidWalker:8,drake:4', 'voidLord:1,voidWalker:8,voidling:14,drake:2'] }
+      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:4,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:2,voidWalker:4', 'magmaGolem:2,voidWalker:5,voidling:8', 'iceGolem:3,drake:5,voidWalker:6', 'deathKnight:4,voidWalker:8,drake:4', 'voidLord:1,voidWalker:8,voidling:14,drake:2'] }
   ],
 
   spawnInterval: { goblin: 0.8, orc: 1.3, orcArcher: 1.3, warg: 0.7, treant: 3.5, skeleton: 1.2, wraith: 1.4, deathKnight: 3, bandit: 0.8, mummy: 2, scorpion: 1.1,

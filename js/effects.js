@@ -14,11 +14,27 @@
     rings: [], rPool: [], bolts: [],
     shakeAmp: 0, shakeTime: 0, shakeX: 0, shakeY: 0,
 
+    /* Xác ngã xuống rồi mờ dần (kiểu Kingdom Rush) */
+    corpses: [],
+    corpse(type, x, y, scale, face, fly) {
+      if (this.corpses.length >= 40) this.corpses.shift();
+      this.corpses.push({ type, x, y, scale, face: face || 1, fly: !!fly, t: 0 });
+    },
+    drawCorpses(ctx) {
+      for (const c of this.corpses) {
+        const f = Math.min(1, c.t / 0.3), e = 1 - (1 - f) * (1 - f), a = c.t < 0.75 ? 1 : Math.max(0, 1 - (c.t - 0.75) / 0.65);
+        if (a <= 0) continue;
+        ctx.save(); ctx.globalAlpha = a; ctx.translate(c.x, c.y + (c.fly ? e * 34 : 0)); ctx.rotate(-c.face * e * 1.42); ctx.scale(1, 1 - e * 0.12);
+        Painter.char(ctx, c.type, 0, 0, c.scale, c.face, 'idle', 0);
+        if (c.t < 0.18) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (0.18 - c.t) / 0.18 * 0.7; Painter.char(ctx, c.type, 0, 0, c.scale, c.face, 'idle', 0); }
+        ctx.restore();
+      }
+    },
     clear() {
       while (this.particles.length) this.pPool.push(this.particles.pop());
       while (this.texts.length) this.tPool.push(this.texts.pop());
       while (this.rings.length) this.rPool.push(this.rings.pop());
-      this.bolts.length = 0;
+      this.bolts.length = 0; this.corpses.length = 0;
       this.shakeAmp = this.shakeTime = this.shakeX = this.shakeY = 0;
     },
 
@@ -95,6 +111,7 @@
     },
 
     update(dt) {
+      for (let i = this.corpses.length - 1; i >= 0; i--) { const c = this.corpses[i]; c.t += dt; if (c.t > 1.4) this.corpses.splice(i, 1); }
       for (let i = this.particles.length - 1; i >= 0; i--) {
         const p = this.particles[i];
         p.life -= dt;

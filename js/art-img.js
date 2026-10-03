@@ -22,12 +22,23 @@
         Object.keys(CH).forEach(n => { VIEWS.forEach(v => list.push(n + '_' + v)); for (let i = 1; i <= 4; i++) list.push(n + '_face' + i); });
         let left = list.length, fin = false;
         const done = () => { if (fin) return; if (--left <= 0) finish(); };
-        const finish = () => { if (fin) return; fin = true; this.ready = true; this.install(); res(); };
+        const finish = () => { if (fin) return; fin = true; this.ready = true; this.install(); this.preloadBgs(); res(); };
         list.forEach(k => { const im = new Image(); im.onload = () => { this.img[k] = im; done(); }; im.onerror = done; im.src = (window.ART_BASE || 'assets/art/') + k + '.png'; });
         setTimeout(finish, 7000);
       });
     },
     has(n) { return !!this.img[n]; },
+    /** Ảnh nền trận (jpg lớn): tải khi cần, gọi cb khi xong. Trả ảnh nếu đã sẵn sàng. */
+    bgs: {},
+    bg(name, cb) {
+      let im = this.bgs[name];
+      if (im) { if (im.complete && im.naturalWidth) return im; if (cb) im._cbs.push(cb); return null; }
+      im = new Image(); im._cbs = cb ? [cb] : [];
+      im.onload = () => { const l = im._cbs; im._cbs = []; l.forEach(f => f(im)); };
+      im.src = (window.ART_BASE || 'assets/art/') + name + '.jpg'; this.bgs[name] = im;
+      return null;
+    },
+    preloadBgs() { (CONFIG.levels || []).forEach(L => L.bg && this.bg(L.bg.img)); },
     /** 'elf3' → { n:'elf', tier:3 } */
     parse(type) { const m = /^(soldier|elf|dwarf|mage|orct)(\d)$/.exec(type || ''); return m ? { n: KEY2IMG[m[1]], tier: +m[2] } : null; },
 
@@ -38,20 +49,43 @@
         const aspect = base.width / base.height;
         for (let t = 1; t <= 4; t++) {
           const key = CH[n] + t, old = reg[key]; if (!old) continue;
-          const h = SIZE[n] * TIER[t], w = h * aspect, flip = FACES_LEFT[n], img = base;
+          const h = SIZE[n] * TIER[t], w = h * aspect, flip = FACES_LEFT[n], img = base, melee = n === 'human' || n === 'orc';
+          // Hoạt ảnh kiểu Kingdom Rush cho ảnh tĩnh: nhún bước, co giãn, lấy đà – lao chém – vệt chém, giật khi bắn
           const draw = (g, P) => {
-            const mv = P.w >= 0, ph = mv ? P.w * TAU : 0, tt = P.t || 0, a = P.a;
-            const sg = a >= 0 ? K.swing(a) : 0;
-            const bob = mv ? Math.abs(Math.sin(ph)) * h * 0.06 : Math.sin(tt * 2.4) * h * 0.012;
-            const rot = (mv ? Math.sin(ph) * 0.06 : Math.sin(tt * 1.7) * 0.012) + sg * 0.2;
-            K.shadow(g, 0, 1, w * 0.46, h * 0.07, 0.4);
-            if (t === 4) K.glow(g, 0, -h * 0.5, h * 0.62, '#ffe27a', 0.28 + Math.sin(tt * 3) * 0.06);
-            g.save(); g.translate(sg * h * 0.1, -bob + h * 0.02); g.rotate(rot);
+            const tt = P.t || 0, a = P.a, mv = P.w >= 0;
+            let ox = 0, oy = 0, rot = 0, sx = 1, sy = 1, smear = -1, charge = -1;
+            if (mv) {
+              const ph = P.w * TAU, step = Math.abs(Math.sin(ph)), land = 1 - step;
+              oy = -step * h * 0.075; rot = 0.06 + Math.sin(ph) * 0.07; sy = 1 - land * 0.08; sx = 1 + land * 0.05;
+            } else if (a >= 0 && melee) {
+              if (a < 0.38) { const k = a / 0.38; rot = -0.22 * k; sx = 1 + 0.06 * k; sy = 1 - 0.08 * k; ox = -h * 0.07 * k; }
+              else if (a < 0.6) { const k = (a - 0.38) / 0.22; rot = -0.22 + 0.55 * k; ox = h * (-0.07 + 0.25 * k); sy = 0.92 + 0.14 * k; sx = 1.06 - 0.1 * k; smear = k; }
+              else { const k = (a - 0.6) / 0.4; rot = 0.33 * (1 - k); ox = h * 0.18 * (1 - k); sy = 1.06 - 0.06 * k; sx = 0.96 + 0.04 * k; if (k < 0.45) smear = 1 - k / 0.45 * 0.6; }
+            } else if (a >= 0) {
+              if (a < 0.5) { const k = a / 0.5; rot = -0.1 * k; sx = 1 - 0.04 * k; sy = 1 + 0.04 * k; charge = k; }
+              else { const k = (a - 0.5) / 0.5, r = Math.max(0, 1 - k * 1.6); ox = -h * 0.08 * r; rot = 0.08 * r; sx = 1 + 0.06 * r; sy = 1 - 0.06 * r; charge = r * 0.6; }
+            } else { const b = Math.sin(tt * 2.4); sy = 1 + b * 0.02; sx = 1 - b * 0.012; rot = Math.sin(tt * 1.7) * 0.015; }
+            K.shadow(g, ox * 0.6, 1, w * 0.46 * (1 + oy / h), h * 0.07, 0.4);
+            if (t === 4) K.glow(g, ox, -h * 0.5, h * 0.62, '#ffe27a', 0.28 + Math.sin(tt * 3) * 0.06);
+            g.save(); g.translate(ox, oy); g.rotate(rot); g.scale(sx, sy);
             if (flip) g.scale(-1, 1);
             g.drawImage(img, -w / 2, -h, w, h);
             g.restore();
+            if (smear > 0) { // vệt chém hình lưỡi liềm trước mặt
+              g.save(); g.translate(ox + w * 0.1, -h * 0.48); g.rotate(rot * 0.6);
+              const r = h * 0.44, a0 = -1.5 + (1 - Math.min(1, smear)) * 0.5;
+              g.globalAlpha = Math.min(1, smear) * 0.85;
+              const gr = g.createLinearGradient(0, -r, 0, r); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, '#fffbe6'); gr.addColorStop(1, 'rgba(255,240,200,0.2)');
+              g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r, a0, 1.1); g.arc(-r * 0.18, 0, r * 0.84, 1.1, a0, true); g.closePath(); g.fill();
+              g.restore();
+            }
+            if (charge > 0) { // tụ lực khi bắn: sáng đầu gậy / dây cung / nòng pháo
+              const col = n === 'witch' ? '#c8a0ff' : n === 'dwarf' ? '#ffb060' : '#d8ffb0';
+              K.glow(g, ox + w * 0.32, -h * (n === 'witch' ? 0.86 : 0.55), h * (0.16 + charge * 0.14), col, 0.25 + charge * 0.55);
+            }
           };
-          reg[key] = { draw, box: [Math.ceil(w * 1.8), Math.ceil(h * 1.4), Math.ceil(w * 0.9), Math.ceil(h * 1.25)], dr: old.dr, head: h * 0.78, tall: h, sprite: true };
+          const bw = w * 1.8 + h * 0.9, box = [Math.ceil(bw), Math.ceil(h * 1.45), Math.ceil(bw / 2), Math.ceil(h * 1.3)];
+          reg[key] = { draw, box, dr: old.dr, head: h * 0.78, tall: h, sprite: true };
         }
       });
       if (window.Painter) Painter.clear();

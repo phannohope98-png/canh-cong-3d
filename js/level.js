@@ -284,9 +284,13 @@
     Path,
 
     build(index) {
-      const L = CONFIG.levels[index], W = CONFIG.world.width, H = CONFIG.world.height, PW = CONFIG.pathWidth;
-      const theme = CONFIG.themes[L.theme], F = FEATURES[index] || { rivers: [] };
-      const paths = L.paths.map(c => new Path(smooth(c, 10)));
+      const L = CONFIG.levels[index], PW = CONFIG.pathWidth, B = L.bg && L.ipaths ? L.bg : null;
+      let W = CONFIG.world.width, H = CONFIG.world.height, sc = 1;
+      // Map ảnh thật: thế giới cao 900, rộng theo tỉ lệ ảnh; đường đi đổi từ toạ độ ảnh gốc
+      if (B) { sc = H / (B.y1 - B.y0); W = Math.round((B.x1 - B.x0) * sc); }
+      const theme = CONFIG.themes[L.theme], F = B ? { rivers: [] } : (FEATURES[index] || { rivers: [] });
+      const ctrl = B ? L.ipaths.map(c => c.map(p => [(p[0] - B.x0) * sc, (p[1] - B.y0) * sc])) : L.paths;
+      const paths = ctrl.map(c => new Path(smooth(c, 10)));
       const rivers = F.rivers.map(c => new Path(smooth(c, 12)));
       const chaos = L.theme === 'chaos';
       const spots = pickSpots(paths, rivers, L.spots || 14, W, H, PW, chaos);
@@ -296,6 +300,7 @@
       const dense = L.theme === 'forest' ? 0.5 : L.theme === 'ice' ? 0.42 : 0.3, big = new Set(['mesa', 'wall']);
       const bigPts = [];
       for (let y = -10; y < H + 20; y += 44) for (let x = -10; x < W + 20; x += 44) {
+        if (B) break;
         const jx = x + (r2() - 0.5) * 38, jy = y + (r2() - 0.5) * 38;
         const dp = distToPaths(paths, jx, jy);
         if (dp < PW / 2 + 32) continue;
@@ -314,7 +319,7 @@
         decor.push({ kind, x: jx, y: jy, s: (kind === 'tree' || kind === 'pine' ? 1.35 : 1.15) + r2() * 0.45, v: Math.floor(r2() * 3) });
       }
       // công trình đặc trưng theo vùng
-      const extra = L.theme === 'castle' ? ['house', 'turret', 'house', 'house', 'turret'] : L.theme === 'desert' ? ['tent', 'tent', 'tent'] : [];
+      const extra = B ? [] : L.theme === 'castle' ?['house', 'turret', 'house', 'house', 'turret'] : L.theme === 'desert' ? ['tent', 'tent', 'tent'] : [];
       for (const kind of extra) {
         for (let tries = 0; tries < 80; tries++) {
           const x = 120 + r2() * (W - 330), y = 130 + r2() * (H - 260);
@@ -329,11 +334,31 @@
       decor.sort((a, b) => a.y - b.y);
 
       const end = paths[0].points[paths[0].points.length - 1];
-      return { index, def: L, W, H, theme, paths, river: rivers[0] || null, rivers, riverKind: F.kind, pond: F.pond || [], spots, decor, exit: { x: end.x, y: end.y }, starts: paths.map(p => p.points[0]) };
+      // điểm đường đi bắt đầu lọt vào khung nhìn (cho nút gọi quái & cờ xuất phát)
+      const entry = paths.map(p => { const q = {}; for (let d = 0; d < p.length; d += 8) { p.pointAt(d, q); if (q.x > 30 && q.y > 30 && q.x < W - 30 && q.y < H - 30) return d + 40; } return 70; });
+      return { index, def: L, W, H, sc, image: B ? B.img : null, theme, paths, entry, river: rivers[0] || null, rivers, riverKind: F.kind, pond: F.pond || [], spots, decor, exit: { x: end.x, y: end.y }, starts: paths.map(p => p.points[0]) };
+    },
+
+    /** Nền map ảnh thật: vẽ ảnh + cờ xuất phát + cờ phòng thủ ở cổng */
+    renderImageBackground(map, res) {
+      const W = map.W, H = map.H, T = map.def.theme;
+      const c = document.createElement('canvas'); c.width = Math.ceil(W * res); c.height = Math.ceil(H * res);
+      const g = c.getContext('2d'); g.scale(res, res); g.lineJoin = 'round'; g.lineCap = 'round';
+      const im = window.ArtImg && ArtImg.bg(map.image, () => { if (window.Game && Game.map === map) Game.renderBg(); if (window.UI && UI._menuMap === map) { UI._menuBg = null; UI.paintMenu && UI.paintMenu(); } });
+      if (im) { g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, W, H); }
+      else { const th = map.theme, gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, shade(th.grass2, -0.3)); gr.addColorStop(1, shade(th.grass, -0.2)); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+      // viền tối nhẹ cho cảm giác chiều sâu
+      const vg = g.createRadialGradient(W * 0.5, H * 0.5, Math.min(W, H) * 0.42, W * 0.5, H * 0.5, Math.max(W, H) * 0.72);
+      vg.addColorStop(0, 'rgba(20,12,40,0)'); vg.addColorStop(1, 'rgba(20,12,40,0.32)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+      const tmp = {};
+      map.paths.forEach((p, i) => { p.pointAt(map.entry[i] - 30, tmp); spawnFlag(g, tmp.x, tmp.y, T); });
+      defendFlag(g, map.exit.x, map.exit.y, T);
+      return c;
     },
 
     /* ================= VẼ NỀN ================= */
     renderBackground(map, res) {
+      if (map.image) return this.renderImageBackground(map, res);
       const W = map.W, H = map.H, th = map.theme, PW = CONFIG.pathWidth, T = map.def.theme;
       const c = document.createElement('canvas'); c.width = Math.ceil(W * res); c.height = Math.ceil(H * res);
       const g = c.getContext('2d'); g.scale(res, res); g.lineJoin = 'round'; g.lineCap = 'round';
@@ -546,6 +571,23 @@
       K.dot(g, 33, py - 24, 3.4, '#f4e6c8');
     }
     g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = K.alpha(col, 0.8); g.lineWidth = 3; g.beginPath(); g.ellipse(10, y, 22, 54, 0, 0, TAU); g.stroke(); g.restore();
+  }
+  /* Cờ đỏ nơi quái xuất hiện (kiểu Kingdom Rush) */
+  function spawnFlag(g, x, y, T) {
+    const col = T === 'chaos' ? '#7a2ac0' : '#a8202a';
+    g.save(); g.globalAlpha = 0.5; g.strokeStyle = col; g.lineWidth = 3; g.setLineDash([8, 6]); g.beginPath(); g.ellipse(x, y, 38, 15, 0, 0, TAU); g.stroke(); g.restore();
+    K.shadow(g, x + 30, y - 8, 10, 4, 0.4);
+    K.limb(g, x + 30, y - 6, x + 30, y - 58, 3, '#4a3020');
+    K.cel(g, c => { c.moveTo(x + 31, y - 58); c.lineTo(x + 58, y - 52); c.lineTo(x + 48, y - 43); c.lineTo(x + 58, y - 34); c.lineTo(x + 31, y - 34); c.closePath(); }, col, { s: 2, h: 1, lw: 1.8 });
+    K.dot(g, x + 42, y - 46, 4, '#f4e6c8'); K.dot(g, x + 40.5, y - 47, 1, '#2a1010'); K.dot(g, x + 43.5, y - 47, 1, '#2a1010');
+  }
+  /* Cờ xanh nơi cần bảo vệ (quái tới đây là mất mạng) */
+  function defendFlag(g, x, y, T) {
+    g.save(); g.globalAlpha = 0.55; g.strokeStyle = '#7ad0ff'; g.lineWidth = 3; g.beginPath(); g.ellipse(x, y, 34, 13, 0, 0, TAU); g.stroke(); g.restore();
+    K.shadow(g, x - 26, y + 2, 10, 4, 0.4);
+    K.limb(g, x - 26, y + 3, x - 26, y - 56, 3, '#4a3020');
+    K.cel(g, c => { c.moveTo(x - 25, y - 56); c.lineTo(x + 2, y - 56); c.lineTo(x + 2, y - 36); c.lineTo(x - 11, y - 30); c.lineTo(x - 25, y - 36); c.closePath(); }, '#2a5ab8', { s: 2, h: 1, lw: 1.8 });
+    K.cel(g, c => { c.moveTo(x - 17, y - 50); c.lineTo(x - 6, y - 50); c.lineTo(x - 6, y - 42); c.lineTo(x - 11.5, y - 38); c.lineTo(x - 17, y - 42); c.closePath(); }, '#f2c14e', { s: 1, h: 0.6, lw: 1.2 });
   }
   function paintGate(g, map, T) {
     const W = map.W, H = map.H, ey = map.exit.y, PW = CONFIG.pathWidth;
