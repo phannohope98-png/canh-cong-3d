@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1022">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Canh Cổng">
+  <title>Canh Cổng – Kỷ Nguyên Bóng Tối</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== MENU CHÍNH ===== -->
+  <section id="screen-menu" class="screen active">
+    <canvas id="menu-bg"></canvas>
+    <div class="menu-shade"></div>
+    <div class="menu-top"><span class="pill"><i class="pi star" data-icon="star"></i><b id="menu-stars">0</b></span></div>
+    <div class="logo">
+      <div class="logo-main">Canh Cổng</div>
+      <div class="logo-ribbon"><span>Kỷ Nguyên Bóng Tối</span></div>
+    </div>
+    <div class="menu-bottom">
+      <button class="gbtn big green" data-action="open" data-target="screen-map"><span>Chiến dịch</span></button>
+      <div class="menu-row">
+        <button class="rbtn lg" data-action="open" data-target="screen-upgrades" data-icon="up"><small>Nâng cấp</small></button>
+        <button class="rbtn lg" data-action="open" data-target="screen-codex" data-icon="book"><small>Bách khoa</small></button>
+        <button class="rbtn lg" data-action="open" data-target="screen-settings" data-icon="gear"><small>Cài đặt</small></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BẢN ĐỒ CHIẾN DỊCH ===== -->
+  <section id="screen-map" class="screen">
+    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Chiến Dịch</h2><span class="pill"><i class="pi star" data-icon="star"></i><b class="star-count">0</b></span></div>
+    <div class="map-scroll" id="map-scroll"><div class="map-inner" id="map-inner"><canvas id="world-map"></canvas><div id="map-nodes"></div></div></div>
+  </section>
+
+  <!-- ===== NÂNG CẤP ===== -->
+  <section id="screen-upgrades" class="screen">
+    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Nâng Cấp</h2><span class="pill"><i class="pi star" data-icon="star"></i><b id="free-stars">0</b></span></div>
+    <div class="scroll" id="upgrades-list"></div>
+  </section>
+
+  <!-- ===== BÁCH KHOA ===== -->
+  <section id="screen-codex" class="screen">
+    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Bách Khoa</h2><span></span></div>
+    <div class="tabs"><button class="tab on" data-action="codex-tab" data-tab="enemies">Quái vật</button><button class="tab" data-action="codex-tab" data-tab="towers">Trụ & Anh hùng</button></div>
+    <div class="scroll" id="codex-list"></div>
+  </section>
+
+  <!-- ===== CÀI ĐẶT ===== -->
+  <section id="screen-settings" class="screen">
+    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Cài Đặt</h2><span></span></div>
+    <div class="scroll" id="settings-list"></div>
+  </section>
+
+  <!-- ===== TRẬN ĐẤU ===== -->
+  <section id="screen-game" class="screen">
+    <div id="game-wrap">
+      <canvas id="game-canvas"></canvas>
+      <div id="wave-btns"></div>
+      <div id="ring" class="hidden"></div>
+      <div class="hud-tl">
+        <span class="pill"><i class="pi heart" data-icon="heart"></i><b id="hud-lives">20</b></span>
+        <span class="pill"><i class="pi coin" data-icon="coin"></i><b id="hud-gold">0</b></span>
+        <span class="pill"><i class="pi skull" data-icon="skull"></i><b id="hud-wave">1/6</b></span>
+      </div>
+      <div class="hud-tr">
+        <button class="rbtn" id="btn-speed" data-action="speed" data-icon="fast"><em>1x</em></button>
+        <button class="rbtn" data-action="pause" data-icon="pause"></button>
+      </div>
+      <div id="boss-bar" class="hidden"><span id="boss-name"></span><div><i id="boss-fill"></i></div></div>
+      <div class="hero-dock">
+        <button class="hero-face" id="hero-face" data-action="hero">
+          <canvas id="hero-canvas" width="128" height="128"></canvas>
+          <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" class="hr-bg"/><circle cx="32" cy="32" r="29" class="hr-fg" id="hero-hp"/></svg>
+          <span class="lvl" id="hero-lvl">1</span><span class="dead-t" id="hero-dead"></span>
+        </button>
+        <button class="skill" id="hero-skill" data-action="skill" data-icon="sun"><i class="cd" id="skill-cd"></i></button>
+      </div>
+      <div id="tip" class="hidden"></div>
+      <div id="banner"></div>
+      <div id="life-flash"></div>
+    </div>
+  </section>
+
+  <!-- ===== LỚP PHỦ ===== -->
+  <div id="overlay" class="overlay hidden"><div class="panel" id="overlay-panel"></div></div>
+  <div id="toast"></div>
+</div>
+
+<script src="js/config.js?v=anime2-1"></script>
+<script src="js/save.js?v=anime2-1"></script>
+<script src="js/audio.js?v=anime2-1"></script>
+<script src="js/icons.js?v=anime2-1"></script>
+<script src="js/art-kit.js?v=anime2-1"></script>
+<script src="js/art-chars.js?v=anime2-1"></script>
+<script src="js/art-towers.js?v=anime2-1"></script>
+<script src="js/art.js?v=anime2-1"></script>
+<script src="js/effects.js?v=anime2-1"></script>
+<script src="js/level.js?v=anime2-1"></script>
+<script src="js/camera.js?v=anime2-1"></script>
+<script src="js/combat.js?v=anime2-1"></script>
+<script src="js/enemies.js?v=anime2-1"></script>
+<script src="js/units.js?v=anime2-1"></script>
+<script src="js/towers.js?v=anime2-1"></script>
+<script src="js/waves.js?v=anime2-1"></script>
+<script src="js/game.js?v=anime2-1"></script>
+<script src="js/ui.js?v=anime2-1"></script>
+<script src="js/main.js?v=anime2-1"></script>
+</body>
+</html>
