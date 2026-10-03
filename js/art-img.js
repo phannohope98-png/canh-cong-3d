@@ -46,10 +46,11 @@
       const reg = window.ArtChars; if (!reg) return;
       Object.keys(CH).forEach(n => {
         const base = this.img[n + '_q34']; if (!base) return;
-        const aspect = base.width / base.height;
-        for (let t = 1; t <= 4; t++) {
-          const key = CH[n] + t, old = reg[key]; if (!old) continue;
-          const h = SIZE[n] * TIER[t], w = h * aspect, flip = FACES_LEFT[n], img = base, melee = n === 'human' || n === 'orc';
+        const VIEWK = [['q34', '', FACES_LEFT[n]], ['front', '_f', false], ['side', '_s', true], ['back', '_b', false]]; // góc nhìn → hậu tố khoá, ảnh gốc quay trái?
+        for (let t = 1; t <= 4; t++) for (const [vw, suf, vflip] of VIEWK) {
+          const key0 = CH[n] + t, old = reg[key0]; if (!old) continue;
+          const key = key0 + suf, img = this.img[n + '_' + vw]; if (!img) continue; const aspect = img.width / img.height;
+          const h = SIZE[n] * TIER[t], w = h * aspect, flip = vflip, melee = n === 'human' || n === 'orc';
           // Hoạt ảnh kiểu Kingdom Rush cho ảnh tĩnh: nhún bước, co giãn, lấy đà – lao chém – vệt chém, giật khi bắn
           const draw = (g, P) => {
             const tt = P.t || 0, a = P.a, mv = P.w >= 0;
