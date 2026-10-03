@@ -9,12 +9,12 @@
 (function () {
   const K = ArtKit, shade = K.shade, mix = K.mix, lerp = K.lerp, TAU = Math.PI * 2;
   const INKC = '#1a0e26';
-  const inkOf = c => mix(c, INKC, 0.74);
+  const inkOf = c => mix(c, INKC, 0.9);
 
   /* ---------------- Bút vẽ cơ bản ---------------- */
   function F(g, build, col, o) {
     o = o || {};
-    K.cel(g, build, col, { s: o.s === undefined ? 1.5 : o.s, h: o.h === undefined ? 0.75 : o.h, lw: o.lw === undefined ? 1.0 : o.lw,
+    K.cel(g, build, col, { s: o.s === undefined ? 1.5 : o.s, h: o.h === undefined ? 0.75 : o.h, lw: o.lw === undefined ? 1.6 : o.lw * 1.45,
       ink: o.ink || inkOf(col), animeHeavy: true, noRim: o.noRim, dark: o.dark, light: o.light });
   }
   const poly = pts => K.P.poly(pts);
@@ -27,7 +27,7 @@
   function limb(g, pts, w, col) {
     const path = () => { g.beginPath(); g.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]); };
     g.lineCap = 'round'; g.lineJoin = 'round';
-    path(); g.strokeStyle = inkOf(col); g.lineWidth = w + 2; g.stroke();
+    path(); g.strokeStyle = inkOf(col); g.lineWidth = w + 3; g.stroke();
     g.strokeStyle = col; g.lineWidth = w; g.stroke();
     g.save(); g.translate(w * 0.2, w * 0.18); path(); g.strokeStyle = shade(col, -0.3); g.lineWidth = w * 0.42; g.stroke(); g.restore();
     g.save(); g.translate(-w * 0.22, -w * 0.2); path(); g.strokeStyle = shade(col, 0.32); g.lineWidth = w * 0.24; g.stroke(); g.restore();

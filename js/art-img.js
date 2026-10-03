@@ -43,6 +43,7 @@
     parse(type) { const m = /^(soldier|elf|dwarf|mage|orct)(\d)$/.exec(type || ''); return m ? { n: KEY2IMG[m[1]], tier: +m[2] } : null; },
 
     install() {
+      if (window.Chibi) { if (window.Painter) Painter.clear(); return; } // trên chiến trường dùng chibi; ảnh art chỉ dùng cho giao diện
       const reg = window.ArtChars; if (!reg) return;
       Object.keys(CH).forEach(n => {
         const base = this.img[n + '_q34']; if (!base) return;

@@ -67,7 +67,8 @@
       ctx.drawImage(towerStatic(type, tier, bucket(scale * this.res)), x - ox * scale, y - oy * scale, w * scale, h * scale);
       ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       const self = this;
-      d.fx(ctx, tier, t, st || {}, { char(ct, cx, cy, face, a, tt) { self.char(ctx, ct, cx, cy, 1.3, face, a >= 0 ? 'atk' : 'idle', a >= 0 ? a : tt, scale * 1.3 * self.res); } });
+      const CS = ArtTowers.CH || 1.3;
+      d.fx(ctx, tier, t, st || {}, { char(ct, cx, cy, face, a, tt) { self.char(ctx, ct, cx, cy, CS, face, a >= 0 ? 'atk' : 'idle', a >= 0 ? a : tt, scale * CS * self.res); } });
       ctx.restore();
     },
     plot(ctx, x, y, hi, t) {
@@ -78,7 +79,7 @@
     /** Chân dung cho giao diện (canvas DOM) */
     towerPortrait(canvas, type, tier, fit) {
       const g = canvas.getContext('2d');
-      const TOP = { archer: [0, 78, 92, 112, 138], mage: [0, 84, 92, 112, 140], barracks: [0, 62, 72, 82, 102], artillery: [0, 46, 52, 58, 64], orc: [0, 62, 70, 80, 90] }[type] || [0, 100, 100, 100, 100];
+      const TOP = { archer: [0, 82, 92, 98, 112], mage: [0, 82, 94, 104, 114], barracks: [0, 48, 56, 70, 80], artillery: [0, 40, 48, 52, 58], orc: [0, 56, 62, 66, 92] }[type] || [0, 100, 100, 100, 100];
       g.clearRect(0, 0, canvas.width, canvas.height);
       const f = fit || 0.82, s = Math.min(canvas.width * f / 92, canvas.height * f / (TOP[tier] + 26));
       this.tower(g, type, tier, canvas.width / 2, canvas.height / 2 + (TOP[tier] - 26) * s / 2, s, 0.5, { a: -1, face: 1 });
