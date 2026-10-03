@@ -289,7 +289,7 @@
       const vw = Game.viewW, vh = Game.viewH;
       box.querySelectorAll('.wave-btn').forEach(b => {
         const p = Game.map.paths[+b.dataset.p].pointAt(Game.map.entry ? Game.map.entry[+b.dataset.p] : 70, {}), s = Camera.toScreen(p.x, p.y);
-        const sy = Math.max(110, Math.min(vh - 70, s.y)); b.style.left = Math.max(40, Math.min(vw - 44, s.x + 26)) + 'px'; b.style.top = sy + 'px';
+        const sy = Math.max(110, Math.min(vh - (s.x < 300 ? 150 : 70), s.y)); b.style.left = Math.max(40, Math.min(vw - 44, s.x + 26)) + 'px'; b.style.top = sy + 'px';
         const circ = b.querySelector('circle');
         if (Waves.state === 'waiting') { circ.style.strokeDashoffset = 220 * (1 - Waves.timer / CONFIG.match.nextWaveDelay); b.querySelector('b').textContent = '+' + Math.floor(Waves.timer * CONFIG.match.earlyCallBonusPerSec); }
         else circ.style.strokeDashoffset = 0;

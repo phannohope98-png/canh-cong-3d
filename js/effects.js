@@ -14,6 +14,28 @@
     rings: [], rPool: [], bolts: [],
     shakeAmp: 0, shakeTime: 0, shakeX: 0, shakeY: 0,
 
+    /* Vết trên mặt đất: cháy xém (nổ) / vết máu (quái chết) – mờ dần */
+    decals: [],
+    decal(x, y, r, kind) {
+      if (this.decals.length >= 60) this.decals.shift();
+      this.decals.push({ x, y, r, kind, t: 0, life: kind === 'scorch' ? 6 : 4, seed: Math.random() * 100 });
+    },
+    drawDecals(ctx) {
+      for (const d of this.decals) {
+        const a = Math.min(1, d.t * 8) * Math.max(0, 1 - d.t / d.life);
+        if (a <= 0) continue;
+        ctx.save(); ctx.globalAlpha = a;
+        if (d.kind === 'scorch') {
+          const g = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r); g.addColorStop(0, 'rgba(20,10,5,0.55)'); g.addColorStop(0.6, 'rgba(40,20,10,0.35)'); g.addColorStop(1, 'rgba(40,20,10,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(d.x, d.y, d.r, d.r * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+        } else {
+          ctx.fillStyle = d.kind === 'goo' ? 'rgba(90,40,140,0.55)' : 'rgba(120,10,16,0.5)';
+          for (let i = 0; i < 5; i++) { const s = d.seed + i * 1.7, ox = Math.sin(s) * d.r * 0.7, oy = Math.cos(s * 1.3) * d.r * 0.3, rr = d.r * (0.25 + (i === 0 ? 0.3 : Math.abs(Math.sin(s * 2.1)) * 0.2));
+            ctx.beginPath(); ctx.ellipse(d.x + ox, d.y + oy, rr, rr * 0.5, 0, 0, Math.PI * 2); ctx.fill(); }
+        }
+        ctx.restore();
+      }
+    },
     /* Xác ngã xuống rồi mờ dần (kiểu Kingdom Rush) */
     corpses: [],
     corpse(type, x, y, scale, face, fly) {
@@ -34,7 +56,7 @@
       while (this.particles.length) this.pPool.push(this.particles.pop());
       while (this.texts.length) this.tPool.push(this.texts.pop());
       while (this.rings.length) this.rPool.push(this.rings.pop());
-      this.bolts.length = 0; this.corpses.length = 0;
+      this.bolts.length = 0; this.corpses.length = 0; this.decals.length = 0;
       this.shakeAmp = this.shakeTime = this.shakeX = this.shakeY = 0;
     },
 
@@ -87,6 +109,7 @@
     },
     hit(x, y, color) { this.burst(x, y, color || '#fff', 5, 120, 0.25, 4); },
     explosion(x, y, radius, color) {
+      this.decal(x, y + 4, radius * 0.75, 'scorch');
       this.flash(x, y, radius * 1.3, '#ffb347');
       this.ring(x, y, radius * 0.2, radius, 0.35, color || '#ffb347', 6);
       this.burst(x, y, color || '#ff7b2e', 18, radius * 3, 0.5, 7);
@@ -112,6 +135,7 @@
 
     update(dt) {
       for (let i = this.corpses.length - 1; i >= 0; i--) { const c = this.corpses[i]; c.t += dt; if (c.t > 1.4) this.corpses.splice(i, 1); }
+      for (let i = this.decals.length - 1; i >= 0; i--) { const d = this.decals[i]; d.t += dt; if (d.t > d.life) this.decals.splice(i, 1); }
       for (let i = this.particles.length - 1; i >= 0; i--) {
         const p = this.particles[i];
         p.life -= dt;

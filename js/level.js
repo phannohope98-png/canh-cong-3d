@@ -249,7 +249,26 @@
   };
   const pickKind = (mix, r) => { let a = 0; for (const [k, p] of mix) { a += p; if (r < a) return k; } return mix[0][0]; };
 
-  function pickSpots(paths, rivers, count, W, H, PW, chaos) {
+  /** Đọc màu ảnh map để biết chỗ nào là nước / dung nham / vực tối (không đặt ô xây) */
+  function terrainProbe(img, W, H) {
+    if (!img || !img.naturalWidth) return null;
+    try {
+      const S = 4, c = document.createElement('canvas'); c.width = Math.ceil(W / S); c.height = Math.ceil(H / S);
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height);
+      const d = g.getImageData(0, 0, c.width, c.height).data, cw = c.width, ch = c.height;
+      const bad = (x, y) => {
+        const i = (Math.max(0, Math.min(ch - 1, Math.round(y / S))) * cw + Math.max(0, Math.min(cw - 1, Math.round(x / S)))) * 4, r = d[i], gg = d[i + 1], b = d[i + 2];
+        const lum = 0.3 * r + 0.59 * gg + 0.11 * b, mx = Math.max(r, gg, b), sat = mx ? (mx - Math.min(r, gg, b)) / mx : 0;
+        if (lum < 38) return true;                                        // vực tối / bóng sâu
+        if (r > 190 && gg > 70 && gg < 190 && b < 90 && sat > 0.55) return true; // dung nham
+        if (b > r + 35 && b > gg + 5 && sat > 0.35 && lum < 190) return true;    // nước / băng xanh đậm
+        return false;
+      };
+      return (x, y) => { let n = 0; for (const [dx, dy] of [[0, 0], [-26, 0], [26, 0], [0, -12], [0, 12]]) if (bad(x + dx, y + dy)) n++; return n < 2; };
+    } catch (e) { return null; } // file:// có thể chặn getImageData
+  }
+
+  function pickSpots(paths, rivers, count, W, H, PW, chaos, ok) {
     const samples = [], tmp = {};
     for (const p of paths) for (let d = 30; d < p.length; d += 36) { p.pointAt(d, tmp); samples.push({ x: tmp.x, y: tmp.y, c: 0 }); }
     const cand = [];
@@ -260,6 +279,7 @@
         if (x < 70 || x > W - 150 || y < 100 || y > H - 80) continue;
         if (distToPaths(paths, x, y) < PW / 2 + 40) continue;
         let bad = false; for (const r of rivers) if (r.nearest(x, y).perp < 66) { bad = true; break; }
+        if (!bad && ok && !ok(x, y)) bad = true;
         if (!bad) cand.push({ x, y });
       }
     }
@@ -293,7 +313,8 @@
       const paths = ctrl.map(c => new Path(smooth(c, 10)));
       const rivers = F.rivers.map(c => new Path(smooth(c, 12)));
       const chaos = L.theme === 'chaos';
-      const spots = pickSpots(paths, rivers, L.spots || 14, W, H, PW, chaos);
+      const probe = B && window.ArtImg ? terrainProbe(ArtImg.bg(B.img), W, H) : null;
+      const spots = pickSpots(paths, rivers, L.spots || 14, W, H, PW, chaos, probe);
 
       // ---- Cây cối / đá / vật trang trí (tránh đường, ô xây, sông) ----
       const decor = [], r2 = K.seeded(index * 31 + 7), mix = DECOR_MIX[L.theme] || DECOR_MIX.forest;

@@ -17,7 +17,7 @@
     constructor(type, spot) {
       this.type = type; this.def = CONFIG.towers[type]; this.spot = spot; this.x = spot.x; this.y = spot.y;
       this.level = 1; this.spent = this.def.cost[0]; this.cd = 0.5; this.shots = 0; this.t = Math.random() * 5;
-      this.anim = { a: -1, face: 1, k: 0, door: 0 }; this.pulse = 0.4; this.pending = null;
+      this.anim = { a: -1, face: 1, k: 0, door: 0 }; this.pulse = 0.4; this.pending = null; this.born = 0;
       if (this.def.kind === 'barracks') {
         let best = null;
         Game.map.paths.forEach((p, i) => { const n = p.nearest(this.x, this.y); if (!best || n.perp < best.perp) best = { perp: n.perp, dist: n.dist, i }; });
@@ -38,7 +38,7 @@
       return { x: this.x + 14 * f * TS, y: this.y + (T.ART_Y[this.level] - 26) * TS };
     }
     update(dt) {
-      this.t += dt; if (this.pulse > 0) this.pulse -= dt; if (this.anim.door > 0) this.anim.door -= dt;
+      this.t += dt; this.born += dt; if (this.pulse > 0) this.pulse -= dt; if (this.anim.door > 0) this.anim.door -= dt;
       if (this.def.kind === 'barracks') return;
       const A = this.anim, st = this.stats;
       if (A.a >= 0) { const prev = A.a; A.a += dt / (this.type === 'artillery' ? 0.5 : this.type === 'orc' ? 0.45 : 0.36); if (prev < 0.5 && A.a >= 0.5) this.release(); if (A.a >= 1) A.a = -1; }
@@ -73,6 +73,11 @@
     get drawY() { return this.y + 14; }
     draw(ctx) {
       const k = this.pulse > 0 ? 1 + Math.sin(this.pulse / 0.4 * Math.PI) * 0.08 : 1;
+      if (this.born < 0.5) { // mọc lên từ mặt đất, nảy nhẹ (easeOutBack)
+        const u = Math.min(1, this.born / 0.5), c1 = 1.9, ey = 1 + (c1 + 1) * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2);
+        ctx.save(); ctx.translate(this.x, this.y + 14); ctx.scale(1 + (1 - u) * 0.15, Math.max(0.05, ey)); ctx.translate(-this.x, -this.y - 14);
+        Painter.tower(ctx, this.type, this.level, this.x, this.y, TS * k, this.t, this.anim); ctx.restore(); return;
+      }
       Painter.tower(ctx, this.type, this.level, this.x, this.y, TS * k, this.t, this.anim);
     }
     drawOverlay(ctx) {
@@ -103,7 +108,7 @@
     },
     upgrade(T) {
       const c = T.nextCost; if (c === null || !Game.spend(c)) return false;
-      T.level++; T.spent += c; T.pulse = 0.4;
+      T.level++; T.spent += c; T.pulse = 0.4; T.born = 0.12;
       if (T.def.kind === 'barracks') Units.refresh(T, false);
       Effects.ring(T.x, T.y, 10, 70, 0.5, '#ffe58a', 5); Effects.burst(T.x, T.y - 40, '#fff0a0', 22, 200, 0.6, 5, -60);
       AudioSys.play('build'); return true;

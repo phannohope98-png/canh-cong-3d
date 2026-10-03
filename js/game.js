@@ -88,7 +88,7 @@
       // ô trống
       const showAll = this.sel && this.sel.kind === 'spot';
       for (const s of Towers.spots) if (!s.tower) Painter.plot(c, s.x, s.y, this.sel && this.sel.ref === s, now);
-      Effects.drawCorpses(c);
+      Effects.drawDecals(c); Effects.drawCorpses(c);
       this.drawSelection(c, now);
       // theo chiều sâu
       const L = this.drawList; L.length = 0;
@@ -148,6 +148,7 @@
       if (!e.alive) return;
       e.alive = false; this.gold += e.reward; this.kills++; this.xp += e.reward;
       Effects.corpse(e.type, e.x, e.y + e.radius * 0.5, e.scale, e.face, e.flying);
+      if (!e.flying && !/skeleton|deathKnight|mummy|Golem|treant|wraith/.test(e.type)) Effects.decal(e.x, e.y + e.radius * 0.5, e.radius * 1.1, /void/.test(e.type) ? 'goo' : 'blood');
       Effects.death(e.x, e.y - e.height * 0.4, e.boss ? '#c0303a' : '#a89a8a');
       Effects.coin(e.x, e.y - e.height, e.reward);
       AudioSys.play('death');
