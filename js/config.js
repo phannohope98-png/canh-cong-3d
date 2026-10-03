@@ -170,7 +170,7 @@ window.CONFIG = {
     voidWalker:{ name: 'Kẻ Dẫn Lối Hư Vô', hp: 500, speed: 44, armor: 0.3, mres: 0.4, damage: [16, 24], rate: 1.3, reward: 58, lives: 2, radius: 17, desc: 'Giáp và kháng phép đều cao.' },
     blackOrc:  { name: 'Hắc Orc',       hp: 375,  speed: 42, armor: 0.6, mres: 0,   damage: [14, 20], rate: 1.3, reward: 45,  lives: 2, radius: 17, desc: 'Giáp cực dày. Dùng phép để hạ.' },
     troll:     { name: 'Troll Hang',    hp: 935, speed: 30, armor: 0.1, mres: 0.25, damage: [30, 45], rate: 2.0, reward: 112,  lives: 3, radius: 24, regen: 6, desc: 'Khổng lồ, tự hồi máu. Tập trung hoả lực.' },
-    trollKing: { name: 'Vua Troll Đá',  hp: 5950, speed: 22, armor: 0.3, mres: 0.3, damage: [70, 100], rate: 2.2, reward: 500, lives: 20, radius: 30, boss: true, slam: { every: 8, radius: 110, damage: 60 }, desc: 'Chúa tể vùng núi. Đập đất làm choáng và gây sát thương cả nhóm lính.' },
+    trollKing: { name: 'Vua Troll Đá',  hp: 5200, speed: 22, armor: 0.3, mres: 0.3, damage: [70, 100], rate: 2.2, reward: 500, lives: 20, radius: 30, boss: true, slam: { every: 8, radius: 110, damage: 60 }, desc: 'Chúa tể vùng núi. Đập đất làm choáng và gây sát thương cả nhóm lính.' },
     voidLord:  { name: 'Chúa Tể Hỗn Mang', hp: 9500, speed: 20, armor: 0.35, mres: 0.35, damage: [90, 130], rate: 2.2, reward: 900, lives: 20, radius: 32, boss: true, slam: { every: 7, radius: 125, damage: 80 }, desc: 'Boss cuối. Xé toạc không gian, choáng cả đội hình.' }
   },
 
@@ -208,12 +208,12 @@ window.CONFIG = {
       story: 'Quỷ lửa và rồng lửa xổ lên từ miệng núi lửa. Vua Troll đích thân dẫn quân!',
       paths: [[[-80, 150], [300, 200], [500, 380], [400, 560], [640, 700], [900, 600], [1010, 400], [1250, 300], [1450, 450], [1350, 650], [1550, 760], [1790, 600]],
               [[-80, 820], [350, 820], [640, 700], [900, 600], [1010, 400], [1250, 300], [1450, 450], [1350, 650], [1550, 760], [1790, 600]]],
-      waves: ['imp:8', 'magmaGolem:1,imp:6', 'drake:2,imp:6', 'blackOrc:4,imp:8', 'magmaGolem:2,drake:2', 'drake:3,imp:10,blackOrc:3', 'magmaGolem:3,drake:3', 'trollKing:1,magmaGolem:2,imp:10'] },
-    { name: 'Cổng Hỗn Mang', theme: 'chaos', diff: 'Boss cuối', gold: 820, spots: 16,
+      waves: ['imp:8', 'blackOrc:2,imp:6', 'magmaGolem:1,imp:6', 'drake:2,imp:6', 'blackOrc:4,imp:8', 'magmaGolem:2,drake:2', 'drake:3,imp:10,blackOrc:3', 'magmaGolem:2,drake:3', 'trollKing:1,magmaGolem:1,imp:10'] },
+    { name: 'Cổng Hỗn Mang', theme: 'chaos', diff: 'Boss cuối', gold: 760, spots: 16,
       story: 'Trận chiến cuối cùng bên rìa thế giới. Chúa Tể Hỗn Mang đang mở cổng!',
       paths: [[[-80, 450], [250, 450], [400, 250], [700, 200], [900, 350], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]],
               [[-80, 790], [250, 790], [500, 710], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]]],
-      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:6,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:3,voidWalker:4', 'magmaGolem:2,voidWalker:5,voidling:8', 'iceGolem:2,drake:4,voidWalker:5', 'deathKnight:3,voidWalker:6,drake:3', 'voidLord:1,voidWalker:6,voidling:12'] }
+      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:6,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:3,voidWalker:4', 'magmaGolem:2,voidWalker:5,voidling:8', 'iceGolem:3,drake:5,voidWalker:6', 'deathKnight:4,voidWalker:8,drake:4', 'voidLord:1,voidWalker:8,voidling:14,drake:2'] }
   ],
 
   spawnInterval: { goblin: 0.8, orc: 1.3, orcArcher: 1.3, warg: 0.7, treant: 3.5, skeleton: 1.2, wraith: 1.4, deathKnight: 3, bandit: 0.8, mummy: 2, scorpion: 1.1,
