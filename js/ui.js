@@ -7,7 +7,7 @@
   const I = n => Icon(n);
   const K = ArtKit;
   const fmt = n => Math.floor(n).toLocaleString('vi-VN');
-  const CHAR = { barracks: 'soldier', archer: 'elf', artillery: 'dwarf', mage: 'mage', orc: 'orct' };   // trụ → nhân vật
+  const CHAR = { barracks: 'soldier', archer: 'elf', artillery: 'dwarf', mage: 'mage', orc: 'orct' }, IMG = { soldier: 'human', elf: 'elf', dwarf: 'dwarf', mage: 'witch', orct: 'orc' };   // trụ → nhân vật
   const GEARTXT = it => (it.dmg ? `+${Math.round(it.dmg * 100)}% sát thương ` : '') + (it.rate ? `+${Math.round(it.rate * 100)}% tốc đánh ` : '') + (it.hp ? `+${Math.round(it.hp * 100)}% máu ` : '') + (it.spd ? `+${Math.round(it.spd * 100)}% tốc chạy` : '');
 
   const UI = {
@@ -121,7 +121,7 @@
         const st = Save.data.stars[i] || 0, locked = i >= un, next = i === un - 1 && !st;
         const [x, y] = nodes[i];
         return `<button class="node ${locked ? 'locked' : ''} ${st ? 'done' : ''} ${next ? 'next' : ''}" style="left:${x}%;top:${y}%" data-action="${locked ? '' : 'level'}" data-index="${i}">
-          <span class="flag">${locked ? I('lock') : i + 1}</span>
+          <span class="flag" style="background-image:url(${window.ART_BASE || "assets/art/"}map_${i}.jpg)">${locked ? I("lock") : i + 1}</span>
           <span class="nstars">${[1, 2, 3].map(k => `<span class="${k <= st ? 'got' : ''}">${I('star')}</span>`).join('')}</span>
           <span class="nname">${L.name}</span><span class="ndiff">${L.diff}</span></button>`;
       }).join('');
@@ -132,7 +132,7 @@
       const foes = [...new Set(L.waves.join(',').split(',').map(s => s.split(':')[0].trim()))];
       const hid = Progress.selectedHero(), H = CONFIG.heroes[hid];
       this.overlay(`<div class="ribbon">Màn ${i + 1} · ${L.name}</div>
-        <div class="lvcard"><div>
+        <div class="lvcard"><div><img class="lvimg" src="${window.ART_BASE || "assets/art/"}map_${i}.jpg" alt="">
           <p>${L.story}</p>
           <div class="row" style="margin:6px 0">${foes.map(f => `<canvas class="portrait dark" data-char="${f}" width="120" height="120" style="width:44px;height:44px;border-radius:12px"></canvas>`).join('')}</div>
           <p style="font-size:13px">${L.waves.length} đợt quái · ${L.paths.length > 1 ? L.paths.length + ' cửa vào · ' : ''}${L.gold} vàng khởi đầu · Độ khó: ${L.diff}</p>
@@ -208,9 +208,9 @@
         html = '<div class="sheets">' + Object.keys(CONFIG.towers).map(k => {
           const T = CONFIG.towers[k], ch = CHAR[k], pal = T.palette, dk = K.shade(pal[0], -0.55);
           return `<div class="sheet" style="--c1:${pal[2]};--c2:${dk};--c3:${pal[4]}"><div class="sheet-head"><canvas data-char="${ch}4" data-head="1" data-zoom="1.3" width="108" height="108"></canvas><div><h3>${T.name.toUpperCase()}</h3><small>${T.role}</small></div></div>
-            <div class="sheet-sec">NHÂN VẬT (4 CẤP)</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><canvas data-char="${ch}${t}" data-full="1" width="180" height="225"></canvas><span>${T.tierNames[t - 1]}</span></div>`).join('')}</div>
-            <div class="sheet-sec">BIỂU CẢM</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><canvas class="face" data-char="${ch}${t}" data-head="1" data-zoom="${t % 2 ? 1.5 : 1.7}" data-mode="${t === 2 ? 'atk' : 'idle'}" width="160" height="160"></canvas></div>`).join('')}</div>
-            <div class="sheet-sec">TRỤ CÔNG TRÌNH</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><canvas data-tower="${k}" data-tier="${t}" width="150" height="190"></canvas></div>`).join('')}</div>
+            <div class="sheet-sec">NHÂN VẬT</div><div class="sheet-row">${['front', 'side', 'back', 'q34'].map((v, i) => `<div class="cell"><img src="${ArtImg.src(IMG[ch] + '_' + v)}" alt=""><span>${['Trước', 'Bên', 'Sau', '3/4'][i]}</span></div>`).join('')}</div>
+            <div class="sheet-sec">BIỂU CẢM</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><img class="face" src="${ArtImg.src(IMG[ch] + '_face' + t)}" alt=""></div>`).join('')}</div>
+            <div class="sheet-sec">TRỤ CÔNG TRÌNH (4 CẤP)</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><canvas data-tower="${k}" data-tier="${t}" width="150" height="190"></canvas><span>${T.tierNames[t - 1]}</span></div>`).join('')}</div>
             <div class="sheet-sec">VŨ KHÍ & TRANG BỊ</div><div class="sheet-gear">${T.gear.map(x => `<b>${x}</b>`).join('')}</div>
             <div class="sheet-pal">BẢNG MÀU ${pal.map(c => `<i style="background:${c}"></i>`).join('')}</div>
             <div class="sheet-desc">${T.desc}</div></div>`;

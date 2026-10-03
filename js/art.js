@@ -85,6 +85,7 @@
     },
     charPortrait(canvas, type, opts) {
       opts = opts || {};
+      if (window.ArtImg && ArtImg.ready && ArtImg.portrait(canvas, type, opts)) return;
       const g = canvas.getContext('2d'), d = ArtChars[type], [w, h, ox, oy] = d.box;
       g.clearRect(0, 0, canvas.width, canvas.height);
       const z = opts.zoom || 1;

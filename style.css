@@ -334,3 +334,14 @@ button { font-family: inherit; color: inherit; border: 0; padding: 0; background
   .big-stars .s { width: 42px; height: 42px; } .big-stars .s:nth-child(2) { width: 50px; height: 50px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; } }
+
+/* ---- ảnh art thật trong bảng nhân vật ---- */
+.sheet-row img { width: 100%; aspect-ratio: 1 / 1.25; object-fit: contain; object-position: center bottom; display: block; background: radial-gradient(circle at 50% 60%, rgba(255,255,255,.1), rgba(0,0,0,.28)); border-radius: 10px; border: 1.5px solid rgba(255,255,255,.14); }
+.sheet-row img.face { aspect-ratio: 1 / 1; object-fit: cover; object-position: center; background: none; }
+.sheet-head canvas { image-rendering: auto; }
+
+/* ---- ảnh map thật ---- */
+.lvimg { display: block; width: 100%; border-radius: 12px; border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); margin-bottom: 6px; aspect-ratio: 2.3 / 1; object-fit: cover; }
+.node .flag { background-size: cover; background-position: center; }
+.node.locked .flag { filter: grayscale(1) brightness(.75); }
+.node .flag .ico { filter: drop-shadow(0 2px 0 var(--ink)); }
