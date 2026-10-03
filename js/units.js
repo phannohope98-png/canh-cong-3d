@@ -101,7 +101,7 @@
       const mode = this.atk >= 0 ? 'atk' : this.moving ? 'walk' : 'idle';
       // ảnh art có 4 góc: đi lên → quay lưng, đi ngang → nghiêng, đi xuống → quay mặt
       let art = this.art;
-      if (mode === 'walk' && !this.isHero) { const v = this.dvy || 0, s = v < -0.55 ? '_b' : v > 0.6 ? '_f' : Math.abs(this.dvx || 0) > 0.8 ? '_s' : ''; if (s && ArtChars[art + s]) art += s; }
+      if (mode === 'walk') { const v = this.dvy || 0, s = v < -0.55 ? '_b' : v > 0.6 ? '_f' : Math.abs(this.dvx || 0) > 0.8 ? '_s' : ''; if (s && ArtChars[art + s]) art += s; }
       Painter.char(ctx, art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT);
       if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.6, this.flash * 6); Painter.char(ctx, art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT); ctx.restore(); }
       if (this.stun > 0) for (let i = 0; i < 3; i++) { const a = time * 5 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * 9, fy - 46 + Math.sin(a) * 3, 2, '#ffe58a'); }
