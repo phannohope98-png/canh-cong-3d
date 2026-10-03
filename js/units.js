@@ -37,7 +37,10 @@
       if (this.atk >= 0) {
         const prev = this.atk; this.atk += dt / 0.4;
         const t = this.target;
-        if (prev < 0.5 && this.atk >= 0.5 && t && t.alive && t.uid === this.tUid) { Combat.hitEnemy(t, this.damage, 'physical'); AudioSys.play('sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0'); }
+        if (prev < 0.5 && this.atk >= 0.5 && t && t.alive && t.uid === this.tUid) {
+          if (this.range) { Combat.fire(this.proj, this.x + this.face * 9, this.y - 26, t, { damage: this.damage, type: this.dtype || 'physical' }); AudioSys.play(this.proj === 'bolt' ? 'magic' : 'arrow'); }
+          else { Combat.hitEnemy(t, this.damage, 'physical'); AudioSys.play('sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0'); }
+        }
         if (this.atk >= 1) this.atk = -1;
       }
       // người chơi ra lệnh di chuyển (anh hùng / dời cờ) → bỏ mục tiêu
@@ -51,7 +54,7 @@
       const e = this.target;
       if (e) {
         this.calm = 0;
-        const dx = e.x - this.x, dy = e.y - this.y, d = Math.hypot(dx, dy), reach = e.radius + this.radius + 1;
+        const dx = e.x - this.x, dy = e.y - this.y, d = Math.hypot(dx, dy), reach = this.range ? this.range - 10 : e.radius + this.radius + 1;
         if (d > reach) { if (this.atk < 0) this.moveTo(e.x - dx / d * (reach - 1), e.y - dy / d * (reach - 1), dt); }
         else { this.moving = false; this.face = dx >= 0 ? 1 : -1; if (this.cd <= 0 && this.atk < 0) { this.atk = 0; this.cd = this.rate; } }
       } else {
@@ -66,7 +69,7 @@
       const R = this.engage, cx = this.postX, cy = this.postY;
       let best = null, bs = Infinity;
       for (const e of Enemies.list) {
-        if (!e.alive || e.flying) continue;
+        if (!e.alive || (e.flying && !this.air)) continue;
         if (Math.hypot(e.x - cx, e.y - cy) > R + e.radius) continue;
         let taken = 0; for (const u of Units.list) if (u !== this && u.active && u.tUid === e.uid) taken++;
         const sc = Math.hypot(e.x - this.x, e.y - this.y) + taken * 55 - e.dist * 0.02;
@@ -103,31 +106,65 @@
     }
   }
 
-  /* ---------------- Anh hùng ---------------- */
+  /* ---------------- Anh hùng (4 nhân vật, mang trang bị) ---------------- */
   const Hero = {
     create(map) {
-      const H = CONFIG.hero, lv = Progress.heroLevel(), m = 1 + (lv - 1) * H.perLevel;
-      const ex = map.exit, p = map.paths[0].pointAt(map.paths[0].length - 190, {});
-      const u = new Unit({ isHero: true, art: H.art, radius: H.radius, scale: H.radius / ArtChars[H.art].dr, x: p.x, y: p.y, postX: p.x, postY: p.y,
-        maxHp: Math.round(H.hp * m), hp: Math.round(H.hp * m), damage: [H.damage[0] * m, H.damage[1] * m], armor: H.armor, rate: H.attackRate,
-        speed: H.speed, regen: H.regen, engage: 80, level: lv, skillCd: 0 });
+      const id = Progress.selectedHero(), H = CONFIG.heroes[id], lv = Progress.heroLevel(id), m = 1 + (lv - 1) * CONFIG.heroPerLevel, gm = Progress.gearMods(id);
+      const art = ArtChars.heroKey(id, Progress.wornTiers(id)), p = map.paths[0].pointAt(map.paths[0].length - 190, {});
+      const hp = Math.round(H.hp * m * (1 + gm.hp)), dm = m * (1 + gm.dmg);
+      const u = new Unit({ isHero: true, heroId: id, heroDef: H, art, radius: H.radius, scale: H.radius / ArtChars[art].dr, x: p.x, y: p.y, postX: p.x, postY: p.y,
+        maxHp: hp, hp, damage: [H.damage[0] * dm, H.damage[1] * dm], armor: Math.min(0.8, H.armor + gm.arm), rate: H.attackRate / (1 + gm.rate),
+        speed: H.speed * (1 + gm.spd), regen: H.regen, engage: 80, level: lv, skillCd: 0, range: H.range || 0, proj: H.proj, air: !!H.air, dtype: H.type, fx: null });
       return u;
     },
-    tick(u, dt) { if (u.skillCd > 0) u.skillCd -= dt; u.engage = u.state === 'post' ? 80 : 0; },
+    tick(u, dt) {
+      if (u.skillCd > 0) u.skillCd -= dt;
+      u.engage = u.state === 'post' ? (u.range ? u.range + 20 : 80) : 0;
+      const f = u.fx; if (!f) return;
+      f.t += dt;
+      if (f.kind === 'rain') {
+        while (f.n < f.ticks && f.t >= f.n * 0.22) {
+          f.n++; Combat.splash(f.x, f.y, f.r, f.dmg, 'physical', { air: true });
+          for (let i = 0; i < 9; i++) { const ax = f.x + (Math.random() - 0.5) * f.r * 1.8, ay = f.y + (Math.random() - 0.5) * f.r * 1.1; Effects.particle(ax + 14, ay - 170, -50, 700, 0.26, '#fff6d0', 3.2); Effects.hit(ax, ay, '#ffe58a'); }
+          Effects.ring(f.x, f.y, 10, f.r, 0.3, '#c8ffb0', 3); AudioSys.play('arrow');
+        }
+        if (f.n >= f.ticks && f.t > f.ticks * 0.22 + 0.3) u.fx = null;
+      } else u.fx = null;
+    },
     moveHero(u, x, y) {
       if (u.state === 'dead') return;
       u.postX = x; u.postY = y; u.state = 'move'; u.target = null; u.tUid = -1; u.atk = -1;
       Effects.ring(x, y, 4, 26, 0.4, '#ffe58a', 3);
     },
     cast(u) {
-      const S = CONFIG.hero.skill;
+      const S = u.heroDef.skill, lvm = 1 + (u.level - 1) * CONFIG.heroPerLevel, dm = u.damage[1] / u.heroDef.damage[1] / lvm;
       if (u.state === 'dead' || u.skillCd > 0) return false;
       u.skillCd = S.cooldown; u.atk = 0;
-      Effects.flash(u.x, u.y - 20, S.radius * 1.4, '#fff0a0'); Effects.ring(u.x, u.y, 10, S.radius, 0.6, '#ffe58a', 8);
-      Effects.burst(u.x, u.y - 20, '#fff6c0', 28, 220, 0.7, 6, -40);
-      Combat.splash(u.x, u.y, S.radius, S.damage * (1 + (u.level - 1) * CONFIG.hero.perLevel), 'magic', { air: true });
-      for (const o of Units.list) if (o.active && Math.hypot(o.x - u.x, o.y - u.y) < S.radius * 1.4) { o.hp = Math.min(o.maxHp, o.hp + o.maxHp * S.heal); Effects.text(o.x, o.y - 50, '+', '#8aff6a', 22); }
-      AudioSys.play('holy'); Effects.shake(6, 0.3);
+      if (S.id === 'holy') {
+        Effects.flash(u.x, u.y - 20, S.radius * 1.4, '#fff0a0'); Effects.ring(u.x, u.y, 10, S.radius, 0.6, '#ffe58a', 8);
+        Effects.burst(u.x, u.y - 20, '#fff6c0', 28, 220, 0.7, 6, -40);
+        Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'magic', { air: true });
+        for (const o of Units.list) if (o.active && Math.hypot(o.x - u.x, o.y - u.y) < S.radius * 1.4) { o.hp = Math.min(o.maxHp, o.hp + o.maxHp * S.heal); Effects.text(o.x, o.y - 50, '+', '#8aff6a', 22); }
+        AudioSys.play('holy'); Effects.shake(6, 0.3);
+      } else if (S.id === 'rain') {
+        // tâm mưa tên: cụm quái đông nhất quanh anh hùng
+        let cx = u.x, cy = u.y, best = -1;
+        for (const e of Enemies.list) { if (!e.alive || Math.hypot(e.x - u.x, e.y - u.y) > 260) continue; let c = 0; for (const o of Enemies.list) if (o.alive && Math.hypot(o.x - e.x, o.y - e.y) < S.radius) c++; if (c > best) { best = c; cx = e.x; cy = e.y; } }
+        u.fx = { kind: 'rain', t: 0, n: 0, ticks: S.ticks, x: cx, y: cy, r: S.radius, dmg: S.damage * lvm * dm / S.ticks };
+        Effects.flash(cx, cy, S.radius * 1.1, '#c8ffb0');
+      } else if (S.id === 'frost') {
+        Effects.flash(u.x, u.y - 20, S.radius * 1.5, '#cfeeff'); Effects.ring(u.x, u.y, 10, S.radius, 0.6, '#9fe0ff', 8); Effects.ring(u.x, u.y, 4, S.radius * 0.7, 0.45, '#ffffff', 4);
+        Effects.burst(u.x, u.y - 20, '#dff6ff', 34, 240, 0.8, 5, 60);
+        Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'magic', { air: true });
+        for (const e of Enemies.list) if (e.alive && Math.hypot(e.x - u.x, (e.y - u.y) * 1.2) < S.radius + e.radius) { e.slowT = S.slowTime; e.slowMul = 1 - S.slow * (e.boss ? 0.5 : 1); }
+        AudioSys.play('magic'); Effects.shake(4, 0.25);
+      } else if (S.id === 'quake') {
+        Effects.ring(u.x, u.y, 10, S.radius, 0.5, '#d8c8a8', 9); Effects.ring(u.x, u.y, 4, S.radius * 0.6, 0.35, '#ffb060', 6);
+        Effects.burst(u.x, u.y, '#a89878', 30, 200, 0.6, 7, 260);
+        Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'physical');
+        for (const e of Enemies.list) if (e.alive && !e.flying && Math.hypot(e.x - u.x, (e.y - u.y) * 1.2) < S.radius + e.radius) e.stunT = Math.max(e.stunT || 0, S.stun * (e.boss ? 0.4 : 1));
+        AudioSys.play('explode'); Effects.shake(12, 0.5);
+      }
       return true;
     }
   };
@@ -166,7 +203,7 @@
     kill(u) {
       if (!u.active) return;
       u.state = 'dead'; u.target = null; u.tUid = -1; u.atk = -1;
-      u.respawnT = u.isHero ? CONFIG.hero.respawn : u.tower.def.respawn;
+      u.respawnT = u.isHero ? u.heroDef.respawn : u.tower.def.respawn;
       Effects.death(u.x, u.y - 14, u.isHero ? '#f2c14e' : '#9aa3b2');
       AudioSys.play('death');
     },

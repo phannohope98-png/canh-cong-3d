@@ -1,12 +1,12 @@
 {
-  "name": "Canh Cổng – Kỷ Nguyên Bóng Tối",
+  "name": "Canh Cổng – Bảo Vệ Thế Giới",
   "short_name": "Canh Cổng",
   "description": "Game thủ thành chơi trên điện thoại",
   "lang": "vi",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "background_color": "#0f0d10",
   "theme_color": "#0f0d10",
   "icons": [

@@ -33,6 +33,8 @@
       if (this.def.regen && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.def.regen * dt);
       if (this.atk >= 0) { this.atk += dt / 0.5; if (this.atk >= 1) this.atk = -1; }
       this.cd -= dt;
+      if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowMul = 1; }
+      if (this.stunT > 0) { this.stunT -= dt; this.state = 'idle'; return; }
 
       // Trùm đập đất
       if (this.def.slam) {
@@ -70,7 +72,7 @@
         }
       }
       this.state = 'walk';
-      const step = this.speed * dt;
+      const step = this.speed * (this.slowMul || 1) * dt;
       this.dist += step; this.walk += step / (this.radius * 2.8);
       if (this.dist >= this.path.length) { Game.enemyEscaped(this); return; }
       this.place();
@@ -83,6 +85,8 @@
       const mode = this.atk >= 0 ? 'atk' : this.state === 'walk' ? 'walk' : 'idle';
       Painter.char(ctx, this.type, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim);
       if (this.flash > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.45, this.radius * 1.6, '#ffffff', this.flash * 6);
+      if (this.slowT > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.4, this.radius * 2.2, '#8fe0ff', 0.45);
+      if (this.stunT > 0) for (let i = 0; i < 3; i++) { const a = this.anim * 6 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * this.radius * 0.7, fy - this.height - 4 + Math.sin(a) * 3, 2.2, '#ffe58a'); }
     }
     drawBar(ctx) {
       if (this.boss || this.hp >= this.maxHp) return;

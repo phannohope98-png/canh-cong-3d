@@ -30,7 +30,7 @@
       this.sel = null; this.heroSelected = false; this.rallyFor = null; this.speed = 1; this.time = 0; this.paused = false;
       this.measure();
       Camera.setup(this.map.W, this.map.H, this.viewW, this.viewH);
-      Camera.x = this.map.exit.x; Camera.y = this.map.H; Camera.clamp();
+      Camera.x = this.map.W / 2; Camera.y = this.map.H / 2; Camera.clamp();
       this.renderBg();
       Units.addHero(this.map);
       this.state = 'playing';
@@ -105,35 +105,34 @@
       if (this.heroSelected && Units.hero && Units.hero.state === 'move') { const h = Units.hero; drawRallyFlag(c, h.postX, h.postY, '#f2c14e', now); }
     },
 
-    /** Lớp không khí: bóng mây trôi + đom đóm/phấn hoa. Chỉ hình ảnh. */
+    /** Lớp không khí theo vùng: mây, đom đóm, tuyết, tàn lửa, bụi cát, hạt hỗn mang. Chỉ hình ảnh. */
     drawAtmosphere(c, t) {
-      const W = this.map.W, H = this.map.H, th = this.map.theme;
+      const W = this.map.W, H = this.map.H, T = this.map.def.theme;
       c.save();
-      // bóng mây trôi chậm trên mặt đất
-      if (!th.dead) {
-        c.globalAlpha = th.snow ? 0.07 : 0.1; c.fillStyle = '#1a2a40';
-        for (let i = 0; i < 3; i++) {
-          const x = ((t * 9 + i * 420) % (W + 500)) - 250, y = 260 + i * 470 + Math.sin(t * 0.1 + i) * 30;
-          c.beginPath(); c.ellipse(x, y, 160, 58, -0.2, 0, Math.PI * 2); c.ellipse(x + 90, y + 22, 110, 44, -0.2, 0, Math.PI * 2); c.ellipse(x - 80, y + 26, 90, 36, -0.2, 0, Math.PI * 2); c.fill();
+      if (T === 'forest' || T === 'castle' || T === 'desert') { // bóng mây trôi chậm
+        c.globalAlpha = T === 'desert' ? 0.07 : 0.1; c.fillStyle = '#1a2a40';
+        for (let i = 0; i < 4; i++) {
+          const x = ((t * 9 + i * 520) % (W + 600)) - 300, y = 160 + i * 220 + Math.sin(t * 0.1 + i) * 30;
+          c.beginPath(); c.ellipse(x, y, 170, 54, -0.1, 0, Math.PI * 2); c.ellipse(x + 100, y + 20, 120, 42, -0.1, 0, Math.PI * 2); c.ellipse(x - 90, y + 24, 100, 34, -0.1, 0, Math.PI * 2); c.fill();
         }
       }
-      // hạt sáng lơ lửng
       c.globalCompositeOperation = 'lighter';
-      const col = th.dead ? '#ff8a3a' : th.snow ? '#ffffff' : th.mush ? '#b8ff9a' : '#fff2b0';
-      for (let i = 0; i < 26; i++) {
-        const x = (i * 377.7 + Math.sin(t * 0.3 + i) * 40 + 1000) % W;
-        const y = th.snow ? (i * 211.3 + t * (14 + (i % 5) * 4)) % H : ((i * 211.3 - t * (6 + (i % 4) * 3)) % H + H) % H;
+      const spec = { forest: ['#fff2b0', 22, 0.5, -6], castle: ['#fff2b0', 18, 0.45, -6], desert: ['#ffe0a0', 30, 0.4, 0], ice: ['#ffffff', 46, 0.8, 16], lava: ['#ff8a3a', 34, 0.8, -22], chaos: ['#d890ff', 36, 0.8, -8] }[T] || ['#fff2b0', 20, 0.5, -6];
+      const n = spec[1];
+      for (let i = 0; i < n; i++) {
+        const sp = spec[3], x = ((i * 377.7 + Math.sin(t * 0.3 + i) * 40 + 3000 + (T === 'desert' ? t * 22 : 0)) % W);
+        const y = (((i * 211.3 + t * sp * (0.6 + (i % 5) * 0.2)) % H) + H) % H;
         const a = 0.35 + 0.35 * Math.sin(t * 2 + i * 1.7);
         if (a <= 0.05) continue;
-        c.globalAlpha = a * (th.snow ? 0.7 : 0.55);
-        ArtKit.glow(c, x, y, th.snow ? 3 : 5, col, 1);
+        c.globalAlpha = a * spec[2];
+        ArtKit.glow(c, x, y, T === 'ice' ? 3 : T === 'lava' ? 4 : 5, spec[0], 1);
       }
       c.restore();
     },
     drawSelection(c, t) {
       const s = this.sel; if (!s || s.kind !== 'tower') return;
       const T = s.ref;
-      if (T.def.kind === 'shooter') ring(c, T.x, T.y, T.stats.range, T.def.color, t);
+      if (T.def.kind !== 'barracks') ring(c, T.x, T.y, T.stats.range, T.def.color, t);
       else {
         ring(c, T.x, T.y, T.def.rallyRange, T.def.color, t);
         const p = this.map.paths[T.rallyPath].pointAt(T.rallyDist, {});
@@ -157,7 +156,7 @@
       UI.lifeLost(); AudioSys.play('life'); Effects.shake(5, 0.2);
       if (this.lives <= 0) this.defeat();
     },
-    onBoss(e) { UI.bossWarning(e.name); AudioSys.play('boss'); Effects.shake(10, 0.8); Camera.focus(e.x, e.y + 200); },
+    onBoss(e) { UI.bossWarning(e.name); AudioSys.play('boss'); Effects.shake(10, 0.8); Camera.focus(e.x, e.y); },
 
     /* ================= HÀNH ĐỘNG ================= */
     toggleSpeed() { this.speed = this.speed === 1 ? 2 : 1; },
@@ -181,16 +180,16 @@
       this.state = 'ended';
       const S = CONFIG.match.stars, stars = this.lives >= S.three ? 3 : this.lives >= S.two ? 2 : 1;
       const newStars = Progress.recordWin(this.levelIndex, stars);
-      const lv0 = Progress.heroLevel(); Save.data.heroXp += this.xp; Save.save(); const lvUp = Progress.heroLevel() > lv0;
+      const hid = Progress.selectedHero(), lv0 = Progress.heroLevel(hid); Progress.addHeroXp(hid, this.xp); const coins = Math.floor(this.xp * 0.5 + 60 + stars * 25); Progress.addCoins(coins); const lvUp = Progress.heroLevel(hid) > lv0;
       Effects.confetti(Camera.x, Camera.y - 200, 500); AudioSys.play('victory');
-      setTimeout(() => UI.showResult({ win: true, stars, newStars, xp: this.xp, lvUp }), 1100);
+      setTimeout(() => UI.showResult({ win: true, stars, newStars, xp: this.xp, lvUp, coins }), 1100);
     },
     defeat() {
       if (this.state !== 'playing') return;
       this.state = 'ended';
-      const xp = Math.floor(this.xp * 0.5); Save.data.heroXp += xp; Save.save();
+      const xp = Math.floor(this.xp * 0.5), coins = Math.floor(this.xp * 0.25); Progress.addHeroXp(Progress.selectedHero(), xp); Progress.addCoins(coins);
       AudioSys.play('defeat'); Effects.shake(14, 0.8);
-      setTimeout(() => UI.showResult({ win: false, xp }), 1000);
+      setTimeout(() => UI.showResult({ win: false, xp, coins }), 1000);
     },
 
     /* ================= CẢM ỨNG ================= */
@@ -247,7 +246,7 @@
       if (h && h.state !== 'dead' && Math.hypot(h.x - x, h.y - 18 - y) < 30) { this.selectHero(); return; }
       const spot = Towers.spotAt(x, y);
       if (this.heroSelected && !spot) {
-        Hero.moveHero(h, Math.max(20, Math.min(this.map.W - 20, x)), Math.max(40, Math.min(this.map.H - 130, y)));
+        Hero.moveHero(h, Math.max(20, Math.min(this.map.W - 130, x)), Math.max(40, Math.min(this.map.H - 50, y)));
         this.heroSelected = false; UI.tip(null); AudioSys.play('click'); return;
       }
       this.heroSelected = false;

@@ -39,9 +39,9 @@
     }
     update(dt) {
       this.t += dt; if (this.pulse > 0) this.pulse -= dt; if (this.anim.door > 0) this.anim.door -= dt;
-      if (this.def.kind !== 'shooter') return;
+      if (this.def.kind === 'barracks') return;
       const A = this.anim, st = this.stats;
-      if (A.a >= 0) { const prev = A.a; A.a += dt / (this.type === 'artillery' ? 0.5 : 0.36); if (prev < 0.5 && A.a >= 0.5) this.release(); if (A.a >= 1) A.a = -1; }
+      if (A.a >= 0) { const prev = A.a; A.a += dt / (this.type === 'artillery' ? 0.5 : this.type === 'orc' ? 0.45 : 0.36); if (prev < 0.5 && A.a >= 0.5) this.release(); if (A.a >= 1) A.a = -1; }
       this.cd -= dt;
       if (this.cd > 0 || A.a >= 0) return;
       const tg = this.type === 'artillery' ? TARGET.densest(this) : TARGET.first(this, this.def.targetsAir);
@@ -56,6 +56,13 @@
         const pierce = st.special === 'pierce' && this.shots % 4 === 0;
         Combat.fire('arrow', m.x, m.y, t, { damage: pierce ? [st.damage[0] * 3, st.damage[1] * 3] : st.damage, type: 'physical', pierce });
         AudioSys.play('arrow');
+      } else if (this.type === 'orc') {
+        this.shots++;
+        const stun = st.special === 'stun' && this.shots % 3 === 0, tx = t.x, ty = t.y;
+        Combat.splash(tx, ty, st.aoe, st.damage, 'physical');
+        if (stun) for (const e of Enemies.list) if (e.alive && !e.flying && Math.hypot(e.x - tx, (e.y - ty) * 1.25) <= st.aoe + e.radius) e.stunT = Math.max(e.stunT || 0, 1.0);
+        Effects.hit(tx, ty - t.height * 0.4, stun ? '#ffe58a' : '#fff4d0'); Effects.ring(tx, ty, 8, st.aoe, 0.3, stun ? '#ffe58a' : '#e8d8b0', 4);
+        Effects.burst(tx, ty, '#c8b890', 6, 90, 0.35, 5, 180); Effects.shake(2.5, 0.12); AudioSys.play('sword');
       } else if (this.type === 'mage') {
         Combat.fire('bolt', m.x, m.y, t, { damage: st.damage, type: 'magic', chain: st.special === 'chain' }); AudioSys.play('magic');
       } else {

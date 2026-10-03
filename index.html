@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#1a1022">
+  <meta name="theme-color" content="#120c18">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Canh Cổng">
-  <title>Canh Cổng – Kỷ Nguyên Bóng Tối</title>
+  <title>Canh Cổng – Bảo Vệ Thế Giới</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=land1">
 </head>
 <body>
 <div id="app">
@@ -21,14 +21,15 @@
   <section id="screen-menu" class="screen active">
     <canvas id="menu-bg"></canvas>
     <div class="menu-shade"></div>
-    <div class="menu-top"><span class="pill"><i class="pi star" data-icon="star"></i><b id="menu-stars">0</b></span></div>
+    <div class="menu-top"><span class="pill"><i class="pi coin" data-icon="coin"></i><b class="coin-count">0</b></span><span class="pill"><i class="pi star" data-icon="star"></i><b id="menu-stars">0</b></span><button class="rbtn sm" id="btn-full" data-action="fullscreen" data-icon="expand"></button></div>
     <div class="logo">
       <div class="logo-main">Canh Cổng</div>
-      <div class="logo-ribbon"><span>Kỷ Nguyên Bóng Tối</span></div>
+      <div class="logo-ribbon"><span>Bảo Vệ Thế Giới</span></div>
     </div>
     <div class="menu-bottom">
       <button class="gbtn big green" data-action="open" data-target="screen-map"><span>Chiến dịch</span></button>
       <div class="menu-row">
+        <button class="rbtn lg" data-action="open" data-target="screen-heroes" data-icon="crown"><small>Anh hùng</small></button>
         <button class="rbtn lg" data-action="open" data-target="screen-upgrades" data-icon="up"><small>Nâng cấp</small></button>
         <button class="rbtn lg" data-action="open" data-target="screen-codex" data-icon="book"><small>Bách khoa</small></button>
         <button class="rbtn lg" data-action="open" data-target="screen-settings" data-icon="gear"><small>Cài đặt</small></button>
@@ -38,27 +39,33 @@
 
   <!-- ===== BẢN ĐỒ CHIẾN DỊCH ===== -->
   <section id="screen-map" class="screen">
-    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Chiến Dịch</h2><span class="pill"><i class="pi star" data-icon="star"></i><b class="star-count">0</b></span></div>
+    <div class="topbar"><button class="rbtn sm" data-action="back" data-icon="back"></button><h2>Chiến Dịch</h2><span class="pill"><i class="pi star" data-icon="star"></i><b class="star-count">0</b></span></div>
     <div class="map-scroll" id="map-scroll"><div class="map-inner" id="map-inner"><canvas id="world-map"></canvas><div id="map-nodes"></div></div></div>
+  </section>
+
+  <!-- ===== ANH HÙNG & TRANG BỊ ===== -->
+  <section id="screen-heroes" class="screen">
+    <div class="topbar"><button class="rbtn sm" data-action="back" data-icon="back"></button><h2>Anh Hùng</h2><span class="pill"><i class="pi coin" data-icon="coin"></i><b class="coin-count">0</b></span></div>
+    <div class="heroes-wrap"><div id="hero-roster"></div><div id="hero-detail" class="scroll"></div></div>
   </section>
 
   <!-- ===== NÂNG CẤP ===== -->
   <section id="screen-upgrades" class="screen">
-    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Nâng Cấp</h2><span class="pill"><i class="pi star" data-icon="star"></i><b id="free-stars">0</b></span></div>
-    <div class="scroll" id="upgrades-list"></div>
+    <div class="topbar"><button class="rbtn sm" data-action="back" data-icon="back"></button><h2>Nâng Cấp Trụ</h2><span class="pill"><i class="pi star" data-icon="star"></i><b id="free-stars">0</b></span></div>
+    <div class="scroll grid-scroll" id="upgrades-list"></div>
   </section>
 
   <!-- ===== BÁCH KHOA ===== -->
   <section id="screen-codex" class="screen">
-    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Bách Khoa</h2><span></span></div>
-    <div class="tabs"><button class="tab on" data-action="codex-tab" data-tab="enemies">Quái vật</button><button class="tab" data-action="codex-tab" data-tab="towers">Trụ & Anh hùng</button></div>
+    <div class="topbar"><button class="rbtn sm" data-action="back" data-icon="back"></button><h2>Bách Khoa</h2><span></span></div>
+    <div class="tabs"><button class="tab on" data-action="codex-tab" data-tab="towers">5 Nhân vật trụ</button><button class="tab" data-action="codex-tab" data-tab="enemies">Quái vật</button><button class="tab" data-action="codex-tab" data-tab="heroes">Anh hùng</button></div>
     <div class="scroll" id="codex-list"></div>
   </section>
 
   <!-- ===== CÀI ĐẶT ===== -->
   <section id="screen-settings" class="screen">
-    <div class="topbar"><button class="rbtn" data-action="back" data-icon="back"></button><h2>Cài Đặt</h2><span></span></div>
-    <div class="scroll" id="settings-list"></div>
+    <div class="topbar"><button class="rbtn sm" data-action="back" data-icon="back"></button><h2>Cài Đặt</h2><span></span></div>
+    <div class="scroll grid-scroll" id="settings-list"></div>
   </section>
 
   <!-- ===== TRẬN ĐẤU ===== -->
@@ -73,8 +80,8 @@
         <span class="pill"><i class="pi skull" data-icon="skull"></i><b id="hud-wave">1/6</b></span>
       </div>
       <div class="hud-tr">
-        <button class="rbtn" id="btn-speed" data-action="speed" data-icon="fast"><em>1x</em></button>
-        <button class="rbtn" data-action="pause" data-icon="pause"></button>
+        <button class="rbtn sm" id="btn-speed" data-action="speed" data-icon="fast"><em>1x</em></button>
+        <button class="rbtn sm" data-action="pause" data-icon="pause"></button>
       </div>
       <div id="boss-bar" class="hidden"><span id="boss-name"></span><div><i id="boss-fill"></i></div></div>
       <div class="hero-dock">
@@ -94,26 +101,27 @@
   <!-- ===== LỚP PHỦ ===== -->
   <div id="overlay" class="overlay hidden"><div class="panel" id="overlay-panel"></div></div>
   <div id="toast"></div>
+  <div id="rotate"><div><svg viewBox="0 0 64 64" width="84" height="84"><rect x="20" y="8" width="24" height="46" rx="4" fill="none" stroke="#ffd23a" stroke-width="4"/><path d="M50 22c6 3 9 8 8 14M54 36l4 3 3-5" fill="none" stroke="#ffd23a" stroke-width="4" stroke-linecap="round"/></svg><p>Hãy xoay ngang điện thoại để chơi</p><small>Game được thiết kế cho màn hình ngang</small></div></div>
 </div>
 
-<script src="js/config.js?v=anime2-1"></script>
-<script src="js/save.js?v=anime2-1"></script>
-<script src="js/audio.js?v=anime2-1"></script>
-<script src="js/icons.js?v=anime2-1"></script>
-<script src="js/art-kit.js?v=anime2-1"></script>
-<script src="js/art-chars.js?v=anime2-1"></script>
-<script src="js/art-towers.js?v=anime2-1"></script>
-<script src="js/art.js?v=anime2-1"></script>
-<script src="js/effects.js?v=anime2-1"></script>
-<script src="js/level.js?v=anime2-1"></script>
-<script src="js/camera.js?v=anime2-1"></script>
-<script src="js/combat.js?v=anime2-1"></script>
-<script src="js/enemies.js?v=anime2-1"></script>
-<script src="js/units.js?v=anime2-1"></script>
-<script src="js/towers.js?v=anime2-1"></script>
-<script src="js/waves.js?v=anime2-1"></script>
-<script src="js/game.js?v=anime2-1"></script>
-<script src="js/ui.js?v=anime2-1"></script>
-<script src="js/main.js?v=anime2-1"></script>
+<script src="js/config.js?v=land1"></script>
+<script src="js/save.js?v=land1"></script>
+<script src="js/audio.js?v=land1"></script>
+<script src="js/icons.js?v=land1"></script>
+<script src="js/art-kit.js?v=land1"></script>
+<script src="js/art-chars.js?v=land1"></script>
+<script src="js/art-towers.js?v=land1"></script>
+<script src="js/art.js?v=land1"></script>
+<script src="js/effects.js?v=land1"></script>
+<script src="js/level.js?v=land1"></script>
+<script src="js/camera.js?v=land1"></script>
+<script src="js/combat.js?v=land1"></script>
+<script src="js/enemies.js?v=land1"></script>
+<script src="js/units.js?v=land1"></script>
+<script src="js/towers.js?v=land1"></script>
+<script src="js/waves.js?v=land1"></script>
+<script src="js/game.js?v=land1"></script>
+<script src="js/ui.js?v=land1"></script>
+<script src="js/main.js?v=land1"></script>
 </body>
 </html>

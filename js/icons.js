@@ -50,6 +50,9 @@
     crown:  '<path d="M3 7.5l4.5 4L12 4.5l4.5 7 4.5-4-1.8 11H4.8z" fill="currentColor"/>',
     flag:   '<path d="M5 21V3.5M5 4h13l-3 4.5 3 4.5H5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>',
     install:'<rect x="6.5" y="2.5" width="11" height="19" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v7M9 11l3 3 3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    glove:  '<path d="M7 21v-6L5 9a1.6 1.6 0 013-1l1 2V4a1.6 1.6 0 013.2 0v5V3.5a1.6 1.6 0 013.2 0V9l.2-4a1.6 1.6 0 013.2.2L19 15v6z" fill="currentColor"/>',
+    boot:   '<path d="M8 3h6v9l5 2c1 .4 1.5 1.2 1.5 2.2V20H6V3z" fill="currentColor"/>',
     book:   '<path d="M12 6.5C9.5 4.5 6 4 3 4.5V19c3-.5 6.5 0 9 2 2.5-2 6-2.5 9-2V4.5c-3-.5-6.5 0-9 2zM12 6.5V21" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
   };
 

@@ -98,7 +98,28 @@
     hammer(g, col) {
       limb(g, [0, 6, 0, -14], 1.6, '#7a4c2a');
       F(g, K.P.rr(-5.5, -19, 11, 6.5, 1.6), col, { s: 1, h: 0.6, lw: 0.9 });
-    }
+    },
+    warhammer(g, col, glow) {
+      K.glow(g, 0, -20, 12 + glow * 8, '#ff8a2a', 0.25 + glow * 0.5);
+      limb(g, [0, 8, 0, -16], 2.2, '#6a4026');
+      F(g, K.P.rr(-8, -26, 16, 11, 2.4), col, { s: 1.6, h: 0.9, lw: 1 });
+      F(g, K.P.rr(-9.4, -24.5, 3.4, 8, 1), '#f2c14e', { s: 0.4, h: 0.3, lw: 0.8 });
+      F(g, K.P.rr(6, -24.5, 3.4, 8, 1), '#f2c14e', { s: 0.4, h: 0.3, lw: 0.8 });
+      F(g, poly([-1.5, -26, 0, -30, 1.5, -26]), '#c8ccd6', { s: 0.3, h: 0.3, lw: 0.7 });
+      dot(g, 0, -20.5, 1.5, '#ff7a2a');
+    },
+    scimitar(g, col) {
+      F(g, K.P.rr(-1, -1, 2, 5.5, 0.8), '#5a3a1a', { s: 0.5, h: 0.3, lw: 0.8 });
+      F(g, g2 => { g2.moveTo(-1.8, -1.6); g2.quadraticCurveTo(-3.2, -12, 3.6, -17.5); g2.quadraticCurveTo(0.8, -10, 1.8, -1.6); g2.closePath(); }, col, { s: 0.9, h: 0.5, lw: 0.9 });
+      F(g, K.P.rr(-3.4, -2.8, 6.8, 1.9, 0.8), '#e8b24a', { s: 0.4, h: 0.3, lw: 0.7 });
+    },
+    bone(g, col) {
+      F(g, K.P.rr(-1.1, -1, 2.2, 5.5, 1), '#6a5a4a', { s: 0.5, h: 0.3, lw: 0.8 });
+      F(g, poly([-2, -2.5, -2.4, -14, 0, -19, 2.4, -14, 2, -2.5]), col, { s: 1.1, h: 0.7, lw: 0.9 });
+      line(g, 0, -4, 0, -15, 'rgba(120,255,220,0.7)', 0.8);
+      F(g, K.P.rr(-4.4, -3.4, 8.8, 2.2, 1), '#8a8478', { s: 0.5, h: 0.3, lw: 0.8 });
+    },
+    none() {}
   };
 
   /* ---------------- Mắt anime ---------------- */
@@ -214,6 +235,23 @@
     } else if (k === 'goggles') {
       F(g, K.P.rr(hx - R * 1.1, hy - R * 0.85, R * 2.2, R * 0.38, 1), '#5a3a22', { s: 0.4, h: 0.3, lw: 0.8 });
       for (const ox of [-0.15, 0.55]) { F(g, circ(hx + R * ox, hy - R * 0.68, R * 0.32), '#c89a3a', { s: 0.4, h: 0.3, lw: 0.8 }); F(g, circ(hx + R * ox, hy - R * 0.68, R * 0.2), '#8fd8ff', { s: 0, h: 0.2, lw: 0.5 }); }
+    } else if (k === 'aviator') { // mũ da + kính phi công (Người Lùn)
+      F(g, g2 => { g2.moveTo(hx - R * 1.1, hy - R * 0.1); g2.quadraticCurveTo(hx - R * 1.15, hy - R * 1.34, hx + R * 0.1, hy - R * 1.3); g2.quadraticCurveTo(hx + R * 1.18, hy - R * 1.2, hx + R * 1.1, hy - R * 0.45); g2.lineTo(hx - R * 0.2, hy - R * 0.5); g2.lineTo(hx - R * 0.7, hy + R * 0.2); g2.closePath(); }, col, { s: 1.5, h: 0.8 });
+      F(g, K.P.rr(hx - R * 1.1, hy - R * 0.92, R * 2.2, R * 0.3, 1), '#3a2418', { s: 0.4, h: 0.3, lw: 0.8 });
+      for (const ox of [-0.1, 0.62]) { F(g, circ(hx + R * ox, hy - R * 0.78, R * 0.34), '#d8a23a', { s: 0.4, h: 0.4, lw: 0.9 }); F(g, circ(hx + R * ox, hy - R * 0.78, R * 0.22), '#9fe8ff', { s: 0, h: 0.3, lw: 0.5, light: '#ffffff' }); }
+    } else if (k === 'horns') {
+      for (const s of [-1, 1]) F(g, g2 => { const bx = hx + s * R * 0.6; g2.moveTo(bx - s * R * 0.25, hy - R * 1.0); g2.quadraticCurveTo(bx + s * R * 0.9, hy - R * 1.2, bx + s * R * 0.7, hy - R * 2.1); g2.quadraticCurveTo(bx + s * R * 0.25, hy - R * 1.3, bx - s * R * 0.3, hy - R * 1.2); g2.closePath(); }, col, { s: 0.8, h: 0.4 });
+    } else if (k === 'flame') {
+      const fl = Math.sin(t * 9) * 0.25;
+      K.glow(g, hx, hy - R * 1.3, R * 1.8, '#ff7a2a', 0.5);
+      F(g, g2 => { g2.moveTo(hx - R * 0.8, hy - R * 0.8); g2.quadraticCurveTo(hx - R * 1.1, hy - R * 1.7, hx - R * 0.3 + fl, hy - R * 2.5); g2.quadraticCurveTo(hx - R * 0.1, hy - R * 1.6, hx + R * 0.35, hy - R * 2.1 - fl); g2.quadraticCurveTo(hx + R * 0.5, hy - R * 1.4, hx + R * 1.0, hy - R * 1.7); g2.quadraticCurveTo(hx + R * 0.9, hy - R * 1.0, hx + R * 0.8, hy - R * 0.7); g2.closePath(); }, '#ff7a1a', { s: 0.8, h: 0.8, lw: 0.9, light: '#ffd84a' });
+      F(g, g2 => { g2.moveTo(hx - R * 0.35, hy - R * 0.9); g2.quadraticCurveTo(hx - R * 0.2, hy - R * 1.6, hx + R * 0.1, hy - R * 1.85 + fl); g2.quadraticCurveTo(hx + R * 0.4, hy - R * 1.3, hx + R * 0.45, hy - R * 0.9); g2.closePath(); }, '#ffd23a', { s: 0, h: 0, lw: 0 });
+    } else if (k === 'leaves') {
+      for (const [ox, oy, r2] of [[-0.7, -1.05, 0.6], [0.7, -1.05, 0.62], [0, -1.35, 0.78], [-0.2, -1.75, 0.5]]) F(g, g2 => { g2.moveTo(hx + R * ox - R * r2, hy + R * oy); g2.quadraticCurveTo(hx + R * ox, hy + R * (oy - r2 * 1.6), hx + R * ox + R * r2, hy + R * oy); g2.quadraticCurveTo(hx + R * ox, hy + R * (oy + r2 * 0.7), hx + R * ox - R * r2, hy + R * oy); g2.closePath(); }, col, { s: 0.8, h: 0.5, lw: 0.9 });
+    } else if (k === 'circlet') {
+      line(g, hx - R * 1.0, hy - R * 0.62, hx + R * 1.0, hy - R * 0.5, col, 1.1);
+      K.glow(g, hx + R * 0.1, hy - R * 0.66, R * 0.55, sp.gemCol || '#7fffd0', 0.8);
+      F(g, poly([hx + R * 0.1, hy - R * 0.95, hx + R * 0.32, hy - R * 0.64, hx + R * 0.1, hy - R * 0.4, hx - R * 0.12, hy - R * 0.64]), sp.gemCol || '#7fffd0', { s: 0, h: 0.4, lw: 0.7, light: '#ffffff' });
     }
   }
 
@@ -249,9 +287,16 @@
     const up = fn => { g.save(); g.translate(0, hipY); g.rotate(lean); g.translate(0, -hipY); fn(); g.restore(); };
 
     shadowE(g, 12 * bk, 3.6 * bk);
+    if (sp.float) g.translate(0, -sp.float - Math.sin(t * 4) * 1.6);
 
     const hx = 1.2 * bk + (sp.headX || 0), hy = chestY - R * 0.92 - (sp.neck || 0.6);
     up(() => {
+      if (sp.wings) { // cánh dơi (quỷ)
+        const fl = Math.sin(t * 8) * 0.18 + (mv ? 0.1 : 0);
+        for (const sd of [0, 1]) F(g, g2 => { const x0 = -cw * 0.3, y0 = chestY + 2, sc = sd ? 0.78 : 1, dx = (sd ? 4 : 0);
+          g2.moveTo(x0 + dx, y0); g2.quadraticCurveTo(x0 - 6 * sc, y0 - 12 * sc - fl * 8, x0 - 17 * sc, y0 - 14 * sc - fl * 12); g2.lineTo(x0 - 13 * sc, y0 - 7 * sc); g2.lineTo(x0 - 17 * sc, y0 - 3 * sc);
+          g2.lineTo(x0 - 11 * sc, y0 - 0.5); g2.lineTo(x0 - 12 * sc, y0 + 5 * sc); g2.lineTo(x0 - 5 * sc, y0 + 2); g2.closePath(); }, sd ? shade(sp.wings, -0.2) : sp.wings, { s: 1.4, h: 0.6, lw: 0.9 });
+      }
       if (sp.cape) {
         const fl = mv ? 2.5 + s * 1.5 : Math.sin(t * 2) * 0.9 + (atk ? -2 * sg : 0);
         F(g, g2 => { g2.moveTo(-cw * 0.4, chestY + 1); g2.quadraticCurveTo(-cw - 4 - fl, chestY + TH * 0.5, -cw - 5 - fl * 1.6, hipY + LL * 0.75);
@@ -287,6 +332,11 @@
       if (sp.chestPlate) F(g, g2 => { g2.moveTo(-cw * 0.62, chestY + 1.6); g2.quadraticCurveTo(0, chestY - 0.2, cw * 0.72, chestY + 1.6); g2.quadraticCurveTo(cw * 0.75, chestY + TH * 0.6, 0.6, chestY + TH * 0.68); g2.quadraticCurveTo(-cw * 0.62, chestY + TH * 0.6, -cw * 0.62, chestY + 1.6); g2.closePath(); }, sp.chestPlate, { s: 1.2, h: 0.7, lw: 0.9 });
       if (sp.tabard) F(g, poly([-2.6, chestY + 2, 3.2, chestY + 2, 3.8, hipY + 6.5, 0.6, hipY + 8.2, -3.2, hipY + 6.5]), sp.tabard, { s: 1, h: 0.5, lw: 0.9 });
       if (sp.emblem) sp.emblem(g, 0.4, chestY + TH * 0.42);
+      if (sp.ribs) { g.save(); g.globalAlpha = 0.9; for (let i = 0; i < 3; i++) { const yy = chestY + 3.2 + i * 2.6; g.strokeStyle = sp.ribs; g.lineWidth = 0.9; g.beginPath(); g.moveTo(-cw * 0.55, yy); g.quadraticCurveTo(0.5, yy + 1.8, cw * 0.6, yy); g.stroke(); } line(g, 0.4, chestY + 1.4, 0.4, hipY, sp.ribs, 1); g.restore(); }
+      if (sp.wrap) { g.save(); g.strokeStyle = sp.wrap; g.lineWidth = 1.1; g.globalAlpha = 0.9; for (let i = 0; i < 6; i++) { const yy = chestY + 1.5 + i * (TH * 0.17); g.beginPath(); g.moveTo(-cw * 0.9, yy + 2); g.lineTo(cw * 0.9, yy - 1.5); g.stroke(); } g.strokeStyle = 'rgba(60,40,20,0.35)'; g.lineWidth = 0.6; for (let i = 0; i < 6; i++) { const yy = chestY + 2.3 + i * (TH * 0.17); g.beginPath(); g.moveTo(-cw * 0.9, yy + 2); g.lineTo(cw * 0.9, yy - 1.5); g.stroke(); } g.restore(); }
+      if (sp.cracks) { g.save(); const fl = 0.7 + Math.sin(t * 4) * 0.3; g.globalCompositeOperation = 'lighter'; g.globalAlpha = fl; g.strokeStyle = sp.cracks; g.lineWidth = 1.2; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(-cw * 0.5, chestY + 3); g.lineTo(-cw * 0.15, chestY + 6); g.lineTo(-cw * 0.35, chestY + 9); g.lineTo(0, hipY + 2);
+        g.moveTo(cw * 0.55, chestY + 2); g.lineTo(cw * 0.2, chestY + 5.5); g.lineTo(cw * 0.45, chestY + 9); g.stroke(); K.glow(g, 0, chestY + TH * 0.45, cw * 1.3, sp.cracks, 0.28); g.restore(); }
       if (sp.collar) F(g, g2 => { g2.moveTo(-cw * 0.7, chestY + 0.6); g2.quadraticCurveTo(0, chestY + 4.2, cw * 0.75, chestY + 0.6); g2.quadraticCurveTo(0, chestY - 1.2, -cw * 0.7, chestY + 0.6); g2.closePath(); }, sp.collar, { s: 0.6, h: 0.4, lw: 0.9 });
       if (sp.belt) { F(g, K.P.rr(-hw - 0.4, hipY - 1.9, hw * 2 + 0.8, 2.6, 1), sp.belt, { s: 0.6, h: 0.3, lw: 0.9 }); F(g, K.P.rr(-0.6, hipY - 2.2, 2.6, 3.2, 0.6), '#f2c14e', { s: 0.3, h: 0.3, lw: 0.7 }); }
       if (sp.quiver) { g.save(); g.translate(-cw * 0.6, chestY + 3); g.rotate(-0.5); F(g, K.P.rr(-2, -4, 4, 12, 1.4), '#7a4a26', { s: 0.6, h: 0.3, lw: 0.9 }); for (let i = 0; i < 3; i++) line(g, -1 + i, -4, -1.5 + i * 1.2, -7.5, '#e8e2cc', 0.8); g.restore(); }
@@ -315,12 +365,14 @@
       else if (sp.tusks) { if (shout) F(g, ell(mx, my + R * 0.06, R * 0.25, R * 0.2), '#4a1420', { s: 0, h: 0, lw: 0.7 }); else line(g, mx - R * 0.3, my, mx + R * 0.32, my - R * 0.05, INKC, 0.8); for (const ox of [-0.32, 0.3]) F(g, poly([mx + R * ox - R * 0.09, my + R * 0.02, mx + R * ox, my - R * 0.42, mx + R * ox + R * 0.1, my + R * 0.02]), '#fff6dc', { s: 0, h: 0, lw: 0.6 }); }
       else if (shout) F(g, ell(mx, my, R * 0.16, R * 0.18), '#a03040', { s: 0, h: 0, lw: 0.6 });
       else { g.strokeStyle = shade(sp.skin, -0.55); g.lineWidth = 0.65; g.beginPath(); g.moveTo(mx - R * 0.17, my); g.quadraticCurveTo(mx, my + R * 0.1, mx + R * 0.18, my - R * 0.02); g.stroke(); }
+      if (sp.teeth) { g.fillStyle = '#1a0e26'; g.fillRect(mx - R * 0.45, my - R * 0.1, R * 0.95, R * 0.34); g.fillStyle = sp.teeth; for (let i = 0; i < 5; i++) g.fillRect(mx - R * 0.42 + i * R * 0.2, my - R * 0.1, R * 0.12, R * 0.34); }
       if (sp.nose) F(g, poly([hx + R * 0.82, hy + R * 0.18, hx + R * 1.28, hy + R * 0.55, hx + R * 0.86, hy + R * 0.62]), shade(sp.skin, -0.06), { s: 0.4, h: 0, lw: 0.8 });
       if (sp.scar) line(g, e1 - R * 0.25, ey - eh * 1.8, e1 + R * 0.2, ey + eh * 1.6, shade(sp.skin, -0.45), 0.8);
       if (sp.beard) {
         F(g, g2 => { g2.moveTo(hx - R * 0.55, hy + R * 0.2); g2.quadraticCurveTo(hx + R * 0.2, hy + R * 0.55, hx + R * 1.0, hy + R * 0.25); g2.quadraticCurveTo(hx + R * 1.05, hy + R * 1.3, hx + R * 0.2, hy + R * 1.75); g2.quadraticCurveTo(hx - R * 0.6, hy + R * 1.2, hx - R * 0.55, hy + R * 0.2); g2.closePath(); }, sp.beard, { s: 1, h: 0.5, lw: 0.9 });
         line(g, mx - R * 0.25, my - R * 0.05, mx + R * 0.3, my - R * 0.08, shade(sp.beard, -0.5), 0.7);
       }
+      if (sp.headWrap) { g.save(); g.beginPath(); headP(g); g.clip(); g.strokeStyle = sp.headWrap; g.lineWidth = 1.5; for (let i = 0; i < 5; i++) { const yy = hy - R * 0.85 + i * R * 0.42; g.beginPath(); g.moveTo(hx - R * 1.1, yy + R * 0.2); g.lineTo(hx + R * 1.1, yy - R * 0.25); g.stroke(); } g.restore(); eye(g, e1, ey, ew, eh, sp.iris || '#3a7ad8', mode, blink, false); eye(g, e2, ey, ew, eh, sp.iris || '#3a7ad8', mode, blink, true); }
       hairFront(g, hx, hy, R, sp, sway);
       headgear(g, hx, hy, R, sp, t, sway);
     });
@@ -351,7 +403,8 @@
       if (sp.bracer) F(g, circ((elx + hx2) / 2, (ely + hy2) / 2, 1.9 * bk), sp.bracer, { s: 0.5, h: 0.3, lw: 0.8 });
       g.save(); g.translate(hx2, hy2); g.rotate(phi); const ws = sp.wScale || 1; g.scale(ws, ws);
       const glow = atk ? Math.sin(Math.min(1, P.a) * Math.PI) : 0;
-      WEAPON[sp.weapon](g, sp.weaponCol || '#dfe6f0', glow); g.restore();
+      if (sp.weaponGlow) K.glow(g, 0, -13, 16, sp.weaponGlow, 0.45 + glow * 0.4);
+      (WEAPON[sp.weapon] || WEAPON.none)(g, sp.weaponCol || '#dfe6f0', glow); g.restore();
       F(g, circ(hx2, hy2, 2.2 * bk), sp.glove || sp.skin, { s: 0.5, h: 0.3, lw: 0.8 });
       if (atk && P.a > 0.36 && P.a < 0.8) {
         const k = 1 - Math.abs(P.a - 0.55) / 0.25, rr = (L + 17 * (sp.wScale || 1) * (sp.weapon === 'greatsword' ? 1.5 : 1));
@@ -385,52 +438,118 @@
     F(g, circ(hx, by, 1.7), sp.glove || sp.skin, { s: 0.3, h: 0.2, lw: 0.7 });
   }
 
+
   /* =====================================================
    * ĐỊNH NGHĨA NHÂN VẬT
+   * 5 nhân vật trụ (theo bảng thiết kế): Con Người · Elf · Người Lùn · Phù Thủy · Orc
    * ===================================================== */
-  const SKIN = '#ffe0c8';
-  const SOLDIER = [
-    { skin: SKIN, hair: 'spiky', hairCol: '#6a3e22', iris: '#4a8a3a', gear: 'cap', gearCol: '#8a5a32', top: '#7a8a5a', sleeve: '#6a7a4a', legs: '#5a4636', boots: '#4a3020', belt: '#5a3a22', skirt: '#8a6a44', weapon: 'sword', shield: { col: '#b07a42', rim: '#6b4426', boss: true }, blush: true },
-    { skin: SKIN, hair: 'spiky', hairCol: '#3a2a22', iris: '#3a6ad8', gear: 'helm', gearCol: '#aab4c4', top: '#8f9aae', sleeve: '#7d889c', tabard: '#3d6fc0', legs: '#3d4a66', boots: '#4a3020', belt: '#5a3a22', skirt: '#7d889c', weapon: 'sword', shield: { col: '#3d6fc0', rim: '#e6ebf2', mark: markTree }, blush: true },
-    { skin: SKIN, hair: 'spiky', hairCol: '#c8823a', iris: '#2a8ac8', gear: 'crest', gearCol: '#c6cede', plumeCol: '#3d6fc0', top: '#b9c2d2', chestPlate: '#d6dde8', sleeve: '#a0a9ba', tabard: '#2f5cb4', pauldron: '#d6dde8', legs: '#2f3d5c', boots: '#3a2a1c', belt: '#4a2e1a', skirt: '#a0a9ba', weapon: 'sword', shield: { col: '#2f5cb4', rim: '#f2c14e', kite: true, mark: markTree }, blush: true },
-    { skin: SKIN, hair: 'spiky', hairCol: '#f2d77a', iris: '#d8484a', gear: 'knight', gearCol: '#eef1f6', plumeCol: '#e04848', top: '#dfe4ec', chestPlate: '#f6f8fb', sleeve: '#c9d0dc', tabard: '#f4f1e6', pauldron: '#f2c14e', legs: '#2a3550', boots: '#c9d0dc', belt: '#8a5a22', skirt: '#c9d0dc', cape: '#b8302a', weapon: 'sword', weaponCol: '#f4f8ff', shield: { col: '#f4f1e6', rim: '#f2c14e', kite: true, mark: markCross }, bulk: 1.05, blush: true }
+  const SKIN = '#ffe0c8', GOLD = '#f2c14e';
+
+  /* ---- CON NGƯỜI (Trụ Thành): tóc nâu, giáp xanh-bạc, áo choàng xanh, kiếm + khiên chữ thập ---- */
+  const HUMAN = [
+    { skin: SKIN, hair: 'spiky', hairCol: '#6a4426', iris: '#3a7ad8', gear: 'cap', gearCol: '#8a6a44', top: '#8a7a5a', sleeve: '#6a7a9a', tabard: '#3d6fc0', legs: '#4a4a5a', boots: '#4a3020', belt: '#5a3a22', skirt: '#6a7a9a', weapon: 'sword', weaponCol: '#dfe6f0', shield: { col: '#b07a42', rim: '#6b4426', boss: true, mark: markCross }, blush: true },
+    { skin: SKIN, hair: 'spiky', hairCol: '#6a4426', iris: '#3a7ad8', gear: 'helm', gearCol: '#aab4c4', top: '#8f9aae', sleeve: '#7d889c', tabard: '#3d6fc0', legs: '#3d4a66', boots: '#4a3020', belt: '#5a3a22', skirt: '#7d889c', weapon: 'sword', shield: { col: '#3d6fc0', rim: '#e6ebf2', mark: markCross }, blush: true },
+    { skin: SKIN, hair: 'spiky', hairCol: '#6a4426', iris: '#3a7ad8', top: '#b9c2d2', chestPlate: '#d6dde8', sleeve: '#a0a9ba', tabard: '#2f5cb4', pauldron: '#d6dde8', legs: '#2f3d5c', boots: '#3a2a1c', belt: '#4a2e1a', skirt: '#a0a9ba', cape: '#2f5cb4', weapon: 'sword', shield: { col: '#2f5cb4', rim: GOLD, kite: true, mark: markCross }, blush: true },
+    { skin: SKIN, hair: 'spiky', hairCol: '#6a4426', iris: '#3a7ad8', gear: 'circlet', gearCol: GOLD, gemCol: '#6ab0ff', top: '#dfe4ec', chestPlate: '#eef2f8', sleeve: '#c9d0dc', tabard: '#2a58c0', pauldron: GOLD, legs: '#2a3550', boots: '#c9d0dc', belt: '#8a5a22', skirt: '#c9d0dc', cape: '#2a4fb8', collar: GOLD, weapon: 'sword', weaponCol: '#f4f8ff', shield: { col: '#2a58c0', rim: GOLD, kite: true, mark: markCross }, bulk: 1.05, blush: true, bracer: GOLD }
   ];
-  const HERO = { skin: SKIN, hair: 'hero', hairCol: '#e6ecf6', iris: '#3aa0ff', top: '#2a4a9a', chestPlate: '#f2f5fa', sleeve: '#2a3a7a', collar: '#f2c14e', pauldron: '#f2c14e', legs: '#232a4a', boots: '#e8ecf4', belt: '#6a4420', skirt: '#2a4a9a', cape: '#1f3a8a', weapon: 'greatsword', weaponCol: '#eaf6ff', bulk: 1.08, blush: true, glove: '#3a3a5a', bracer: '#f2c14e', smear: '#9fe0ff', R: 9.6,
-    emblem: (g, x, y) => { F(g, poly([x, y - 2.6, x + 2.2, y, x, y + 2.6, x - 2.2, y]), '#4ac0ff', { s: 0.3, h: 0.4, lw: 0.6 }); } };
-  const ELF = tier => ({ skin: SKIN, hair: 'long', hairCol: tier > 2 ? '#fff2b8' : '#f2c860', iris: '#2aa86a', ears: 'elf', gear: tier === 1 ? 'hood' : null, gearCol: '#2f7a44',
-    top: tier > 2 ? '#f2eedc' : '#3f8a4a', sleeve: tier > 2 ? '#e2dac0' : '#367a40', tabard: tier > 2 ? '#3f8a4a' : null, legs: tier > 2 ? '#d8d0b8' : '#4a6a3a', boots: '#6b4a2a', belt: '#6b4a2a',
-    weapon: 'bow', bowCol: tier > 2 ? '#e8c060' : '#8a5a2a', arrowGlow: tier > 3 ? '#bfffe8' : '#fff3c0', cape: tier > 1 ? (tier > 2 ? '#2f8a54' : '#2f7040') : null, quiver: true, blush: true, R: 9.4 });
+
+  /* ---- ELF (Trụ Cung): tóc vàng dài, váy giáp xanh lá + vàng, tai nhọn, cung rồng, ống tên ---- */
+  const ELF = tier => ({ skin: SKIN, hair: 'long', hairCol: tier > 2 ? '#fff0b0' : '#f2cc60', iris: '#2aa86a', ears: 'elf', gear: tier > 2 ? 'circlet' : null, gearCol: GOLD, gemCol: '#7fffd0',
+    top: tier > 2 ? '#f2eedc' : '#3f8a4a', sleeve: tier > 2 ? '#e2dac0' : '#367a40', tabard: tier > 2 ? '#3f8a4a' : '#d8c070', legs: tier > 2 ? '#d8d0b8' : '#4a6a3a', boots: tier > 2 ? '#8a6a3a' : '#6b4a2a', belt: '#6b4a2a',
+    weapon: 'bow', bowCol: tier > 2 ? '#e8c060' : '#8a5a2a', arrowGlow: tier > 3 ? '#bfffe8' : '#fff3c0', cape: tier > 1 ? (tier > 2 ? '#2f8a54' : '#2f7040') : null, quiver: true, blush: true, R: 9.4, glove: '#a8783a' });
+
+  /* ---- PHÙ THỦY (Trụ Pháp): mũ nhọn tím, tóc bạc-tím dài, áo choàng tím viền vàng, trượng pha lê ---- */
   const MAGE = tier => {
-    const robe = ['#3a5ab8', '#2f4ca8', '#5a3ab8', '#6a3ac8'][tier - 1];
-    return { skin: SKIN, hair: tier > 2 ? 'long' : 'spiky', hairCol: ['#5a3a2a', '#3a2a5a', '#d8e0ff', '#f0f0ff'][tier - 1], iris: tier > 2 ? '#b07aff' : '#3ab0ff', gear: 'wizard', gearCol: robe, trim: '#f2c14e',
-      top: robe, sleeve: shade(robe, -0.08), tabard: '#f2c14e', collar: tier > 1 ? '#f4f1e6' : null, legs: shade(robe, -0.2), boots: '#3a2a4a', skirt: shade(robe, -0.05), belt: '#4a2e5a',
-      weapon: 'staff', orb: tier > 2 ? '#d8a8ff' : '#7fd4ff', cape: tier > 2 ? '#2a2060' : null, blush: true, R: 9.4 };
+    const robe = ['#4a3a98', '#5a3ab8', '#6a3ac8', '#7a42d8'][tier - 1];
+    return { skin: SKIN, hair: 'long', hairCol: '#dcd4f2', iris: '#b07aff', gear: 'wizard', gearCol: robe, trim: GOLD,
+      top: robe, sleeve: shade(robe, -0.08), tabard: GOLD, collar: tier > 1 ? '#f4f1e6' : null, legs: shade(robe, -0.2), boots: '#3a2a4a', skirt: shade(robe, -0.05), belt: '#4a2e5a',
+      weapon: 'staff', orb: tier > 2 ? '#d8a8ff' : '#9ad8ff', cape: tier > 1 ? '#2a2060' : null, blush: true, R: 9.4, glove: '#f4f1e6' };
   };
-  const DWARF = { skin: '#f6c4a0', hair: 'none', iris: '#3a6ad8', gear: 'goggles', top: '#a83a2a', sleeve: '#8a3022', legs: '#5a3a2a', boots: '#3a2418', belt: '#4a2e1a', beard: '#e08a3a', weapon: 'hammer', weaponCol: '#8a8e9a', bulk: 1.25, leg: 8.5, torso: 11, R: 9.6, nose: true, brows: 1, blush: true };
+
+  /* ---- NGƯỜI LÙN (Trụ Pháo): râu cam đỏ, kính phi công, giáp da nâu, đại pháo ---- */
+  const DWARF = tier => ({ skin: '#f6c4a0', hair: 'none', iris: '#3a6ad8', gear: 'aviator', gearCol: '#6a4a30', top: tier > 1 ? '#4a3022' : '#6a4a30', sleeve: '#5a3a28', legs: '#4a3a2a', boots: '#2a1c14', belt: '#3a2418', beard: '#d0521e', weapon: 'hammer', weaponCol: '#8a8e9a',
+    bulk: 1.28, leg: 8.5, torso: 11, R: 9.6, nose: true, brows: 1, blush: true, glove: '#3a2a22',
+    chestPlate: tier > 1 ? '#8a6a44' : null, pauldron: tier > 2 ? '#8a8e9a' : null, spikes: tier > 3, cape: tier > 3 ? '#8a2a1a' : null, bracer: tier > 2 ? GOLD : null });
+
+  /* ---- ORC (Trụ Thủ): da xanh olive, tóc đen, ngà, giáp da + vai đầu sói, rìu chiến ---- */
+  const ORCT = tier => ({ skin: '#7aa22e', hair: 'spiky', hairCol: '#1a1418', iris: '#f2c030', eyeMode: 'fierce', eyeW: 0.22, eyeH: 0.3, ears: 'orc', brows: 2, tusks: true, jaw: true, scar: tier > 1,
+    gear: tier === 2 ? 'bandana' : tier > 2 ? 'horned' : null, gearCol: tier === 2 ? '#a83a2a' : tier === 3 ? '#8a8a82' : GOLD,
+    top: '#5a3a28', chestPlate: tier > 1 ? (tier > 2 ? '#8a8a82' : '#7a5a3a') : null, sleeve: '#6a9a28', tabard: tier > 1 ? '#a83a2a' : null, legs: '#4a3a2a', boots: '#3a2a1c', belt: '#2a1a14', skirt: '#e8e0cc',
+    pauldron: tier > 1 ? '#8a8a82' : '#7a5a3a', spikes: tier > 2, weapon: 'axe', weaponCol: tier > 2 ? '#c8ccd4' : '#a8acb4', bulk: 1.28 + tier * 0.03, chest: 1.12, R: 9, hunch: 0.04, smear: '#ffd0a0', bracer: tier > 2 ? GOLD : '#7a5a3a', glove: '#3a2a22' });
+
+  /* ---- ANH HÙNG: mỗi người một khung, trang bị đổi màu/hiệu ứng ---- */
+  const HERO_BASE = {
+    aldric: { skin: SKIN, hair: 'hero', hairCol: '#e6ecf6', iris: '#3aa0ff', top: '#2a4a9a', chestPlate: '#f2f5fa', sleeve: '#2a3a7a', collar: GOLD, pauldron: GOLD, legs: '#232a4a', boots: '#e8ecf4', belt: '#6a4420', skirt: '#2a4a9a', cape: '#1f3a8a', weapon: 'greatsword', weaponCol: '#eaf6ff', bulk: 1.08, blush: true, glove: '#3a3a5a', bracer: GOLD, smear: '#9fe0ff', R: 9.6,
+      emblem: (g, x, y) => { F(g, poly([x, y - 2.6, x + 2.2, y, x, y + 2.6, x - 2.2, y]), '#4ac0ff', { s: 0.3, h: 0.4, lw: 0.6 }); } },
+    lyra: { skin: SKIN, hair: 'long', hairCol: '#8af0c8', iris: '#2ab8a0', ears: 'elf', gear: 'circlet', gearCol: GOLD, gemCol: '#7fffd0', top: '#2a6a5a', sleeve: '#245a4c', tabard: '#f4f1e6', legs: '#d8d0b8', boots: '#6b4a2a', belt: '#6b4a2a',
+      weapon: 'bow', bowCol: '#e8c060', arrowGlow: '#bfffe8', cape: '#2a8a6a', quiver: true, blush: true, R: 9.4, glove: '#8a5a2a', pauldron: '#3a8a7a' },
+    selene: { skin: SKIN, hair: 'long', hairCol: '#e8f0ff', iris: '#5ab8ff', gear: 'wizard', gearCol: '#2a3a7a', trim: '#c8e0ff', top: '#2a3a7a', sleeve: '#243268', tabard: '#aee0ff', collar: '#f4f8ff', legs: '#1a2450', boots: '#2a2a4a', skirt: '#2a3a7a', belt: '#4a5a9a',
+      weapon: 'staff', orb: '#aef0ff', staffCol: '#8aa0c8', cape: '#1a2860', blush: true, R: 9.4, glove: '#dfe8ff' },
+    borin: { skin: '#f6c4a0', hair: 'none', iris: '#3a6ad8', gear: 'horned', gearCol: '#8a8e9a', beard: '#b83a1a', top: '#5a3a2a', chestPlate: '#8a8e9a', sleeve: '#4a3022', pauldron: '#c8903a', legs: '#3a2a22', boots: '#2a1c14', belt: '#4a2e1a', skirt: '#5a3a2a',
+      weapon: 'warhammer', weaponCol: '#9aa0b0', bulk: 1.45, leg: 8.5, torso: 11, R: 9.6, nose: true, brows: 2, glove: '#3a2a22', bracer: '#c8903a', cape: '#8a2a1a', spikes: true }
+  };
+  const HERO_H = { aldric: 48, lyra: 44, selene: 46, borin: 40 };
+  /** Trang bị → spec: tiers = [vũ khí, găng, giáp, giày] mỗi ô 0..3 */
+  function heroSpec(id, tiers) {
+    const sp = Object.assign({}, HERO_BASE[id]), E = window.CONFIG.equipment, w = tiers[0], gl = tiers[1], ar = tiers[2], bo = tiers[3];
+    if (w > 0) {
+      const it = E.weapon.items[w - 1];
+      if (sp.weapon === 'bow') sp.bowCol = it.col; else if (sp.weapon === 'staff') { sp.staffCol = it.col; sp.orb = w === 3 ? '#fff0a0' : w === 2 ? '#e8f4ff' : sp.orb; } else sp.weaponCol = it.col;
+      if (it.glow) sp.weaponGlow = it.glow;
+    }
+    if (gl > 0) { const it = E.gloves.items[gl - 1]; sp.glove = it.col; if (gl > 1) sp.bracer = gl === 3 ? GOLD : '#c8d0dc'; }
+    if (ar > 0) { const it = E.armor.items[ar - 1]; if (!sp.chestPlate || id !== 'aldric') sp.chestPlate = it.col; if (ar > 1) sp.pauldron = ar === 3 ? GOLD : it.col; if (ar === 3) sp.collar = GOLD; }
+    if (bo > 0) sp.boots = E.boots.items[bo - 1].col;
+    return sp;
+  }
 
   const ENEMY = {
-    goblin: { skin: '#9ccc5a', hair: 'none', iris: '#ffd23a', eyeMode: 'slit', eyeW: 0.24, eyeH: 0.32, ears: 'goblin', brows: 2, mouth: 'grin', nose: true, gear: 'bandana', gearCol: '#c8382a',
-      top: '#8a5a34', sleeve: '#9ccc5a', legs: '#9ccc5a', boots: '#5a3a1a', belt: '#4a2e1a', skirt: '#6a4a2a', weapon: 'dagger', weaponCol: '#c8ccd6', R: 10.2, leg: 8, torso: 9.5, bulk: 0.88, hunch: 0.08 },
-    orc: { skin: '#6aa84a', hair: 'tuft', hairCol: '#2a2a2a', iris: '#ff4a2a', eyeMode: 'fierce', eyeW: 0.22, eyeH: 0.3, ears: 'orc', brows: 2, tusks: true, jaw: true, gear: 'helm', gearCol: '#7a7e8a',
-      top: '#5a4636', sleeve: '#6aa84a', legs: '#4a3a2a', boots: '#2a1e14', belt: '#3a2a1a', skirt: '#6a5038', pauldron: '#8a8e9a', spikes: true, weapon: 'cleaver', weaponCol: '#c8ccd6', bulk: 1.18, chest: 1.12, R: 9, scar: true, hunch: 0.05, smear: '#ffd0a0' },
-    orcArcher: { skin: '#7ab04a', hair: 'tuft', hairCol: '#2a2018', iris: '#ff6a2a', eyeMode: 'fierce', eyeW: 0.22, eyeH: 0.3, ears: 'orc', brows: 2, tusks: true, gear: 'hood', gearCol: '#4a3a2a',
-      top: '#5a4a32', sleeve: '#7ab04a', legs: '#4a3a2a', boots: '#2a1e14', belt: '#3a2a1a', skirt: '#4a3a2a', weapon: 'bow', bowCol: '#5a3a1a', arrowGlow: '#a8ff77', quiver: true, bulk: 1.05, R: 9 },
+    goblin: { skin: '#8cc04a', hair: 'none', iris: '#ffd23a', eyeMode: 'slit', eyeW: 0.24, eyeH: 0.32, ears: 'goblin', brows: 2, mouth: 'grin', nose: true, gear: 'bandana', gearCol: '#c8382a',
+      top: '#8a5a34', sleeve: '#8cc04a', legs: '#8cc04a', boots: '#5a3a1a', belt: '#4a2e1a', skirt: '#6a4a2a', weapon: 'dagger', weaponCol: '#c8ccd6', R: 10.2, leg: 8, torso: 9.5, bulk: 0.88, hunch: 0.08 },
+    orc: { skin: '#5f7f50', hair: 'tuft', hairCol: '#1a1a1a', iris: '#ff3a2a', eyeMode: 'fierce', eyeW: 0.22, eyeH: 0.3, ears: 'orc', brows: 2, tusks: true, jaw: true, gear: 'helm', gearCol: '#4a4a56',
+      top: '#3a3440', chestPlate: '#4a4452', sleeve: '#5f7f50', tabard: '#8a1a22', legs: '#3a3036', boots: '#2a1e14', belt: '#2a1a1a', skirt: '#4a3a3a', pauldron: '#5a5a66', spikes: true, weapon: 'cleaver', weaponCol: '#aab0bc', bulk: 1.18, chest: 1.12, R: 9, scar: true, hunch: 0.05, smear: '#ffd0a0' },
+    orcArcher: { skin: '#6a8a4a', hair: 'tuft', hairCol: '#1a1810', iris: '#ff5a2a', eyeMode: 'fierce', eyeW: 0.22, eyeH: 0.3, ears: 'orc', brows: 2, tusks: true, gear: 'hood', gearCol: '#3a2a3a',
+      top: '#4a3a3a', sleeve: '#6a8a4a', legs: '#3a3036', boots: '#2a1e14', belt: '#2a1a1a', skirt: '#3a2a3a', weapon: 'bow', bowCol: '#4a2a1a', arrowGlow: '#ff8a5a', quiver: true, bulk: 1.05, R: 9 },
     blackOrc: { skin: '#4a6040', hair: 'none', iris: '#ff2a1a', eyeMode: 'glow', eyeW: 0.24, eyeH: 0.3, ears: 'orc', brows: 2, tusks: true, jaw: true, gear: 'horned', gearCol: '#3a3a48',
       top: '#2e2e3a', chestPlate: '#454556', sleeve: '#3a3a48', tabard: '#8a1a1a', legs: '#26222a', boots: '#3a3a48', belt: '#1a1418', skirt: '#3a3a48', pauldron: '#3a3a48', spikes: true,
       weapon: 'axe', weaponCol: '#8a909c', shield: { col: '#3a3a48', rim: '#a02020', kite: true, mark: markSkull }, bulk: 1.3, chest: 1.12, R: 9, smear: '#ff8a6a' },
     troll: { skin: '#8aa0a8', hair: 'tuft', hairCol: '#4a5a3a', iris: '#ffc43a', eyeMode: 'fierce', eyeW: 0.2, eyeH: 0.28, brows: 2, tusks: true, jaw: true, nose: true,
       top: '#7a9098', sleeve: '#8aa0a8', legs: '#7a9098', boots: '#5a6a70', belt: '#5a3a22', skirt: '#7a5a3a', weapon: 'club', weaponCol: '#8a5a32', bulk: 1.75, chest: 1.18, R: 8.2, leg: 10, torso: 15, arm: 1.3, wScale: 1.25, hunch: 0.14, headX: 2.5, smear: '#e8dcc0' },
     trollKing: { skin: '#7890a8', hair: 'none', iris: '#ff5a2a', eyeMode: 'glow', eyeW: 0.22, eyeH: 0.3, brows: 2, tusks: true, jaw: true, nose: true, gear: 'crown',
-      top: '#5a6e86', chestPlate: '#6a7e96', sleeve: '#7890a8', legs: '#5a6e86', boots: '#4a5a6a', belt: '#3a2418', skirt: '#7a1a2a', tabard: '#7a1a2a', pauldron: '#f2c14e', spikes: true, cape: '#5a1020',
+      top: '#5a6e86', chestPlate: '#6a7e96', sleeve: '#7890a8', legs: '#5a6e86', boots: '#4a5a6a', belt: '#3a2418', skirt: '#7a1a2a', tabard: '#7a1a2a', pauldron: GOLD, spikes: true, cape: '#5a1020',
       weapon: 'pillar', weaponCol: '#7a7480', bulk: 1.95, chest: 1.2, R: 8.4, leg: 10.5, torso: 16, arm: 1.35, wScale: 1.45, hunch: 0.1, headX: 2.5, smear: '#ffb080',
-      emblem: (g, x, y) => { K.glow(g, x, y, 5, '#ff6a2a', 0.8); F(g, poly([x, y - 2.6, x + 2, y, x, y + 2.6, x - 2, y]), '#ff8a3a', { s: 0, h: 0.4, lw: 0.6 }); } }
+      emblem: (g, x, y) => { K.glow(g, x, y, 5, '#ff6a2a', 0.8); F(g, poly([x, y - 2.6, x + 2, y, x, y + 2.6, x - 2, y]), '#ff8a3a', { s: 0, h: 0.4, lw: 0.6 }); } },
+    /* ---- quái theo vùng ---- */
+    treant: { skin: '#7a5a38', hair: 'none', iris: '#9aff6a', eyeMode: 'glow', eyeW: 0.22, eyeH: 0.3, brows: 2, jaw: true, gear: 'leaves', gearCol: '#4f9a3a', top: '#6a4a2c', sleeve: '#7a5a38', legs: '#6a4a2c', boots: '#4a3420', belt: '#3a6a2a', skirt: '#4f8a3a', pauldron: '#4f9a3a',
+      weapon: 'club', weaponCol: '#6a4a2c', bulk: 1.7, chest: 1.2, R: 8.4, leg: 10, torso: 15, arm: 1.3, wScale: 1.25, hunch: 0.12, headX: 2.5, smear: '#a8e070', mouth: 'grin' },
+    skeleton: { skin: '#e8e2d0', hair: 'none', iris: '#6af0d0', eyeMode: 'glow', eyeW: 0.24, eyeH: 0.3, teeth: '#f4eed8', gear: 'helm', gearCol: '#6a6a78', top: '#d8d0bc', chestPlate: '#5a5a6a', ribs: '#8a8478', sleeve: '#e8e2d0', legs: '#e8e2d0', boots: '#8a8478', belt: '#4a3a2a', skirt: '#3a2a4a', tabard: '#3a2a4a',
+      weapon: 'bone', weaponCol: '#dcd6c0', shield: { col: '#4a4a58', rim: '#8a8478', kite: true, mark: markSkull }, bulk: 0.98, R: 9.2, smear: '#aef0e0' },
+    deathKnight: { skin: '#8a90a8', hair: 'none', iris: '#6ae0ff', eyeMode: 'glow', eyeW: 0.24, eyeH: 0.3, gear: 'knight', gearCol: '#2a2a3a', plumeCol: '#6a4ae0', top: '#1e1e2a', chestPlate: '#34344a', sleeve: '#2a2a3a', pauldron: '#34344a', spikes: true, legs: '#1a1a24', boots: '#2a2a3a', tabard: '#4a2a7a', cape: '#3a1a5a',
+      belt: '#1a1418', skirt: '#2a2a3a', weapon: 'greatsword', weaponCol: '#8a9ac8', bulk: 1.38, chest: 1.15, R: 9, wScale: 0.92, smear: '#a08aff' },
+    bandit: { skin: '#e0b48a', hair: 'spiky', hairCol: '#2a1a10', iris: '#3a2a1a', eyeMode: 'fierce', eyeW: 0.2, eyeH: 0.28, brows: 2, mouth: 'grin', gear: 'bandana', gearCol: '#e8e0c8', top: '#8a5a3a', sleeve: '#e8d8b0', legs: '#c8b080', boots: '#6a4a2a', belt: '#a83a2a', skirt: '#a83a2a',
+      weapon: 'scimitar', weaponCol: '#e0e4ec', bulk: 0.98, R: 9.2, scar: true, smear: '#fff0c0' },
+    mummy: { skin: '#d8c8a0', hair: 'none', iris: '#5aff9a', eyeMode: 'glow', eyeW: 0.22, eyeH: 0.28, wrap: '#ece0c0', headWrap: '#e8dcb8', top: '#d8c8a0', sleeve: '#d8c8a0', legs: '#d8c8a0', boots: '#c8b890', belt: '#8a6a3a', cape: '#cdbf98',
+      weapon: 'none', bulk: 1.15, arm: 1.15, R: 9, hunch: 0.1, leg: 11, smear: '#e8dcb8' },
+    iceGolem: { skin: '#9ad8f0', hair: 'none', iris: '#e8ffff', eyeMode: 'glow', eyeW: 0.24, eyeH: 0.3, brows: 2, jaw: true, gear: 'horns', gearCol: '#d8f4ff', top: '#7ac0e0', chestPlate: '#bfe8fa', sleeve: '#8ad0ee', legs: '#7ac0e0', boots: '#5aa0c8', belt: '#5a90b8', skirt: '#9ad8f0', pauldron: '#d8f4ff', spikes: true, cracks: '#aef0ff',
+      weapon: 'none', bulk: 1.9, chest: 1.2, R: 8.4, leg: 10, torso: 15.5, arm: 1.35, hunch: 0.1, headX: 2.5, smear: '#d8f4ff' },
+    imp: { skin: '#d83a2a', hair: 'none', iris: '#ffd23a', eyeMode: 'slit', eyeW: 0.25, eyeH: 0.32, ears: 'goblin', brows: 2, mouth: 'grin', teeth: '#fff4d0', gear: 'flame', wings: '#a82020', top: '#7a1a1a', sleeve: '#d83a2a', legs: '#d83a2a', boots: '#4a1a14', belt: '#3a1010', skirt: '#7a1a1a',
+      weapon: 'dagger', weaponCol: '#ffb04a', R: 10, leg: 7, torso: 8.5, bulk: 0.82, float: 14, smear: '#ffb04a' },
+    magmaGolem: { skin: '#4a3a3a', hair: 'none', iris: '#ffd23a', eyeMode: 'glow', eyeW: 0.24, eyeH: 0.3, brows: 2, jaw: true, gear: 'horns', gearCol: '#2a2020', top: '#3a2c2c', chestPlate: '#5a4a48', sleeve: '#4a3a3a', legs: '#3a2c2c', boots: '#2a2020', belt: '#6a3a1a', skirt: '#3a2c2c', pauldron: '#6a5a58', spikes: true, cracks: '#ff7a2a',
+      weapon: 'none', bulk: 2.0, chest: 1.2, R: 8.6, leg: 10, torso: 16, arm: 1.4, hunch: 0.1, headX: 2.5, smear: '#ff9a4a' },
+    voidling: { skin: '#6a4aa8', hair: 'none', iris: '#ff6aff', eyeMode: 'glow', eyeW: 0.24, eyeH: 0.3, ears: 'goblin', brows: 2, teeth: '#e8d8ff', gear: 'horns', gearCol: '#3a2a5a', top: '#2a1e4a', sleeve: '#6a4aa8', legs: '#2a1e4a', boots: '#1a1230', belt: '#4a2a7a', skirt: '#2a1e4a', cracks: '#c880ff',
+      weapon: 'dagger', weaponCol: '#c8a0ff', R: 9.8, leg: 8.5, torso: 10, bulk: 0.9, hunch: 0.06, smear: '#d8b0ff' },
+    voidWalker: { skin: '#8a6ad8', hair: 'long', hairCol: '#1a1030', iris: '#ff8aff', eyeMode: 'glow', eyeW: 0.22, eyeH: 0.3, gear: 'horned', gearCol: '#3a2a68', top: '#241640', chestPlate: '#3a2a68', sleeve: '#2c1e54', legs: '#241640', boots: '#1a1230', belt: '#5a3aa0', skirt: '#241640', pauldron: '#5a3aa0', spikes: true, cape: '#2a1a4a', cracks: '#c880ff',
+      weapon: 'staff', orb: '#d890ff', staffCol: '#3a2a68', bulk: 1.15, R: 9, leg: 12, smear: '#d8b0ff' },
+    voidLord: { skin: '#5a3a98', hair: 'none', iris: '#ff5aff', eyeMode: 'glow', eyeW: 0.22, eyeH: 0.3, brows: 2, tusks: true, jaw: true, gear: 'horned', gearCol: '#2a1a4a', top: '#1e1038', chestPlate: '#3a2268', sleeve: '#4a2a88', legs: '#1e1038', boots: '#2a1a4a', belt: '#6a3aa0', skirt: '#4a1a6a', tabard: '#4a1a6a', pauldron: '#b070ff', spikes: true, cape: '#4a1a6a', cracks: '#d890ff',
+      weapon: 'pillar', weaponCol: '#6a4ab0', bulk: 2.0, chest: 1.2, R: 8.4, leg: 10.5, torso: 16, arm: 1.35, wScale: 1.45, hunch: 0.1, headX: 2.5, smear: '#e0a0ff',
+      emblem: (g, x, y) => { K.glow(g, x, y, 6, '#d070ff', 0.9); F(g, poly([x, y - 2.8, x + 2.2, y, x, y + 2.8, x - 2.2, y]), '#f0a0ff', { s: 0, h: 0.4, lw: 0.6 }); } }
   };
-
   /* ---------------- Sói Warg ---------------- */
-  function warg(g, P) {
+  function warg(g, P, pal) {
+    pal = pal || {};
     const mv = P.w >= 0, ph = mv ? P.w * TAU : 0, t = P.t || 0;
     const bob = mv ? Math.sin(ph * 2) * 1.4 : Math.sin(t * 2.4) * 0.4;
-    const F1 = '#6a5a6a', FD = '#4a3c4c', BELLY = '#b8a8b0', bite = P.a >= 0 ? Math.sin(Math.min(1, P.a * 1.3) * Math.PI) : 0;
+    const F1 = pal.f1 || '#6a5a6a', FD = pal.fd || '#4a3c4c', BELLY = pal.belly || '#b8a8b0', bite = P.a >= 0 ? Math.sin(Math.min(1, P.a * 1.3) * Math.PI) : 0;
     const lunge = bite * 3;
     shadowE(g, 20, 4.4);
     g.save(); g.translate(lunge, 0);
@@ -452,7 +571,7 @@
     F(g, poly([11, -27 + hb, 12.5, -35 + hb, 16, -28.5 + hb]), FD, { s: 0.6, h: 0.3, lw: 0.8 });
     F(g, poly([13.5, -28 + hb, 16, -34 + hb, 18, -27.5 + hb]), F1, { s: 0.6, h: 0.3, lw: 0.8 });
     dot(g, 27.2, -19.6 + hb - bite, 1.3, INKC);
-    eye(g, 18.6, -23.2 + hb, 1.6, 1.6, '#ffb030', 'glow', false, false);
+    eye(g, 18.6, -23.2 + hb, 1.6, 1.6, pal.eye || '#ffb030', 'glow', false, false);
     for (const x of [17, 21]) F(g, poly([x, -16.3 + hb, x + 1.2, -16.3 + hb, x + 0.6, -13.6 + hb]), '#ffffff', { s: 0, h: 0, lw: 0.4 });
     g.restore();
   }
@@ -481,6 +600,66 @@
     g.restore();
   }
 
+
+  /* ---------------- Bọ cạp cát ---------------- */
+  function scorpion(g, P) {
+    const mv = P.w >= 0, ph = mv ? P.w * TAU : 0, t = P.t || 0, a = P.a;
+    const bob = mv ? Math.sin(ph * 2) * 0.7 : Math.sin(t * 2.4) * 0.3;
+    const sting = a >= 0 ? Math.sin(Math.min(1, a * 1.2) * Math.PI) : 0;
+    const C = '#c8782a', CD = '#8a4a1a';
+    shadowE(g, 19, 4.4);
+    for (let i = 0; i < 4; i++) for (const side of [0, 1]) {
+      const sw = mv ? Math.sin(ph + i * 1.57 + side * 0.9) * 3.2 : 0, x0 = -8 + i * 5, col = side ? shade(CD, 0.1) : shade(CD, -0.25);
+      limb(g, [x0, -7 + bob, x0 + (side ? 5 : -4) + sw, -10 + bob, x0 + (side ? 8 : -7) + sw * 1.5, -0.5], 1.7, col);
+    }
+    const tw = Math.sin(t * 3) * 1.1 + (mv ? Math.sin(ph * 2) * 1.2 : 0);
+    const tail = [[-14, -10 + bob], [-23, -13 + bob], [-27, -22 + tw * 0.3], [-21, -30 + tw * 0.6 + sting * 2], [-11 + sting * 14, -33 + tw + sting * 6]];
+    for (let i = 0; i < tail.length - 1; i++) limb(g, [tail[i][0], tail[i][1], tail[i + 1][0], tail[i + 1][1]], 5.2 - i * 0.7, i % 2 ? shade(C, -0.08) : C);
+    const tp = tail[4];
+    K.glow(g, tp[0] + 4, tp[1] + 3, 6 + sting * 5, '#9aff6a', 0.5 + sting * 0.4);
+    F(g, poly([tp[0] - 2, tp[1] - 2.5, tp[0] + 7, tp[1] + 4.5, tp[0] - 1.5, tp[1] + 2.5]), '#f4e6c8', { s: 0.3, h: 0.3, lw: 0.8 });
+    F(g, ell(-3, -9 + bob, 15, 8), C, { s: 2.2, h: 1.1, lw: 1.1 });
+    g.strokeStyle = 'rgba(70,30,10,0.55)'; g.lineWidth = 0.9;
+    for (let i = 0; i < 4; i++) { g.beginPath(); g.moveTo(-11 + i * 5.2, -15 + bob); g.quadraticCurveTo(-10 + i * 5.2, -9 + bob, -11 + i * 5.2, -2.5 + bob); g.stroke(); }
+    F(g, ell(11, -10 + bob, 7.5, 6), shade(C, 0.06), { s: 1.4, h: 0.8, lw: 1 });
+    for (const sd of [-1, 1]) {
+      const cy = -9 + bob + sd * 3.2;
+      limb(g, [15, cy, 21, cy - 1 + sd * 2], 3.2, CD);
+      F(g, g2 => { g2.moveTo(20, cy - 3 + sd * 2); g2.quadraticCurveTo(28, cy - 6 + sd * 2, 29, cy + 1 + sd * 2); g2.quadraticCurveTo(26, cy + 1 + sd * 2, 21, cy + 3 + sd * 2); g2.closePath(); }, C, { s: 1, h: 0.6, lw: 0.9 });
+    }
+    dot(g, 13, -13 + bob, 1.3, '#ff4a2a'); dot(g, 15.5, -12 + bob, 1.1, '#ff4a2a');
+  }
+
+  /* ---------------- Rồng lửa bay ---------------- */
+  function drake(g, P) {
+    const t = P.t || 0, ph = P.w >= 0 ? P.w * TAU : t * 2.4, fly = -34 + Math.sin(ph * 0.5) * 2.5, a = P.a, br = a >= 0 ? Math.sin(Math.min(1, a) * Math.PI) : 0;
+    const R = '#c8381e', RD = '#7a1a10', BEL = '#f2c068';
+    shadowE(g, 14, 3.4, 0.22);
+    const wing = far => {
+      const fa = Math.sin(ph) * 0.7 - 0.1;
+      g.save(); g.translate(far ? -3 : 1, fly - 8); g.rotate(-0.35 + fa * (far ? 0.85 : 1));
+      const col = far ? shade(RD, -0.15) : RD;
+      F(g, g2 => { g2.moveTo(0, 0); g2.lineTo(-5, -17); g2.lineTo(-11, -31); g2.quadraticCurveTo(-17, -21, -21, -27); g2.quadraticCurveTo(-23, -12, -30, -15); g2.quadraticCurveTo(-26, -3, -35, -3); g2.quadraticCurveTo(-18, 5, -6, 7); g2.closePath(); }, col, { s: 1.4, h: 0.6, lw: 0.9, light: shade(col, 0.4) });
+      line(g, 0, 0, -11, -31, shade(R, -0.1), 1.4); line(g, 0, 0, -21, -27, shade(R, -0.1), 1.1); line(g, 0, 0, -30, -15, shade(R, -0.1), 1);
+      g.restore();
+    };
+    wing(true);
+    const tw = Math.sin(t * 3) * 3 + Math.sin(ph) * 1.5;
+    F(g, g2 => { g2.moveTo(-8, fly - 2); g2.quadraticCurveTo(-20, fly + 4 + tw * 0.4, -29, fly + 7 + tw); g2.lineTo(-33, fly + 3 + tw); g2.lineTo(-34, fly + 11 + tw); g2.lineTo(-28, fly + 10 + tw); g2.quadraticCurveTo(-18, fly + 9, -7, fly + 3); g2.closePath(); }, R, { s: 1.6, h: 0.8, lw: 1 });
+    for (const lx of [-3, 7]) limb(g, [lx, fly + 3, lx + 2, fly + 9, lx + 5, fly + 11], 2.4, shade(R, -0.18));
+    F(g, g2 => { g2.moveTo(-11, fly - 1); g2.quadraticCurveTo(-11, fly - 12, 2, fly - 12); g2.quadraticCurveTo(14, fly - 12, 15, fly - 2); g2.quadraticCurveTo(9, fly + 8, -3, fly + 7); g2.quadraticCurveTo(-11, fly + 6, -11, fly - 1); g2.closePath(); }, R, { s: 2.2, h: 1, lw: 1.1 });
+    F(g, g2 => { g2.moveTo(-6, fly + 3); g2.quadraticCurveTo(2, fly + 7, 11, fly + 1); g2.quadraticCurveTo(3, fly + 9, -6, fly + 3); g2.closePath(); }, BEL, { s: 0, h: 0, lw: 0.6 });
+    for (let i = 0; i < 4; i++) F(g, poly([-8 + i * 5, fly - 11, -6 + i * 5, fly - 15, -4 + i * 5, fly - 11]), RD, { s: 0, h: 0, lw: 0.7 });
+    limb(g, [10, fly - 6, 16, fly - 13, 20, fly - 18], 6.4, R);
+    const hb = -br * 1.5;
+    F(g, g2 => { g2.moveTo(17, fly - 22); g2.quadraticCurveTo(24, fly - 26, 30, fly - 21 + hb); g2.quadraticCurveTo(34, fly - 18 + hb, 31, fly - 15 + hb); g2.lineTo(22, fly - 14); g2.quadraticCurveTo(15, fly - 15, 17, fly - 22); g2.closePath(); }, R, { s: 1.4, h: 0.8, lw: 1 });
+    F(g, poly([18, fly - 22, 12, fly - 29, 22, fly - 24]), '#f4e6c8', { s: 0.3, h: 0.3, lw: 0.7 });
+    F(g, poly([22, fly - 24, 19, fly - 31, 27, fly - 24]), '#f4e6c8', { s: 0.3, h: 0.3, lw: 0.7 });
+    eye(g, 24, fly - 20, 1.7, 1.7, '#ffe03a', 'glow', false, false);
+    if (br > 0.1) { K.glow(g, 33, fly - 14, 12 + br * 10, '#ff8a2a', br); F(g, poly([31, fly - 15, 42, fly - 12 - br * 2, 36, fly - 9, 31, fly - 12]), '#ffd84a', { s: 0, h: 0, lw: 0 }); }
+    wing(false);
+  }
+
   /* =====================================================
    * ĐĂNG KÝ – chiều cao mục tiêu (đv thế giới, khi scale = 1)
    * ===================================================== */
@@ -492,17 +671,27 @@
     const oy = Math.ceil(target * r), w = Math.ceil(target * (spec.wScale ? 2.4 : 2.0)), h = Math.ceil(oy + target * 0.28);
     reg[key] = { draw: (g, P) => { g.save(); g.scale(sz, sz); humanoid(g, P, spec); g.restore(); }, box: [w, h, Math.ceil(w / 2), oy], dr, head: target * 0.72, tall: target };
   }
-  SOLDIER.forEach((s, i) => addH('soldier' + (i + 1), s, 40 + i, 12 * 1.05));
-  addH('hero', HERO, 48, (window.CONFIG && CONFIG.hero) ? CONFIG.hero.radius : 15, 1.55);
-  [1, 2, 3, 4].forEach(i => { addH('elf' + i, ELF(i), 30, 12); addH('mage' + i, MAGE(i), 32, 12, 1.6); });
-  addH('dwarf', DWARF, 26, 12);
-  addH('goblin', ENEMY.goblin, 32, radius('goblin'));
-  addH('orc', ENEMY.orc, 44, radius('orc'));
-  addH('orcArcher', ENEMY.orcArcher, 42, radius('orcArcher'));
-  addH('blackOrc', ENEMY.blackOrc, 50, radius('blackOrc'), 1.55);
-  addH('troll', ENEMY.troll, 64, radius('troll'), 1.5);
-  addH('trollKing', ENEMY.trollKing, 96, radius('trollKing'), 1.5);
+  /* 5 nhân vật trụ, mỗi người 4 cấp */
+  HUMAN.forEach((s, i) => addH('soldier' + (i + 1), s, 40 + i, 12 * 1.05));
+  [1, 2, 3, 4].forEach(i => { addH('elf' + i, ELF(i), 30, 12); addH('mage' + i, MAGE(i), 32, 12, 1.6); addH('dwarf' + i, DWARF(i), 26, 12); addH('orct' + i, ORCT(i), 34, 12, 1.5); });
+  /* Anh hùng + trang bị: đăng ký khi cần */
+  function heroKey(id, tiers) {
+    tiers = tiers || [0, 0, 0, 0]; const key = 'h_' + id + '_' + tiers.join('');
+    if (!reg[key]) addH(key, heroSpec(id, tiers), HERO_H[id], (CONFIG.heroes[id] || {}).radius || 15, 1.55);
+    return key;
+  }
+  Object.keys(HERO_BASE).forEach(id => heroKey(id));
+  /* Quái */
+  const EH = { goblin: [32], orc: [44], orcArcher: [42], blackOrc: [50, 1.55], troll: [64, 1.5], trollKing: [96, 1.5], treant: [62, 1.5], skeleton: [42], deathKnight: [54, 1.55],
+    bandit: [38], mummy: [44], iceGolem: [64, 1.5], imp: [28, 1.9], magmaGolem: [70, 1.5], voidling: [34], voidWalker: [50, 1.5], voidLord: [100, 1.5] };
+  Object.keys(EH).forEach(k => addH(k, ENEMY[k], EH[k][0], radius(k), EH[k][1]));
+  const WARGP = { frostWolf: { f1: '#d4e4f2', fd: '#8aa8c8', belly: '#f4faff', eye: '#6ae0ff' } };
   reg.warg = { draw: (g, P) => { g.save(); g.scale(1.25, 1.25); warg(g, P); g.restore(); }, box: [104, 66, 50, 52], dr: radius('warg'), head: 30, tall: 40, wide: 78 };
+  reg.frostWolf = { draw: (g, P) => { g.save(); g.scale(1.25, 1.25); warg(g, P, WARGP.frostWolf); g.restore(); }, box: [104, 66, 50, 52], dr: radius('frostWolf'), head: 30, tall: 40, wide: 78 };
   reg.wraith = { draw: (g, P) => { g.save(); g.scale(1.15, 1.15); wraith(g, P); g.restore(); }, box: [90, 80, 40, 66], dr: radius('wraith'), head: 36, tall: 44 };
+  reg.scorpion = { draw: (g, P) => { g.save(); g.scale(1.2, 1.2); scorpion(g, P); g.restore(); }, box: [110, 76, 54, 58], dr: radius('scorpion'), head: 22, tall: 40, wide: 84 };
+  reg.drake = { draw: (g, P) => { g.save(); g.scale(1.45, 1.45); drake(g, P); g.restore(); }, box: [150, 120, 80, 100], dr: radius('drake'), head: 56, tall: 72, wide: 100 };
+  reg.heroKey = heroKey;
+  reg.hero = reg.h_aldric_0000;
   window.ArtChars = reg;
 })();

@@ -1,8 +1,7 @@
 /* =========================================================
- * level.js – Dựng màn chơi
- *  - Đường đi: spline mềm (Catmull-Rom) từ các điểm điều khiển
- *  - Ô xây: tự đặt dọc 2 bên đường, cách đều, không đè đường
- *  - Nền bản đồ: vẽ 1 lần vào canvas (cỏ, đường, sông, cầu, rừng, tường thành)
+ * level.js – Dựng màn chơi (6 vùng đất, bản đồ NGANG 1800×900)
+ *  - Đường đi: spline mềm; ô xây tự chọn theo độ phủ đường
+ *  - Nền vẽ 1 lần: rừng, thành cổ, sa mạc, băng giá, núi lửa, cổng hỗn mang
  * ========================================================= */
 (function () {
   const K = ArtKit, shade = K.shade, TAU = Math.PI * 2;
@@ -56,162 +55,6 @@
   }
 
   function distToPaths(paths, x, y) { let m = Infinity; for (const p of paths) m = Math.min(m, p.nearest(x, y).perp); return m; }
-
-  const Level = {
-    Path,
-
-    build(index) {
-      const L = CONFIG.levels[index], W = CONFIG.world.width, H = CONFIG.world.height, PW = CONFIG.pathWidth;
-      const theme = CONFIG.themes[L.theme];
-      const paths = L.paths.map(c => new Path(smooth(c, 10)));
-      const river = L.river ? new Path(smooth(L.river, 12)) : null;
-
-      // ---- Ô xây: dọc hai bên đường ----
-      const spots = [], rnd = K.seeded(index * 97 + 13), tmp = {};
-      const ok = (x, y) => {
-        if (x < 55 || x > W - 55 || y < 90 || y > H - 210) return false;
-        if (distToPaths(paths, x, y) < PW / 2 + 44) return false;
-        if (river && river.nearest(x, y).perp < 70) return false;
-        for (const s of spots) if (Math.hypot(s.x - x, s.y - y) < 150) return false;
-        return true;
-      };
-      for (const p of paths) {
-        for (let d = 140, side = 1; d < p.length - 150; d += 70, side = -side) {
-          p.pointAt(d, tmp);
-          for (const sd of [side, -side]) {
-            const off = PW / 2 + 52 + rnd() * 10, x = tmp.x + tmp.nx * off * sd, y = tmp.y + tmp.ny * off * sd;
-            if (ok(x, y)) { spots.push({ id: spots.length, x: Math.round(x), y: Math.round(y) }); break; }
-          }
-        }
-      }
-
-      // ---- Cây cối & đá (tránh đường, ô xây, sông) ----
-      const decor = [], r2 = K.seeded(index * 31 + 7);
-      for (let y = -20; y < H - 150; y += 46) for (let x = -10; x < W + 20; x += 46) {
-        const jx = x + (r2() - 0.5) * 40, jy = y + (r2() - 0.5) * 40;
-        const dp = distToPaths(paths, jx, jy);
-        if (dp < PW / 2 + 34) continue;
-        let near = false; for (const s of spots) if (Math.hypot(s.x - jx, s.y - jy) < 80) { near = true; break; }
-        if (near) continue;
-        if (river && river.nearest(jx, jy).perp < 58) continue;
-        const edge = Math.min(jx, W - jx, jy + 60) < 90, dens = theme.dense ? 0.55 : 0.32;
-        const pChance = edge ? 0.9 : dp > 170 ? dens + 0.3 : dp > 110 ? dens * 0.7 : 0.05;
-        if (r2() > pChance) continue;
-        const roll = r2();
-        let kind;
-        if (theme.dead) kind = roll < 0.4 ? 'deadtree' : roll < 0.75 ? 'rock' : 'crystal';
-        else if (theme.snow) kind = roll < 0.7 ? 'pine' : roll < 0.85 ? 'rock' : 'bush';
-        else if (theme.mush && roll < 0.12) kind = 'mushroom';
-        else kind = roll < (theme.dense ? 0.42 : 0.5) ? 'tree' : roll < 0.78 ? 'pine' : roll < 0.9 ? 'bush' : 'rock';
-        decor.push({ kind, x: jx, y: jy, s: (kind === 'tree' || kind === 'pine' ? 1.35 : 1.1) + r2() * 0.5, v: Math.floor(r2() * 3) });
-      }
-      decor.sort((a, b) => a.y - b.y);
-
-      const end = paths[0].points[paths[0].points.length - 1];
-      return { index, def: L, W, H, theme, paths, river, spots, decor, exit: { x: end.x, y: end.y } };
-    },
-
-    /* ================= VẼ NỀN ================= */
-    renderBackground(map, res) {
-      const W = map.W, H = map.H, th = map.theme, PW = CONFIG.pathWidth;
-      const c = document.createElement('canvas'); c.width = Math.ceil(W * res); c.height = Math.ceil(H * res);
-      const g = c.getContext('2d'); g.scale(res, res); g.lineJoin = 'round'; g.lineCap = 'round';
-      const rnd = K.seeded(map.index * 53 + 3);
-
-      // 1) Mặt đất: nền chuyển sắc + mảng nắng/bóng + cỏ nhiều tầng
-      const base = g.createLinearGradient(0, 0, W * 0.3, H);
-      base.addColorStop(0, shade(th.grass2, -0.08)); base.addColorStop(0.5, th.grass); base.addColorStop(1, shade(th.grass, 0.06));
-      g.fillStyle = base; g.fillRect(0, 0, W, H);
-      const blot = (x, y, r, col, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, K.alpha(col, a)); gr.addColorStop(1, K.alpha(col, 0)); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); };
-      for (let i = 0; i < 70; i++) blot(rnd() * W, rnd() * H, 60 + rnd() * 160, rnd() < 0.5 ? th.grass2 : shade(th.grass2, -0.12), 0.55);
-      for (let i = 0; i < 40; i++) blot(rnd() * W, rnd() * H, 50 + rnd() * 120, shade(th.grass, 0.28), 0.35);
-      // vệt cỏ ngắn loang (texture)
-      for (let i = 0; i < 2600; i++) { const x = rnd() * W, y = rnd() * H; g.fillStyle = K.alpha(rnd() < 0.5 ? shade(th.grass, -0.2) : shade(th.grass, 0.22), 0.35); g.fillRect(x, y, 2.2, 1.1); }
-      const tuftCols = [shade(th.grass, -0.22), shade(th.grass2, -0.12), shade(th.grass, 0.18)];
-      for (let i = 0; i < 1500; i++) {
-        const x = rnd() * W, y = rnd() * H, h = 4 + rnd() * 6, col = tuftCols[(rnd() * 3) | 0];
-        g.fillStyle = col; g.beginPath(); g.moveTo(x - 3.4, y); g.quadraticCurveTo(x - 3, y - h * 0.6, x - 4.8, y - h); g.quadraticCurveTo(x - 1.2, y - h * 0.55, x, y - h * 1.2); g.quadraticCurveTo(x + 1, y - h * 0.5, x + 4.6, y - h * 0.9); g.quadraticCurveTo(x + 2.6, y - h * 0.4, x + 3.4, y); g.closePath(); g.fill();
-      }
-      if (th.flowers) { // hoa mọc thành cụm
-        const fc = ['#fff6a0', '#ffffff', '#ffb0c8', '#c8b0ff', '#ffd27a'];
-        for (let i = 0; i < 70; i++) { const cx = rnd() * W, cy = rnd() * H, col = fc[(rnd() * fc.length) | 0], n = 3 + (rnd() * 6 | 0);
-          for (let j = 0; j < n; j++) { const x = cx + (rnd() - 0.5) * 34, y = cy + (rnd() - 0.5) * 20; K.line(g, x, y + 4, x, y, shade(th.grass, -0.3), 1); for (let k = 0; k < 5; k++) { const an = k / 5 * TAU; K.dot(g, x + Math.cos(an) * 1.9, y + Math.sin(an) * 1.9, 1.5, col); } K.dot(g, x, y, 1.1, '#f2a83a'); } }
-      }
-      if (th.snow) for (let i = 0; i < 260; i++) { const x = rnd() * W, y = rnd() * H; K.dot(g, x, y, 1 + rnd() * 1.6, 'rgba(255,255,255,0.8)'); }
-      if (th.lava) for (let i = 0; i < 18; i++) { const x = rnd() * W, y = rnd() * (H - 200); K.glow(g, x, y, 40 + rnd() * 30, '#ff5a1a', 0.35); }
-
-      // 2) Đường đi: bóng – mép đất – nền – vệt mòn – sỏi – cỏ lấn mép
-      const drawPath = (p, w, col) => { g.beginPath(); p.points.forEach((pt, i) => i ? g.lineTo(pt.x, pt.y) : g.moveTo(pt.x, pt.y)); g.strokeStyle = col; g.lineWidth = w; g.stroke(); };
-      const tmp = {};
-      for (const p of map.paths) drawPath(p, PW + 30, 'rgba(30,20,10,0.13)');
-      for (const p of map.paths) drawPath(p, PW + 12, th.dirtEdge);
-      for (const p of map.paths) drawPath(p, PW + 4, shade(th.dirt, -0.1));
-      for (const p of map.paths) drawPath(p, PW - 4, th.dirt);
-      for (const p of map.paths) drawPath(p, PW * 0.62, K.alpha(shade(th.dirt, 0.14), 0.8));
-      for (const p of map.paths) drawPath(p, PW * 0.3, K.alpha(shade(th.dirt, 0.24), 0.5));
-      // vệt bánh xe
-      for (const p of map.paths) for (const off of [-PW * 0.2, PW * 0.2]) {
-        g.beginPath(); let first = true;
-        for (let d = 0; d < p.length; d += 8) { p.pointAt(d, tmp); const x = tmp.x + tmp.nx * off, y = tmp.y + tmp.ny * off; if (first) { g.moveTo(x, y); first = false; } else g.lineTo(x, y); }
-        g.strokeStyle = K.alpha(shade(th.dirt, -0.22), 0.32); g.lineWidth = 3.2; g.stroke();
-      }
-      for (const p of map.paths) for (let d = 0; d < p.length; d += 6) {
-        p.pointAt(d, tmp);
-        if (rnd() < 0.45) { const o = (rnd() - 0.5) * (PW - 12), x = tmp.x + tmp.nx * o, y = tmp.y + tmp.ny * o, r = 1.2 + rnd() * 2.6;
-          g.fillStyle = K.alpha(shade(th.dirt, -0.35), 0.45); g.beginPath(); g.ellipse(x + 0.6, y + 0.8, r, r * 0.7, 0, 0, TAU); g.fill();
-          g.fillStyle = rnd() < 0.5 ? shade(th.rock, 0.1) : shade(th.dirt, 0.25); g.beginPath(); g.ellipse(x, y, r, r * 0.68, 0, 0, TAU); g.fill();
-          g.fillStyle = 'rgba(255,255,240,0.5)'; g.beginPath(); g.ellipse(x - r * 0.3, y - r * 0.25, r * 0.4, r * 0.25, 0, 0, TAU); g.fill(); }
-        if (rnd() < 0.85) { const sd = rnd() < 0.5 ? -1 : 1, o = sd * (PW / 2 + 1 + rnd() * 5), x = tmp.x + tmp.nx * o, y = tmp.y + tmp.ny * o, h = 4 + rnd() * 6;
-          g.fillStyle = rnd() < 0.5 ? th.grass : shade(th.grass, 0.12); g.beginPath(); g.moveTo(x - 4, y + 2); g.quadraticCurveTo(x - 3, y - h * 0.5, x - 5, y - h); g.quadraticCurveTo(x - 1, y - h * 0.4, x, y - h * 1.15); g.quadraticCurveTo(x + 1.2, y - h * 0.4, x + 5, y - h * 0.85); g.quadraticCurveTo(x + 3, y - h * 0.3, x + 4, y + 2); g.closePath(); g.fill(); }
-      }
-
-      // 3) Sông + cầu
-      if (map.river) {
-        const r = map.river;
-        drawPath(r, 112, shade(th.dirt, 0.1));
-        drawPath(r, 96, shade(th.water, -0.25));
-        drawPath(r, 84, th.water);
-        drawPath(r, 40, K.alpha(shade(th.water, 0.2), 0.6));
-        for (let d = 0; d < r.length; d += 26) { r.pointAt(d, tmp); const o = (rnd() - 0.5) * 60; K.line(g, tmp.x + tmp.nx * o - 8, tmp.y + tmp.ny * o, tmp.x + tmp.nx * o + 8, tmp.y + tmp.ny * o, 'rgba(255,255,255,0.55)', 2); }
-        for (const p of map.paths) for (let d = 0; d < p.length; d += 4) {
-          p.pointAt(d, tmp);
-          if (r.nearest(tmp.x, tmp.y).perp < 2) { drawBridge(g, tmp, PW); break; }
-        }
-      }
-
-      // 4) Cây, đá
-      for (const d of map.decor) DECOR[d.kind] && (g.save(), g.translate(d.x, d.y), g.scale(d.s, d.s), DECOR[d.kind](g, th, d.v), g.restore());
-
-      // 5) Sương mù ở cửa vào phía trên
-      const fog = g.createLinearGradient(0, 0, 0, 170); fog.addColorStop(0, 'rgba(20,10,30,0.75)'); fog.addColorStop(1, 'rgba(20,10,30,0)');
-      g.fillStyle = fog; g.fillRect(0, 0, W, 170);
-      for (const p of map.paths) { const s = p.points.find(q => q.y > 10) || p.points[0]; K.glow(g, s.x, 20, 70, '#c02a3a', 0.45); }
-
-      // 6) Tường thành & cổng
-      paintWall(g, map);
-      // 7) Ánh sáng kiểu nền anime: nắng ấm góc trên trái, bóng mát góc dưới phải
-      g.save(); g.globalCompositeOperation = 'soft-light';
-      const sun = g.createLinearGradient(0, 0, W, H * 0.8);
-      sun.addColorStop(0, 'rgba(255,236,170,0.55)'); sun.addColorStop(0.55, 'rgba(255,236,170,0)'); sun.addColorStop(1, 'rgba(40,60,120,0.35)');
-      g.fillStyle = sun; g.fillRect(0, 0, W, H); g.restore();
-      g.save(); const vg = g.createRadialGradient(W * 0.5, H * 0.45, Math.min(W, H) * 0.3, W * 0.5, H * 0.45, Math.max(W, H) * 0.75);
-      vg.addColorStop(0, 'rgba(20,12,40,0)'); vg.addColorStop(1, 'rgba(20,12,40,0.22)'); g.fillStyle = vg; g.fillRect(0, 0, W, H); g.restore();
-
-      return c;
-    }
-  };
-
-  function drawBridge(g, p, PW) {
-    g.save(); g.translate(p.x, p.y); g.rotate(Math.atan2(p.ty, p.tx));
-    const L = 128, w = PW + 8;
-    K.shadow(g, 6, 10, L * 0.55, w * 0.5, 0.35);
-    K.rr(g, -L / 2, -w / 2, L, w, 8, '#b8a890', { s: 4, h: 2 });
-    g.strokeStyle = 'rgba(40,20,20,0.35)'; g.lineWidth = 1.2;
-    for (let x = -L / 2 + 12; x < L / 2; x += 12) { g.beginPath(); g.moveTo(x, -w / 2 + 3); g.lineTo(x, w / 2 - 3); g.stroke(); }
-    for (const s of [-1, 1]) { K.rr(g, -L / 2 - 2, s * w / 2 - 5, L + 4, 10, 4, '#9a8e7a', { s: 2.4, h: 1 }); for (const x of [-L / 2, L / 2]) K.rr(g, x - 7, s * w / 2 - 8, 14, 16, 4, '#8a7e6a', { s: 2.4, h: 1 }); }
-    g.restore();
-  }
-
   /* ---------------- Trang trí kiểu nền anime ---------------- */
   const inkOf = c => K.mix(c, '#1a1424', 0.7);
   function leafBlob(g, x, y, r, seed) {
@@ -289,34 +132,444 @@
     }
   };
 
-  /* ---------------- Tường thành ở lối ra ---------------- */
-  function paintWall(g, map) {
-    const W = map.W, H = map.H, ex = map.exit.x, wy = H - 110, ST = '#b8b2c4';
-    K.shadow(g, W / 2, wy, W * 0.6, 26, 0.4);
-    // mặt tường
-    K.rr(g, -10, wy, W + 20, H - wy + 10, 0, ST, { s: 8, h: 3 });
-    g.save(); g.beginPath(); g.rect(-10, wy, W + 20, H - wy); g.clip(); g.strokeStyle = 'rgba(40,20,50,0.28)'; g.lineWidth = 1.4;
-    for (let r = 0, y = wy + 16; y < H; y += 16, r++) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); for (let x = (r % 2) * 18; x < W; x += 36) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 16); g.stroke(); } }
+  /* ---------------- Trang trí thêm theo vùng ---------------- */
+  DECOR.cactus = function (g, th, v) {
+    K.shadow(g, 4, 3, 16, 5, 0.4);
+    const c = '#5a9a3a';
+    K.rr(g, -4.5, -26, 9, 28, 4.4, c, { s: 2.2, h: 1.2, ink: inkOf(c), animeHeavy: true, lw: 1.3 });
+    K.rr(g, -13, -19, 6, 4.4, 2.2, c, { s: 1, h: 0.6, ink: inkOf(c), animeHeavy: true, lw: 1.2 }); K.rr(g, -13, -27, 4.4, 12, 2.2, c, { s: 1, h: 0.6, ink: inkOf(c), animeHeavy: true, lw: 1.2 });
+    if (v !== 1) { K.rr(g, 7, -14, 6, 4.4, 2.2, c, { s: 1, h: 0.6, ink: inkOf(c), animeHeavy: true, lw: 1.2 }); K.rr(g, 9, -22, 4.4, 11, 2.2, c, { s: 1, h: 0.6, ink: inkOf(c), animeHeavy: true, lw: 1.2 }); }
+    g.strokeStyle = 'rgba(30,60,20,0.45)'; g.lineWidth = 0.8; for (const x of [-1.6, 1.6]) { g.beginPath(); g.moveTo(x, -24); g.lineTo(x, 0); g.stroke(); }
+    K.dot(g, 0, -27, 2, '#ff7aa8');
+  };
+  DECOR.mesa = function (g, th, v) {
+    K.shadow(g, 6, 4, 46, 13, 0.4);
+    const c = th.rock, tiers = [[-36, 4, 36, 4, 32, -26, -30, -26], [-26, -22, 26, -22, 22, -48, -22, -48]];
+    K.poly(g, [-40, 4, -34, -26, 32, -28, 42, 4], c, { s: 5, h: 2, ink: inkOf(c), animeHeavy: true, lw: 1.5 });
+    K.poly(g, [-28, -26, -22, -52, 20, -54, 28, -28], shade(c, 0.08), { s: 4, h: 1.6, ink: inkOf(c), animeHeavy: true, lw: 1.5 });
+    g.strokeStyle = 'rgba(80,30,10,0.35)'; g.lineWidth = 1; for (const y of [-12, -34]) { g.beginPath(); g.moveTo(-36, y); g.lineTo(38, y + 1); g.stroke(); }
+    K.flat(g, [-22, -52, 20, -54, 22, -50, -20, -48], shade(c, 0.3));
+  };
+  DECOR.tent = function (g, th, v) {
+    K.shadow(g, 4, 4, 30, 9, 0.4);
+    const a = v % 2 ? '#c84a3a' : '#2f7ab0';
+    K.poly(g, [-28, 3, 0, -34, 28, 3], '#f0e6cc', { s: 4, h: 1.6, ink: inkOf('#c8b890'), animeHeavy: true, lw: 1.4 });
+    K.poly(g, [-14, 3, 0, -34, 14, 3], a, { s: 3, h: 1.2, ink: inkOf(a), animeHeavy: true, lw: 1.3 });
+    K.poly(g, [-7, 3, 0, -10, 7, 3], '#3a2418', { s: 0, h: 0, lw: 1 });
+    K.line(g, 0, -34, 0, -44, '#6b4426', 1.8); K.flat(g, [0, -44, 12, -41, 0, -37], a);
+  };
+  DECOR.house = function (g, th, v) {
+    K.shadow(g, 6, 5, 40, 11, 0.42);
+    const wall = '#eadcc0', roof = v % 2 ? '#b8402a' : '#3d6a9a';
+    K.rr(g, -26, -22, 52, 26, 2, wall, { s: 4, h: 1.6, ink: inkOf('#a89878'), animeHeavy: true, lw: 1.4 });
+    g.strokeStyle = 'rgba(90,50,30,0.55)'; g.lineWidth = 1.4; for (const x of [-26, -9, 9, 26]) { g.beginPath(); g.moveTo(x, -22); g.lineTo(x, 4); g.stroke(); } g.beginPath(); g.moveTo(-26, -9); g.lineTo(26, -9); g.stroke();
+    K.poly(g, [-33, -20, 0, -50, 33, -20, 26, -18, -26, -18], roof, { s: 4, h: 1.8, ink: inkOf(roof), animeHeavy: true, lw: 1.5 });
+    K.rr(g, -5, -9, 10, 13, 2, '#6a3e20', { s: 1.2, h: 0.6, animeHeavy: true, lw: 1.1 });
+    for (const x of [-17, 15]) { K.rr(g, x - 3.5, -17, 7, 7, 1.2, '#ffe8a0', { s: 0, h: 0, ink: '#5a4a3a', animeHeavy: true, lw: 1 }); }
+    K.rr(g, 12, -46, 7, 14, 1.4, '#a09a8e', { s: 1, h: 0.5, animeHeavy: true, lw: 1.1 });
+  };
+  DECOR.turret = function (g, th, v) {
+    K.shadow(g, 5, 4, 28, 8, 0.42);
+    const st = '#c6c0b4';
+    K.rr(g, -15, -42, 30, 46, 3, st, { s: 4, h: 1.6, ink: inkOf(st), animeHeavy: true, lw: 1.4 });
+    g.strokeStyle = 'rgba(60,40,60,0.3)'; g.lineWidth = 0.9; for (let y = -34, r = 0; y < 4; y += 8, r++) { g.beginPath(); g.moveTo(-15, y); g.lineTo(15, y); g.stroke(); for (let x = -15 + (r % 2) * 8; x < 15; x += 16) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 8); g.stroke(); } }
+    K.poly(g, [-20, -40, 0, -76, 20, -40], '#3d6fc0', { s: 4, h: 1.6, ink: inkOf('#3d6fc0'), animeHeavy: true, lw: 1.4 });
+    K.rr(g, -3, -32, 6, 11, 3, '#2a1830', { s: 0, h: 0, lw: 1 }); K.glow(g, 0, -26, 10, '#ffd070', 0.5);
+    K.line(g, 0, -76, 0, -88, '#6b4426', 1.6); K.flat(g, [0, -88, 11, -85, 0, -81], '#e04848');
+  };
+  DECOR.wall = function (g, th, v) {
+    K.shadow(g, 4, 4, 38, 8, 0.4);
+    const st = '#b8b2a6';
+    K.rr(g, -36, -14, 72, 16, 2, st, { s: 3, h: 1.4, ink: inkOf(st), animeHeavy: true, lw: 1.3 });
+    for (let i = 0; i < 5; i++) K.rr(g, -36 + i * 15, -22, 11, 10, 1.4, shade(st, 0.06), { s: 1.4, h: 0.7, ink: inkOf(st), animeHeavy: true, lw: 1.1 });
+  };
+  DECOR.iceCrystal = function (g, th, v) {
+    K.shadow(g, 3, 3, 20, 6, 0.35); K.glow(g, 0, -14, 28, '#9fe0ff', 0.4);
+    K.poly(g, [-9, 2, -12, -14, -4, -34, 2, 2], '#9fe0ff', { s: 2.4, h: 1.4, light: '#ffffff', ink: '#2a5a8a', animeHeavy: true, lw: 1.3 });
+    K.poly(g, [0, 3, 3, -22, 11, -12, 12, 3], '#7cc8f0', { s: 2, h: 1.2, light: '#e8faff', ink: '#2a5a8a', animeHeavy: true, lw: 1.3 });
+    K.line(g, -6, -24, -8, -8, 'rgba(255,255,255,0.8)', 1.2);
+  };
+  DECOR.spire = function (g, th, v) {
+    K.shadow(g, 4, 3, 22, 7, 0.45);
+    const c = '#4a3a3c';
+    K.poly(g, [-14, 3, -9, -26, -2, -44, 4, -24, 14, 3], c, { s: 3, h: 1.4, ink: '#1a0e10', animeHeavy: true, lw: 1.5 });
+    K.glow(g, 0, -16, 24, '#ff6a1a', 0.35);
+    g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = '#ff7a2a'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(-2, -2); g.lineTo(1, -12); g.lineTo(-2, -20); g.lineTo(2, -30); g.stroke(); g.restore();
+  };
+  DECOR.brazier = function (g, th, v) {
+    K.shadow(g, 3, 3, 14, 5, 0.4);
+    K.limb(g, 0, 2, 0, -12, 3, '#4a3a2a'); K.rr(g, -7, -18, 14, 8, 3, '#3a3036', { s: 1.4, h: 0.7, animeHeavy: true, lw: 1.2 });
+    K.glow(g, 0, -26, 22, '#ff8a2a', 0.7);
+    K.cel(g, c => { c.moveTo(-5, -17); c.quadraticCurveTo(-6, -26, 0, -34); c.quadraticCurveTo(6, -26, 5, -17); c.closePath(); }, '#ff8a1a', { s: 0, h: 0.8, light: '#ffe060', lw: 1, ink: '#7a2a0a', animeHeavy: true });
+  };
+  DECOR.voidCrystal = function (g, th, v) {
+    K.shadow(g, 3, 3, 22, 7, 0.4); K.glow(g, 0, -16, 34, '#b070ff', 0.5);
+    K.poly(g, [-10, 3, -14, -12, -4, -38, 3, 3], '#a060f0', { s: 2.6, h: 1.4, light: '#f0d8ff', ink: '#2a1050', animeHeavy: true, lw: 1.3 });
+    K.poly(g, [0, 4, 4, -26, 13, -14, 14, 4], '#7a40d0', { s: 2.2, h: 1.2, light: '#d8b8ff', ink: '#2a1050', animeHeavy: true, lw: 1.3 });
+    K.line(g, -7, -28, -9, -10, 'rgba(255,255,255,0.8)', 1.2);
+  };
+  DECOR.rune = function (g, th, v) {
+    K.shadow(g, 3, 3, 16, 5, 0.4);
+    const c = '#5a4a8a';
+    K.poly(g, [-9, 3, -10, -24, -3, -32, 6, -30, 10, -22, 9, 3], c, { s: 2.6, h: 1.2, ink: '#1a1030', animeHeavy: true, lw: 1.4 });
+    K.glow(g, 0, -16, 16, '#c880ff', 0.5);
+    g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = '#e0a0ff'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(-3, -22); g.lineTo(3, -22); g.moveTo(0, -26); g.lineTo(0, -10); g.moveTo(-4, -14); g.lineTo(4, -17); g.stroke(); g.restore();
+  };
+  DECOR.bones = function (g, th, v) {
+    K.shadow(g, 2, 2, 12, 4, 0.3);
+    K.circ(g, -2, -4, 5, '#efe6d0', { s: 1.2, h: 0.6, animeHeavy: true, lw: 1, ink: '#6a5a4a' });
+    K.dot(g, -4, -5, 1.2, '#2a1a14'); K.dot(g, 0, -5, 1.2, '#2a1a14');
+    K.line(g, 6, -2, 15, 2, '#efe6d0', 2.2); K.line(g, 6, 1, 14, 5, '#efe6d0', 2);
+  };
+  DECOR.palm = function (g, th, v) {
+    K.shadow(g, 5, 3, 22, 7, 0.4);
+    const t = '#8a5a32'; g.lineCap = 'round'; g.strokeStyle = inkOf(t); g.lineWidth = 6.4; g.beginPath(); g.moveTo(0, 3); g.quadraticCurveTo(7, -18, 3, -38); g.stroke(); g.strokeStyle = t; g.lineWidth = 4; g.stroke();
+    for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + (i - 2.5) * 0.62, lx = 3 + Math.cos(a) * 26, ly = -38 + Math.sin(a) * 16 + 8;
+      K.cel(g, c => { c.moveTo(3, -38); c.quadraticCurveTo(3 + Math.cos(a) * 14, -38 + Math.sin(a) * 14 - 6, lx, ly); c.quadraticCurveTo(3 + Math.cos(a) * 14, -38 + Math.sin(a) * 14 + 2, 3, -37); c.closePath(); }, '#4a9a3a', { s: 1, h: 0.6, ink: '#1e4a1a', animeHeavy: true, lw: 1.2 }); }
+    K.dot(g, 1, -36, 2.4, '#7a4a22'); K.dot(g, 5, -35, 2.4, '#7a4a22');
+  };
+
+  /* ---------------- Đặc điểm từng màn: sông / dung nham / hồ ---------------- */
+  const FEATURES = [
+    { rivers: [[[1000, -60], [960, 180], [1040, 380], [1000, 560], [1080, 720], [1030, 960]]], kind: 'water' },                                   // Rừng Xanh
+    { rivers: [[[-60, 430], [260, 440], [560, 430], [700, 400], [870, 390], [1000, 430], [1100, 520], [1180, 760], [1250, 960]]], kind: 'water' }, // Thành Cổ
+    { rivers: [], kind: 'water', pond: [[1010, 130, 70], [250, 780, 50]] },                                                                         // Sa Mạc (ốc đảo)
+    { rivers: [[[-60, 560], [260, 560], [540, 520], [700, 700], [900, 790], [1100, 960]]], kind: 'ice' },                                           // Băng Giá
+    { rivers: [[[200, -60], [330, 300], [270, 520], [310, 960]], [[1100, 960], [1180, 700], [1110, 480], [1180, 200], [1150, -60]]], kind: 'lava' },  // Núi Lửa
+    { rivers: [], kind: 'water' }                                                                                                                   // Hỗn Mang
+  ];
+  /* Bộ ký tự theo vùng cho cây cối / vật trang trí */
+  const DECOR_MIX = {
+    forest: [['tree', 0.46], ['pine', 0.2], ['bush', 0.16], ['rock', 0.12], ['mushroom', 0.06]],
+    castle: [['tree', 0.34], ['bush', 0.22], ['rock', 0.2], ['pine', 0.14], ['wall', 0.1]],
+    desert: [['cactus', 0.34], ['rock', 0.26], ['deadtree', 0.12], ['bones', 0.1], ['mesa', 0.12], ['bush', 0.06]],
+    ice:    [['pine', 0.46], ['rock', 0.2], ['iceCrystal', 0.22], ['bush', 0.12]],
+    lava:   [['rock', 0.34], ['spire', 0.26], ['deadtree', 0.16], ['crystal', 0.14], ['brazier', 0.1]],
+    chaos:  [['voidCrystal', 0.34], ['rune', 0.2], ['deadtree', 0.2], ['rock', 0.18], ['crystal', 0.08]]
+  };
+  const pickKind = (mix, r) => { let a = 0; for (const [k, p] of mix) { a += p; if (r < a) return k; } return mix[0][0]; };
+
+  function pickSpots(paths, rivers, count, W, H, PW, chaos) {
+    const samples = [], tmp = {};
+    for (const p of paths) for (let d = 30; d < p.length; d += 36) { p.pointAt(d, tmp); samples.push({ x: tmp.x, y: tmp.y, c: 0 }); }
+    const cand = [];
+    for (const p of paths) for (let d = 110; d < p.length - 140; d += 30) {
+      p.pointAt(d, tmp);
+      for (const sd of [-1, 1]) for (const off of [PW / 2 + 46, PW / 2 + 76]) {
+        const x = tmp.x + tmp.nx * off * sd, y = tmp.y + tmp.ny * off * sd;
+        if (x < 70 || x > W - 150 || y < 100 || y > H - 80) continue;
+        if (distToPaths(paths, x, y) < PW / 2 + 40) continue;
+        let bad = false; for (const r of rivers) if (r.nearest(x, y).perp < 66) { bad = true; break; }
+        if (!bad) cand.push({ x, y });
+      }
+    }
+    const spots = [];
+    while (spots.length < count && cand.length) {
+      let bi = -1, bs = -1;
+      for (let i = 0; i < cand.length; i++) {
+        const c = cand[i]; let near = false;
+        for (const s of spots) if (Math.hypot(s.x - c.x, s.y - c.y) < 116) { near = true; break; }
+        if (near) { cand.splice(i--, 1); continue; }
+        let sc = 0; for (const s of samples) if (Math.hypot(s.x - c.x, s.y - c.y) < 175) sc += 1 / (1 + s.c * 1.6);
+        if (sc > bs) { bs = sc; bi = i; }
+      }
+      if (bi < 0) break;
+      const c = cand.splice(bi, 1)[0]; spots.push({ id: spots.length, x: Math.round(c.x), y: Math.round(c.y) });
+      for (const s of samples) if (Math.hypot(s.x - c.x, s.y - c.y) < 175) s.c++;
+    }
+    return spots;
+  }
+
+  const Level = {
+    Path,
+
+    build(index) {
+      const L = CONFIG.levels[index], W = CONFIG.world.width, H = CONFIG.world.height, PW = CONFIG.pathWidth;
+      const theme = CONFIG.themes[L.theme], F = FEATURES[index] || { rivers: [] };
+      const paths = L.paths.map(c => new Path(smooth(c, 10)));
+      const rivers = F.rivers.map(c => new Path(smooth(c, 12)));
+      const chaos = L.theme === 'chaos';
+      const spots = pickSpots(paths, rivers, L.spots || 14, W, H, PW, chaos);
+
+      // ---- Cây cối / đá / vật trang trí (tránh đường, ô xây, sông) ----
+      const decor = [], r2 = K.seeded(index * 31 + 7), mix = DECOR_MIX[L.theme] || DECOR_MIX.forest;
+      const dense = L.theme === 'forest' ? 0.5 : L.theme === 'ice' ? 0.42 : 0.3, big = new Set(['mesa', 'wall']);
+      const bigPts = [];
+      for (let y = -10; y < H + 20; y += 44) for (let x = -10; x < W + 20; x += 44) {
+        const jx = x + (r2() - 0.5) * 38, jy = y + (r2() - 0.5) * 38;
+        const dp = distToPaths(paths, jx, jy);
+        if (dp < PW / 2 + 32) continue;
+        if (chaos && dp > 150) continue;
+        if (jx > W - 130) continue;
+        let near = false; for (const s of spots) if (Math.hypot(s.x - jx, s.y - jy) < 78) { near = true; break; }
+        if (near) continue;
+        let wet = false; for (const r of rivers) if (r.nearest(jx, jy).perp < 66) { wet = true; break; }
+        if (wet) continue;
+        for (const pd of (F.pond || [])) if (Math.hypot(pd[0] - jx, pd[1] - jy) < pd[2] + 36) wet = true;
+        if (wet) continue;
+        const edge = Math.min(jx, jy + 40, H - jy + 30) < 80, pChance = edge ? 0.9 : dp > 170 ? dense + 0.28 : dp > 110 ? dense * 0.7 : 0.06;
+        if (r2() > pChance) continue;
+        const kind = pickKind(mix, r2());
+        if (big.has(kind)) { let clash = false; for (const b of bigPts) if (Math.hypot(b.x - jx, b.y - jy) < 130) { clash = true; break; } if (clash) continue; bigPts.push({ x: jx, y: jy }); }
+        decor.push({ kind, x: jx, y: jy, s: (kind === 'tree' || kind === 'pine' ? 1.35 : 1.15) + r2() * 0.45, v: Math.floor(r2() * 3) });
+      }
+      // công trình đặc trưng theo vùng
+      const extra = L.theme === 'castle' ? ['house', 'turret', 'house', 'house', 'turret'] : L.theme === 'desert' ? ['tent', 'tent', 'tent'] : [];
+      for (const kind of extra) {
+        for (let tries = 0; tries < 80; tries++) {
+          const x = 120 + r2() * (W - 330), y = 130 + r2() * (H - 260);
+          if (distToPaths(paths, x, y) < PW / 2 + 80) continue;
+          let bad = false; for (const s of spots) if (Math.hypot(s.x - x, s.y - y) < 110) { bad = true; break; }
+          for (const b of decor) if (Math.hypot(b.x - x, b.y - y) < 60) { bad = true; break; }
+          for (const r of rivers) if (r.nearest(x, y).perp < 80) bad = true;
+          for (const b of bigPts) if (Math.hypot(b.x - x, b.y - y) < 120) bad = true;
+          if (bad) continue; bigPts.push({ x, y }); decor.push({ kind, x, y, s: 1.2, v: Math.floor(r2() * 3) }); break;
+        }
+      }
+      decor.sort((a, b) => a.y - b.y);
+
+      const end = paths[0].points[paths[0].points.length - 1];
+      return { index, def: L, W, H, theme, paths, river: rivers[0] || null, rivers, riverKind: F.kind, pond: F.pond || [], spots, decor, exit: { x: end.x, y: end.y }, starts: paths.map(p => p.points[0]) };
+    },
+
+    /* ================= VẼ NỀN ================= */
+    renderBackground(map, res) {
+      const W = map.W, H = map.H, th = map.theme, PW = CONFIG.pathWidth, T = map.def.theme;
+      const c = document.createElement('canvas'); c.width = Math.ceil(W * res); c.height = Math.ceil(H * res);
+      const g = c.getContext('2d'); g.scale(res, res); g.lineJoin = 'round'; g.lineCap = 'round';
+      const rnd = K.seeded(map.index * 53 + 3), tmp = {};
+      const blot = (x, y, r, col, a) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, K.alpha(col, a)); gr.addColorStop(1, K.alpha(col, 0)); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); };
+      const drawPath = (p, w, col) => { g.beginPath(); p.points.forEach((pt, i) => i ? g.lineTo(pt.x, pt.y) : g.moveTo(pt.x, pt.y)); g.strokeStyle = col; g.lineWidth = w; g.stroke(); };
+
+      /* 1) Mặt đất */
+      if (T === 'chaos') groundChaos(g, map, th, rnd, blot);
+      else {
+        const base = g.createLinearGradient(0, 0, W * 0.3, H);
+        base.addColorStop(0, shade(th.grass2, -0.08)); base.addColorStop(0.5, th.grass); base.addColorStop(1, shade(th.grass, 0.06));
+        g.fillStyle = base; g.fillRect(0, 0, W, H);
+        for (let i = 0; i < 80; i++) blot(rnd() * W, rnd() * H, 60 + rnd() * 160, rnd() < 0.5 ? th.grass2 : shade(th.grass2, -0.12), 0.55);
+        for (let i = 0; i < 46; i++) blot(rnd() * W, rnd() * H, 50 + rnd() * 120, shade(th.grass, 0.28), 0.35);
+        if (T === 'desert') groundDesert(g, W, H, th, rnd);
+        else if (T === 'ice') groundIce(g, W, H, th, rnd);
+        else if (T === 'lava') groundLava(g, W, H, th, rnd, blot);
+        else groundGrass(g, W, H, th, rnd, T);
+      }
+
+      /* 2) Hồ / sông / dung nham (dưới đường) */
+      for (const pd of map.pond) pond(g, pd[0], pd[1], pd[2], th, rnd);
+      for (const r of map.rivers) river(g, r, map.riverKind, th, rnd, drawPath);
+
+      /* 3) Đường đi */
+      const pc = pathColors(T, th);
+      for (const p of map.paths) drawPath(p, PW + 30, 'rgba(20,10,10,0.16)');
+      for (const p of map.paths) drawPath(p, PW + 12, pc.edge);
+      for (const p of map.paths) drawPath(p, PW + 4, shade(pc.fill, -0.1));
+      for (const p of map.paths) drawPath(p, PW - 4, pc.fill);
+      for (const p of map.paths) drawPath(p, PW * 0.62, K.alpha(shade(pc.fill, 0.14), 0.8));
+      for (const p of map.paths) drawPath(p, PW * 0.3, K.alpha(shade(pc.fill, 0.24), 0.45));
+      pathDetail(g, map, T, th, pc, rnd, tmp);
+      if (T === 'chaos') for (const p of map.paths) { g.save(); g.globalCompositeOperation = 'lighter'; drawPath(p, PW + 6, 'rgba(176,112,255,0.28)'); drawPath(p, 3, 'rgba(235,200,255,0.8)'); g.restore(); }
+
+      /* 4) Cầu bắc qua sông */
+      for (const r of map.rivers) for (const p of map.paths) {
+        let last = -999;
+        for (let d = 0; d < p.length; d += 4) { p.pointAt(d, tmp); if (r.nearest(tmp.x, tmp.y).perp < 6 && d - last > 150) { last = d; drawBridge(g, tmp, PW, map.riverKind, T); } }
+      }
+
+      /* 5) Cây, đá, nhà */
+      for (const d of map.decor) DECOR[d.kind] && (g.save(), g.translate(d.x, d.y), g.scale(d.s, d.s), DECOR[d.kind](g, th, d.v), g.restore());
+
+      /* 6) Điểm xuất phát bên trái + cổng thành bên phải */
+      for (const s of map.starts) spawnMark(g, s, T);
+      paintGate(g, map, T);
+
+      /* 7) Ánh sáng */
+      g.save(); g.globalCompositeOperation = 'soft-light';
+      const sun = g.createLinearGradient(0, 0, W, H * 0.8);
+      if (T === 'lava') { sun.addColorStop(0, 'rgba(255,120,60,0.45)'); sun.addColorStop(1, 'rgba(60,20,80,0.4)'); }
+      else if (T === 'chaos') { sun.addColorStop(0, 'rgba(200,120,255,0.35)'); sun.addColorStop(1, 'rgba(20,10,80,0.45)'); }
+      else if (T === 'ice') { sun.addColorStop(0, 'rgba(255,255,255,0.5)'); sun.addColorStop(1, 'rgba(40,80,160,0.35)'); }
+      else { sun.addColorStop(0, 'rgba(255,236,170,0.55)'); sun.addColorStop(0.55, 'rgba(255,236,170,0)'); sun.addColorStop(1, 'rgba(40,60,120,0.35)'); }
+      g.fillStyle = sun; g.fillRect(0, 0, W, H); g.restore();
+      g.save(); const vg = g.createRadialGradient(W * 0.5, H * 0.5, Math.min(W, H) * 0.35, W * 0.5, H * 0.5, Math.max(W, H) * 0.7);
+      vg.addColorStop(0, 'rgba(20,12,40,0)'); vg.addColorStop(1, 'rgba(20,12,40,0.28)'); g.fillStyle = vg; g.fillRect(0, 0, W, H); g.restore();
+      return c;
+    }
+  };
+
+  /* ---------- Mặt đất theo vùng ---------- */
+  function groundGrass(g, W, H, th, rnd, T) {
+    g.save();
+    for (let i = 0; i < 2600; i++) { const x = rnd() * W, y = rnd() * H; g.fillStyle = K.alpha(rnd() < 0.5 ? shade(th.grass, -0.2) : shade(th.grass, 0.22), 0.35); g.fillRect(x, y, 2.2, 1.1); }
+    const tuftCols = [shade(th.grass, -0.22), shade(th.grass2, -0.12), shade(th.grass, 0.18)];
+    for (let i = 0; i < 1700; i++) {
+      const x = rnd() * W, y = rnd() * H, h = 4 + rnd() * 6, col = tuftCols[(rnd() * 3) | 0];
+      g.fillStyle = col; g.beginPath(); g.moveTo(x - 3.4, y); g.quadraticCurveTo(x - 3, y - h * 0.6, x - 4.8, y - h); g.quadraticCurveTo(x - 1.2, y - h * 0.55, x, y - h * 1.2); g.quadraticCurveTo(x + 1, y - h * 0.5, x + 4.6, y - h * 0.9); g.quadraticCurveTo(x + 2.6, y - h * 0.4, x + 3.4, y); g.closePath(); g.fill();
+    }
+    const fc = ['#fff6a0', '#ffffff', '#ffb0c8', '#c8b0ff', '#ffd27a'];
+    for (let i = 0; i < 90; i++) { const cx = rnd() * W, cy = rnd() * H, col = fc[(rnd() * fc.length) | 0], n = 3 + (rnd() * 6 | 0);
+      for (let j = 0; j < n; j++) { const x = cx + (rnd() - 0.5) * 34, y = cy + (rnd() - 0.5) * 20; K.line(g, x, y + 4, x, y, shade(th.grass, -0.3), 1); for (let k = 0; k < 5; k++) { const an = k / 5 * TAU; K.dot(g, x + Math.cos(an) * 1.9, y + Math.sin(an) * 1.9, 1.5, col); } K.dot(g, x, y, 1.1, '#f2a83a'); } }
+    if (T === 'castle') { // thảm đá lát quanh khu thành
+      for (let i = 0; i < 18; i++) { const x = 150 + rnd() * (W - 400), y = 120 + rnd() * (H - 240), r = 24 + rnd() * 30; g.fillStyle = 'rgba(190,184,172,0.5)'; g.beginPath(); g.ellipse(x, y, r * 1.6, r, 0, 0, TAU); g.fill();
+        g.strokeStyle = 'rgba(90,80,90,0.3)'; g.lineWidth = 1; for (let k = 0; k < 4; k++) { g.beginPath(); g.ellipse(x, y, r * 1.6 * (k + 1) / 4, r * (k + 1) / 4, 0, 0, TAU); g.stroke(); } }
+    }
     g.restore();
-    for (let x = -6; x < W; x += 36) K.rr(g, x, wy - 14, 22, 18, 3, shade(ST, 0.08), { s: 3, h: 1.4 });
-    // cổng
-    const gw = PWg();
-    function PWg() { return CONFIG.pathWidth + 24; }
-    K.cel(g, c => { c.moveTo(ex - gw / 2, H); c.lineTo(ex - gw / 2, wy + 22); c.arc(ex, wy + 22, gw / 2, Math.PI, 0); c.lineTo(ex + gw / 2, H); c.closePath(); }, '#2a1828', { s: 0, h: 0, lw: 3 });
-    K.glow(g, ex, wy + 60, 50, '#ffc860', 0.5);
-    g.strokeStyle = '#3a2418'; g.lineWidth = 4; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(ex + i * 14, wy + (Math.abs(i) === 2 ? 14 : 0) - 4); g.lineTo(ex + i * 14, wy + 30); g.stroke(); }
-    g.strokeStyle = K.INK; g.lineWidth = 10; g.beginPath(); g.arc(ex, wy + 22, gw / 2 + 4, Math.PI, 0); g.stroke();
-    g.strokeStyle = '#d8d2e2'; g.lineWidth = 6; g.stroke();
-    // 2 tháp cổng
-    for (const s of [-1, 1]) {
-      const tx = ex + s * (gw / 2 + 34);
-      K.rr(g, tx - 26, wy - 50, 52, H - wy + 60, 6, shade(ST, 0.05), { s: 8, h: 3 });
-      for (let i = 0; i < 3; i++) K.rr(g, tx - 26 + i * 19, wy - 64, 14, 16, 3, shade(ST, 0.12), { s: 2.4, h: 1 });
-      K.cel(g, c => { c.moveTo(tx - 6, wy - 12); c.lineTo(tx - 6, wy - 24); c.arc(tx, wy - 24, 6, Math.PI, 0); c.lineTo(tx + 6, wy - 12); c.closePath(); }, '#ffd070', { s: 0, h: 1.6, light: '#fff6c0', lw: 2 });
-      K.glow(g, tx, wy - 20, 18, '#ffc860', 0.6);
-      // cờ treo
-      K.cel(g, c => { c.moveTo(tx - 9, wy + 4); c.lineTo(tx + 9, wy + 4); c.lineTo(tx + 9, wy + 40); c.lineTo(tx, wy + 46); c.lineTo(tx - 9, wy + 40); c.closePath(); }, '#3d6fc0', { s: 2.4, h: 1 });
-      K.dot(g, tx, wy + 20, 3, '#f4f1e6'); K.line(g, tx, wy + 22, tx, wy + 30, '#f4f1e6', 1.6);
+  }
+  function groundDesert(g, W, H, th, rnd) {
+    for (let i = 0; i < 26; i++) { // cồn cát
+      const x = rnd() * W, y = rnd() * H, r = 90 + rnd() * 170;
+      g.save(); g.translate(x, y); g.scale(1.9, 0.5);
+      g.fillStyle = K.alpha(shade(th.grass, -0.16), 0.5); g.beginPath(); g.arc(0, 18, r, Math.PI * 1.05, Math.PI * 1.95); g.fill();
+      g.fillStyle = K.alpha(shade(th.grass, 0.3), 0.55); g.beginPath(); g.arc(-8, 0, r, Math.PI * 1.08, Math.PI * 1.7); g.fill(); g.restore();
+    }
+    g.strokeStyle = K.alpha(shade(th.grass, -0.25), 0.3); g.lineWidth = 1.2;
+    for (let i = 0; i < 400; i++) { const x = rnd() * W, y = rnd() * H, w = 10 + rnd() * 22; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + w / 2, y - 3, x + w, y); g.stroke(); }
+    for (let i = 0; i < 700; i++) K.dot(g, rnd() * W, rnd() * H, 0.8 + rnd() * 1.2, rnd() < 0.5 ? K.alpha(shade(th.grass, 0.4), 0.7) : K.alpha(shade(th.grass, -0.3), 0.5));
+  }
+  function groundIce(g, W, H, th, rnd) {
+    for (let i = 0; i < 40; i++) { const x = rnd() * W, y = rnd() * H, r = 40 + rnd() * 100; g.fillStyle = K.alpha(rnd() < 0.5 ? '#a8d4f4' : '#ffffff', 0.28); g.beginPath(); g.ellipse(x, y, r * 1.5, r * 0.7, rnd(), 0, TAU); g.fill(); }
+    g.strokeStyle = 'rgba(120,170,210,0.4)'; g.lineWidth = 1.1;
+    for (let i = 0; i < 140; i++) { let x = rnd() * W, y = rnd() * H; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { x += (rnd() - 0.5) * 50; y += (rnd() - 0.3) * 30; g.lineTo(x, y); } g.stroke(); }
+    for (let i = 0; i < 520; i++) K.dot(g, rnd() * W, rnd() * H, 0.9 + rnd() * 1.6, 'rgba(255,255,255,0.85)');
+  }
+  function groundLava(g, W, H, th, rnd, blot) {
+    for (let i = 0; i < 60; i++) blot(rnd() * W, rnd() * H, 40 + rnd() * 100, '#1a0c0c', 0.5);
+    g.lineCap = 'round';
+    for (let i = 0; i < 70; i++) { // khe nứt phát sáng
+      let x = rnd() * W, y = rnd() * H; const pts = [[x, y]];
+      for (let k = 0; k < 5; k++) { x += (rnd() - 0.5) * 80; y += (rnd() - 0.5) * 60; pts.push([x, y]); }
+      g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = 'rgba(255,90,20,0.25)'; g.lineWidth = 7; g.beginPath(); pts.forEach((p, k) => k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke();
+      g.strokeStyle = 'rgba(255,170,60,0.85)'; g.lineWidth = 1.6; g.stroke(); g.restore();
+    }
+    for (let i = 0; i < 30; i++) K.glow(g, rnd() * W, rnd() * H, 40 + rnd() * 40, '#ff5a1a', 0.18);
+    for (let i = 0; i < 500; i++) K.dot(g, rnd() * W, rnd() * H, 0.8 + rnd() * 1.4, rnd() < 0.5 ? 'rgba(255,150,60,0.7)' : 'rgba(0,0,0,0.35)');
+  }
+  function groundChaos(g, map, th, rnd, blot) {
+    const W = map.W, H = map.H;
+    const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#0c0620'); sky.addColorStop(0.5, '#1e0e44'); sky.addColorStop(1, '#2a1250');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 14; i++) blot(rnd() * W, rnd() * H, 120 + rnd() * 220, rnd() < 0.5 ? '#7a2ab8' : '#c03a9a', 0.22);
+    for (let i = 0; i < 380; i++) K.dot(g, rnd() * W, rnd() * H, 0.5 + rnd() * 1.3, 'rgba(255,255,255,' + (0.3 + rnd() * 0.6) + ')');
+    for (let i = 0; i < 26; i++) { // đảo bay xa
+      const x = rnd() * W, y = rnd() * H, r = 18 + rnd() * 38;
+      g.fillStyle = 'rgba(40,24,80,0.8)'; g.beginPath(); g.ellipse(x, y, r * 1.6, r * 0.5, 0, 0, TAU); g.fill();
+      g.beginPath(); g.moveTo(x - r * 1.5, y); g.lineTo(x, y + r * 1.5); g.lineTo(x + r * 1.5, y); g.closePath(); g.fillStyle = 'rgba(28,16,60,0.9)'; g.fill();
+    }
+    // đảo chính = hợp các đĩa quanh đường
+    const disc = () => { g.beginPath(); for (const p of map.paths) for (let i = 0; i < p.points.length; i += 2) { const q = p.points[i]; g.moveTo(q.x + 150, q.y); g.arc(q.x, q.y, 150, 0, TAU); } };
+    g.save(); g.translate(0, 22); disc(); g.fillStyle = '#1a0e38'; g.fill(); g.restore();
+    g.save(); g.translate(0, 12); disc(); g.fillStyle = '#35216a'; g.fill(); g.restore();
+    disc(); const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#6a58a8'); gr.addColorStop(1, '#46367e'); g.fillStyle = gr; g.fill();
+    g.save(); disc(); g.clip();
+    for (let i = 0; i < 90; i++) blot(rnd() * W, rnd() * H, 40 + rnd() * 90, rnd() < 0.5 ? '#8a78c8' : '#2c1e5a', 0.4);
+    g.strokeStyle = 'rgba(200,140,255,0.22)'; g.lineWidth = 1.1;
+    for (let i = 0; i < 120; i++) { let x = rnd() * W, y = rnd() * H; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 3; k++) { x += (rnd() - 0.5) * 50; y += (rnd() - 0.5) * 36; g.lineTo(x, y); } g.stroke(); }
+    g.restore();
+  }
+
+  /* ---------- Đường đi ---------- */
+  function pathColors(T, th) {
+    if (T === 'castle') return { fill: '#b9b2a2', edge: '#6e6a62' };
+    if (T === 'ice') return { fill: '#b8cadc', edge: '#6a8098' };
+    if (T === 'lava') return { fill: '#8a6a58', edge: '#c0502a' };
+    if (T === 'chaos') return { fill: '#7a6ab0', edge: '#b070ff' };
+    return { fill: th.dirt, edge: th.dirtEdge };
+  }
+  function pathDetail(g, map, T, th, pc, rnd, tmp) {
+    const PW = CONFIG.pathWidth;
+    for (const p of map.paths) for (const off of [-PW * 0.2, PW * 0.2]) {
+      g.beginPath(); let first = true;
+      for (let d = 0; d < p.length; d += 8) { p.pointAt(d, tmp); const x = tmp.x + tmp.nx * off, y = tmp.y + tmp.ny * off; if (first) { g.moveTo(x, y); first = false; } else g.lineTo(x, y); }
+      g.strokeStyle = K.alpha(shade(pc.fill, -0.22), T === 'castle' ? 0.2 : 0.3); g.lineWidth = 3.2; g.stroke();
+    }
+    for (const p of map.paths) for (let d = 0; d < p.length; d += 6) {
+      p.pointAt(d, tmp);
+      if (T === 'castle' && rnd() < 0.6) { // gạch lát
+        g.save(); g.translate(tmp.x, tmp.y); g.rotate(Math.atan2(tmp.ty, tmp.tx)); g.strokeStyle = 'rgba(60,50,60,0.4)'; g.lineWidth = 1; g.strokeRect(-6, -PW / 2 + 5, 12, 14); g.strokeRect(-3, -4, 12, 14); g.strokeRect(-6, PW / 2 - 19, 12, 14); g.restore();
+      }
+      if (rnd() < 0.45) { const o = (rnd() - 0.5) * (PW - 12), x = tmp.x + tmp.nx * o, y = tmp.y + tmp.ny * o, r = 1.2 + rnd() * 2.6;
+        g.fillStyle = K.alpha(shade(pc.fill, -0.35), 0.45); g.beginPath(); g.ellipse(x + 0.6, y + 0.8, r, r * 0.7, 0, 0, TAU); g.fill();
+        g.fillStyle = rnd() < 0.5 ? shade(th.rock, 0.1) : shade(pc.fill, 0.25); g.beginPath(); g.ellipse(x, y, r, r * 0.68, 0, 0, TAU); g.fill(); }
+      if (T === 'lava' && rnd() < 0.12) K.glow(g, tmp.x + (rnd() - 0.5) * PW * 0.7, tmp.y + (rnd() - 0.5) * PW * 0.7, 10, '#ff6a1a', 0.5);
+      if (T === 'chaos' && rnd() < 0.06) { g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = 'rgba(230,190,255,0.7)'; g.lineWidth = 1.2; g.strokeRect(tmp.x - 4, tmp.y - 4, 8, 8); g.restore(); }
+      if ((T === 'forest' || T === 'castle') && rnd() < 0.85) { const sd = rnd() < 0.5 ? -1 : 1, o = sd * (PW / 2 + 1 + rnd() * 5), x = tmp.x + tmp.nx * o, y = tmp.y + tmp.ny * o, h = 4 + rnd() * 6;
+        g.fillStyle = rnd() < 0.5 ? th.grass : shade(th.grass, 0.12); g.beginPath(); g.moveTo(x - 4, y + 2); g.quadraticCurveTo(x - 3, y - h * 0.5, x - 5, y - h); g.quadraticCurveTo(x - 1, y - h * 0.4, x, y - h * 1.15); g.quadraticCurveTo(x + 1.2, y - h * 0.4, x + 5, y - h * 0.85); g.quadraticCurveTo(x + 3, y - h * 0.3, x + 4, y + 2); g.closePath(); g.fill(); }
+    }
+  }
+
+  /* ---------- Sông / hồ ---------- */
+  function river(g, r, kind, th, rnd, drawPath) {
+    const tmp = {};
+    if (kind === 'lava') {
+      drawPath(r, 124, '#1a0c0c'); drawPath(r, 106, '#3a1810');
+      drawPath(r, 92, '#e8480e'); drawPath(r, 64, '#ff8a1e'); drawPath(r, 30, '#ffd85a');
+      g.save(); g.globalCompositeOperation = 'lighter'; drawPath(r, 150, 'rgba(255,90,20,0.16)'); g.restore();
+      for (let d = 0; d < r.length; d += 22) { r.pointAt(d, tmp); const o = (rnd() - 0.5) * 60; K.line(g, tmp.x + tmp.nx * o - 10, tmp.y + tmp.ny * o, tmp.x + tmp.nx * o + 10, tmp.y + tmp.ny * o + 2, 'rgba(120,20,0,0.5)', 2.2); }
+      return;
+    }
+    if (kind === 'ice') {
+      drawPath(r, 120, '#7a98b0'); drawPath(r, 104, '#a8d0ea'); drawPath(r, 88, '#cfeaf8'); drawPath(r, 40, 'rgba(255,255,255,0.6)');
+      g.strokeStyle = 'rgba(80,130,180,0.55)'; g.lineWidth = 1.2;
+      for (let d = 0; d < r.length; d += 30) { r.pointAt(d, tmp); const o = (rnd() - 0.5) * 70; g.beginPath(); g.moveTo(tmp.x + tmp.nx * o, tmp.y + tmp.ny * o); g.lineTo(tmp.x + tmp.nx * o + 16, tmp.y + tmp.ny * o + (rnd() - 0.5) * 20); g.lineTo(tmp.x + tmp.nx * o + 30, tmp.y + tmp.ny * o + (rnd() - 0.5) * 10); g.stroke(); }
+      return;
+    }
+    drawPath(r, 112, shade(th.dirt, 0.1)); drawPath(r, 98, shade(th.water, -0.25)); drawPath(r, 86, th.water); drawPath(r, 42, K.alpha(shade(th.water, 0.2), 0.6));
+    for (let d = 0; d < r.length; d += 26) { r.pointAt(d, tmp); const o = (rnd() - 0.5) * 60; K.line(g, tmp.x + tmp.nx * o - 8, tmp.y + tmp.ny * o, tmp.x + tmp.nx * o + 8, tmp.y + tmp.ny * o, 'rgba(255,255,255,0.55)', 2); }
+  }
+  function pond(g, x, y, r, th, rnd) {
+    g.fillStyle = '#c8a860'; g.beginPath(); g.ellipse(x, y, r * 1.5 + 12, r * 0.8 + 10, 0, 0, TAU); g.fill();
+    g.fillStyle = shade(th.water, -0.2); g.beginPath(); g.ellipse(x, y, r * 1.5, r * 0.8, 0, 0, TAU); g.fill();
+    g.fillStyle = th.water; g.beginPath(); g.ellipse(x - 4, y - 3, r * 1.35, r * 0.68, 0, 0, TAU); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.45)'; g.beginPath(); g.ellipse(x - r * 0.4, y - r * 0.2, r * 0.5, r * 0.12, 0, 0, TAU); g.fill();
+    for (const [dx, dy] of [[-r * 1.5, -4], [r * 1.5, 3], [0, -r * 0.8]]) { g.save(); g.translate(x + dx, y + dy); DECOR.palm(g, th, 0); g.restore(); }
+  }
+
+  function drawBridge(g, p, PW, kind, T) {
+    g.save(); g.translate(p.x, p.y); g.rotate(Math.atan2(p.ty, p.tx));
+    const L = 132, w = PW + 8, wood = T === 'forest' || T === 'desert';
+    const base = wood ? '#a87a46' : T === 'lava' ? '#5a4a48' : T === 'ice' ? '#bcd0e0' : '#b8a890', rail = wood ? '#7a5230' : T === 'lava' ? '#3a2c2c' : '#9a8e7a';
+    K.shadow(g, 6, 10, L * 0.55, w * 0.5, 0.35);
+    K.rr(g, -L / 2, -w / 2, L, w, 8, base, { s: 4, h: 2 });
+    g.strokeStyle = 'rgba(40,20,20,0.35)'; g.lineWidth = 1.2;
+    for (let x = -L / 2 + 12; x < L / 2; x += 12) { g.beginPath(); g.moveTo(x, -w / 2 + 3); g.lineTo(x, w / 2 - 3); g.stroke(); }
+    for (const s of [-1, 1]) { K.rr(g, -L / 2 - 2, s * w / 2 - 5, L + 4, 10, 4, rail, { s: 2.4, h: 1 }); for (const x of [-L / 2, 0, L / 2]) K.rr(g, x - 6, s * w / 2 - 8, 12, 16, 4, shade(rail, -0.08), { s: 2.4, h: 1 }); }
+    g.restore();
+  }
+
+  /* ---------- Điểm quái xuất hiện (trái) & cổng thành (phải) ---------- */
+  function spawnMark(g, s, T) {
+    const y = s.y, col = T === 'chaos' ? '#d070ff' : '#c02a3a';
+    K.glow(g, 14, y, 110, col, 0.55);
+    for (const sd of [-1, 1]) {
+      const py = y + sd * 52; K.limb(g, 18, py + 6, 18, py - 40, 4, '#3a2a30');
+      K.cel(g, c => { c.moveTo(20, py - 40); c.lineTo(46, py - 34); c.lineTo(36, py - 24); c.lineTo(46, py - 14); c.lineTo(20, py - 8); c.closePath(); }, T === 'chaos' ? '#6a2ab0' : '#8a1a22', { s: 2, h: 1, lw: 1.8 });
+      K.dot(g, 33, py - 24, 3.4, '#f4e6c8');
+    }
+    g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = K.alpha(col, 0.8); g.lineWidth = 3; g.beginPath(); g.ellipse(10, y, 22, 54, 0, 0, TAU); g.stroke(); g.restore();
+  }
+  function paintGate(g, map, T) {
+    const W = map.W, H = map.H, ey = map.exit.y, PW = CONFIG.pathWidth;
+    const ST = T === 'lava' ? '#8a8490' : T === 'chaos' ? '#a89cc8' : T === 'ice' ? '#d4dce8' : '#c2bccc';
+    const x0 = W - 92;
+    K.shadow(g, x0 - 4, H / 2, 40, H * 0.55, 0.35);
+    K.rr(g, x0, -12, 104, H + 24, 0, ST, { s: 8, h: 3 });
+    g.save(); g.beginPath(); g.rect(x0, 0, 100, H); g.clip(); g.strokeStyle = 'rgba(40,20,50,0.28)'; g.lineWidth = 1.4;
+    for (let r = 0, y = 12; y < H; y += 16, r++) { g.beginPath(); g.moveTo(x0, y); g.lineTo(W, y); g.stroke(); for (let x = x0 + (r % 2) * 18; x < W; x += 36) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 16); g.stroke(); } }
+    g.restore();
+    for (let y = 4; y < H; y += 40) K.rr(g, x0 - 16, y, 22, 24, 3, shade(ST, 0.08), { s: 3, h: 1.4 });
+    // lối vào
+    const gh = PW + 30;
+    K.cel(g, c => { c.moveTo(x0 - 2, ey + gh / 2); c.lineTo(x0 - 2, ey - gh / 2 + 22); c.arc(x0 + 22, ey - gh / 2 + 22, 24, Math.PI, Math.PI * 1.5); c.lineTo(W, ey - gh / 2 - 2); c.lineTo(W, ey + gh / 2); c.closePath(); }, '#2a1828', { s: 0, h: 0, lw: 3 });
+    K.glow(g, x0 + 40, ey, 60, '#ffc860', 0.5);
+    g.strokeStyle = '#3a2418'; g.lineWidth = 4; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(x0 + 6, ey + i * 14); g.lineTo(x0 + 50, ey + i * 14); g.stroke(); }
+    // 2 tháp canh
+    for (const sd of [-1, 1]) {
+      const ty = ey + sd * (gh / 2 + 78);
+      K.circ(g, W - 52, ty, 46, shade(ST, 0.05), { s: 8, h: 3 });
+      for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; K.rr(g, W - 52 + Math.cos(a) * 40 - 6, ty + Math.sin(a) * 40 - 6, 13, 13, 2, shade(ST, 0.1), { s: 2, h: 1 }); }
+      K.cel(g, c => { c.moveTo(W - 52 - 6, ty - 8); c.lineTo(W - 52 - 6, ty - 20); c.arc(W - 52, ty - 20, 6, Math.PI, 0); c.lineTo(W - 52 + 6, ty - 8); c.closePath(); }, '#ffd070', { s: 0, h: 1.6, light: '#fff6c0', lw: 2 });
+      K.line(g, W - 52, ty - 28, W - 52, ty - 66, '#6b4426', 3);
+      K.cel(g, c => { c.moveTo(W - 50, ty - 66); c.lineTo(W - 20, ty - 58); c.lineTo(W - 50, ty - 46); c.closePath(); }, '#3d6fc0', { s: 2, h: 1, lw: 2 });
     }
   }
 

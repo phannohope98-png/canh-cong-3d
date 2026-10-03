@@ -223,8 +223,8 @@
       }
     }
     const face = st.face || 1, k = st.k || 0, a = st.a === undefined ? -1 : st.a;
-    env.char('elf' + tier, -9, top, face, k % 2 === 0 ? a : -1, t);
-    env.char('elf' + tier, 9, top + 1, face, k % 2 === 1 ? a : -1, t + 0.9);
+    env.char('elf' + tier, -10, top, face, k % 2 === 0 ? a : -1, t);
+    env.char('elf' + tier, 10, top + 1, face, k % 2 === 1 ? a : -1, t + 0.9);
     const w = tier === 1 ? 23 : tier === 2 ? 26 : tier === 3 ? 26 : 29;
     rail(g, w, top, tier >= 3 ? GOLD : '#a87444', tier >= 3 ? '#f4f1e6' : '#8a5a32');
     if (tier === 1) flag(g, 20, top - 6, 18, '#3a8a4a', t);
@@ -268,7 +268,8 @@
       banner(g, 13, -34, 8, 19, '#f4f1e6', (c, x, y) => { line(c, x, y - 4, x, y + 4, '#2f5cc0', 1.5); line(c, x - 3, y - 1, x + 3, y - 1, '#2f5cc0', 1.5); });
     }
   }
-  function barracksFx(g, tier, t, st) {
+  function barracksFx(g, tier, t, st, env) {
+    env.char('soldier' + tier, 0, 17, st.face || 1, -1, t);
     if (tier === 1) flag(g, 0, -44, 14, '#3d6fc0', t);
     else if (tier === 2) { flag(g, 0, -48, 16, '#3d6fc0', t); for (let i = 0; i < 2; i++) { const p = (t * 0.4 + i / 2) % 1; g.save(); g.globalAlpha = (1 - p) * 0.5; dot(g, 17.5 + p * 6, -50 - p * 22, 2.4 + p * 4, '#d8d0c8'); g.restore(); } }
     else if (tier === 3) { flag(g, -25, -66, 12, '#3d6fc0', t); flag(g, 25, -66, 12, '#3d6fc0', t); }
@@ -374,7 +375,7 @@
     const recoil = st.a >= 0 ? Math.max(0, Math.sin(Math.min(1, st.a * 1.6) * Math.PI)) : 0;
     const col = ['', '#7a7e8a', '#c8903a', '#5a5e6a', '#3a3a46'][tier], sc = [0, 1, 1.1, 1.2, 1.32][tier];
     const y = ART_Y[tier], f = st.face || 1;
-    env.char('dwarf', -22 * f, y - 2, f, -1, t);
+    env.char('dwarf' + tier, -22 * f, y - 2, f, -1, t);
     mortar(g, 6 * f, y + 2, sc, col, recoil, f, tier);
     if (tier === 4) { g.save(); g.globalAlpha = 0.6 + Math.sin(t * 4) * 0.3; g.strokeStyle = '#ff9a3a'; g.lineWidth = 1.6; g.beginPath(); g.arc(6 * f, y - 14, 10, -2.4, -0.8); g.stroke(); g.restore(); }
     if (tier >= 3) for (let i = 0; i < 3; i++) {
@@ -384,11 +385,98 @@
     if (tier === 4) K.glow(g, 0, -6, 30, '#ff8a2a', 0.22 + Math.sin(t * 3) * 0.08);
   }
 
+  /* =====================================================
+   * TRỤ THỦ ORC – chòi gai → lô cốt xương → pháo đài → hang chiến thần
+   * ===================================================== */
+  const ORC_TOP = [0, -38, -46, -56, -64];
+  const RED = '#a83a2a';
+  function stakes(g, rx, y, n, col, h, front) {
+    const ry = rx * 0.38;
+    for (let i = 0; i < n; i++) {
+      const a = (i + 0.5) / n * TAU, sn = Math.sin(a);
+      if ((sn > 0) !== front) continue;
+      const x = Math.cos(a) * rx, yy = y + sn * ry;
+      F(g, P.poly([x - 2.4, yy, x - 1.6, yy - h, x, yy - h - 6, x + 1.6, yy - h, x + 2.4, yy]), shade(col, front ? 0.04 : -0.16), { s: 0.8, h: 0.5, lw: 1.1 });
+    }
+  }
+  function skullEmblem(g, x, y, s) {
+    g.save(); g.translate(x, y); g.scale(s, s);
+    F(g, P.circ(0, -1, 4.6), '#efe6d0', { s: 1, h: 0.6, lw: 1.1 });
+    F(g, P.rr(-2.6, 2, 5.2, 3.4, 1), '#efe6d0', { s: 0.6, h: 0.3, lw: 1 });
+    dot(g, -1.8, -1.2, 1.2, '#1c1028'); dot(g, 1.8, -1.2, 1.2, '#1c1028');
+    g.restore();
+  }
+  function orcStatic(g, tier) {
+    const top = ORC_TOP[tier];
+    if (tier === 1) {
+      foundation(g, 31, '#8a7a62', '#6aa84a');
+      stakes(g, 33, 3, 11, '#9a6a3a', 14, false);
+      for (const x of [-18, 18]) post(g, x, 2, x * 0.85, top + 6, 5, '#7a4e2a');
+      for (const x of [-7, 7]) post(g, x, 4, x * 0.8, top + 6, 4.4, '#7a4e2a');
+      post(g, -17, -2, 15, top + 12, 2.6, '#6a4222'); post(g, 17, -2, -15, top + 12, 2.6, '#6a4222');
+      planks(g, 0, top + 7, 46, 8, '#8a5a32');
+      banner(g, 0, -16, 12, 18, RED, (c, x, y) => skullEmblem(c, x, y, 0.8));
+      stakes(g, 33, 3, 11, '#9a6a3a', 14, true);
+    } else if (tier === 2) {
+      foundation(g, 33, '#7e7466', '#6aa84a');
+      stakes(g, 35, 3, 12, '#a07040', 16, false);
+      cyl(g, 0, -1, 25, 20, '#8a8274', { ry: 9, top: false, rowH: 7 });
+      for (const x of [-17, 17]) post(g, x, -20, x * 0.9, top + 6, 5, '#7a4e2a');
+      planks(g, 0, top + 7, 52, 9, '#7a4e2a');
+      door(g, 0, 4, 12, 15, '#4a2a18', '#6a6256');
+      for (const s of [-1, 1]) { skullEmblem(g, s * 19, -6, 0.75); }
+      F(g, P.rr(-3, -18, 6, 3, 1), '#2a1a14', { s: 0, h: 0, lw: 0.8 });
+      banner(g, -17, -22, 9, 16, RED, (c, x, y) => skullEmblem(c, x, y, 0.65)); banner(g, 17, -22, 9, 16, RED, (c, x, y) => skullEmblem(c, x, y, 0.65));
+      stakes(g, 35, 3, 12, '#a07040', 16, true);
+    } else if (tier === 3) {
+      foundation(g, 35, '#6e6860', '#5aa84a');
+      stakes(g, 38, 4, 13, '#8a8478', 14, false);
+      cyl(g, 0, -1, 29, -(top + 9), '#8a8478', { ry: 10, top: false, taper: 4, rowH: 7.5 });
+      F(g, P.rr(-31, top + 3, 62, 9, 3), '#5a544c', { s: 1.6, h: 0.8 });
+      for (let i = -3; i <= 3; i++) F(g, P.poly([i * 8.2 - 2.4, top + 4, i * 8.2, top - 5, i * 8.2 + 2.4, top + 4]), '#c8ccd4', { s: 0.5, h: 0.4, lw: 1 });
+      door(g, 0, 5, 14, 18, '#3a2214', '#5a544c');
+      skullEmblem(g, 0, -30, 1.25);
+      for (const s of [-1, 1]) { win(g, s * 13, -27, 4.4, 8, '#ff8a3a', { noBar: true }); banner(g, s * 24, -26, 8, 17, RED, (c, x, y) => skullEmblem(c, x, y, 0.6)); }
+      g.strokeStyle = RED; g.lineWidth = 2; g.beginPath(); g.ellipse(0, -12, 28, 10, 0, 0.08, Math.PI - 0.08); g.stroke();
+      stakes(g, 38, 4, 13, '#8a8478', 14, true);
+    } else {
+      foundation(g, 38, '#4e4a58', '#5aa84a');
+      stakes(g, 41, 4, 14, '#3a3644', 16, false);
+      cyl(g, 0, -1, 33, -(top + 9), '#5e5868', { ry: 11.5, top: false, taper: 6, rowH: 7.5 });
+      g.strokeStyle = GOLD; g.lineWidth = 2.2;
+      for (const y of [-14, -36]) { g.beginPath(); g.ellipse(0, y, 31 - (-y) * 0.06, 11, 0, 0.08, Math.PI - 0.08); g.stroke(); }
+      F(g, P.rr(-35, top + 2, 70, 10, 3.4), '#3a3644', { s: 1.8, h: 0.9 });
+      for (let i = -4; i <= 4; i++) F(g, P.poly([i * 7.6 - 2.6, top + 3, i * 7.6, top - 7, i * 7.6 + 2.6, top + 3]), '#d8dce4', { s: 0.5, h: 0.4, lw: 1 });
+      // cổng sừng
+      F(g, c => { c.moveTo(-9, 6); c.lineTo(-9, -12); c.arc(0, -12, 9, Math.PI, 0); c.lineTo(9, 6); c.closePath(); }, '#1c1018', { s: 0, h: 0, lw: 1.6 });
+      K.glow(g, 0, -4, 14, '#ff6a2a', 0.5);
+      for (const s of [-1, 1]) F(g, c => { c.moveTo(s * 7, -19); c.quadraticCurveTo(s * 18, -22, s * 17, -32); c.quadraticCurveTo(s * 11, -25, s * 5, -22); c.closePath(); }, '#efe6d0', { s: 1, h: 0.6, lw: 1.1 });
+      skullEmblem(g, 0, -34, 1.6);
+      for (const s of [-1, 1]) { banner(g, s * 25, -30, 9, 22, RED, (c, x, y) => skullEmblem(c, x, y, 0.7)); }
+      stakes(g, 41, 4, 14, '#3a3644', 16, true);
+    }
+  }
+  function orcFx(g, tier, t, st, env) {
+    const top = ORC_TOP[tier], face = st.face || 1, a = st.a === undefined ? -1 : st.a;
+    if (tier >= 3) for (const s of [-1, 1]) { // chậu lửa
+      const bx = s * (tier === 4 ? 36 : 33), by = top + 8;
+      post(g, bx, by + 6, bx, by - 2, 3, '#4a3a2a'); F(g, P.rr(bx - 5, by - 7, 10, 6, 2), '#3a3036', { s: 1, h: 0.5, lw: 1.1 });
+      K.glow(g, bx, by - 14, 15, '#ff8a2a', 0.6 + Math.sin(t * 9 + s) * 0.2);
+      F(g, c => { c.moveTo(bx - 4, by - 7); c.quadraticCurveTo(bx - 5, by - 14 - Math.sin(t * 8 + s) * 2, bx, by - 20); c.quadraticCurveTo(bx + 5, by - 14, bx + 4, by - 7); c.closePath(); }, '#ff8a1a', { s: 0, h: 0.8, lw: 0.9, light: '#ffe060' });
+    }
+    env.char('orct' + tier, 0, top + 1, face, a, t);
+    const w = tier === 1 ? 23 : tier === 2 ? 26 : 29;
+    rail(g, w, top + 1, tier >= 3 ? '#6a6460' : '#8a5a32', tier >= 3 ? '#8a8478' : '#6a4222');
+    if (tier === 1) flag(g, 21, top - 6, 18, RED, t);
+    if (tier === 2) flag(g, -23, top - 6, 20, RED, t, -1);
+  }
+
   window.ArtTowers = {
     archer:    { static: archerStatic,    fx: archerFx,    box: [130, 200, 65, 160] },
     barracks:  { static: barracksStatic,  fx: barracksFx,  box: [130, 150, 65, 110] },
     mage:      { static: mageStatic,      fx: mageFx,      box: [130, 210, 65, 170] },
     artillery: { static: artilleryStatic, fx: artilleryFx, box: [130, 120, 65, 80] },
-    ARCH_TOP, MAGE_TOP, ART_Y
+    orc:       { static: orcStatic,       fx: orcFx,       box: [140, 190, 70, 150] },
+    ARCH_TOP, MAGE_TOP, ART_Y, ORC_TOP
   };
 })();

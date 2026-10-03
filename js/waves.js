@@ -20,7 +20,7 @@
       const n = level.paths.length;
       this.list = level.waves.map(w => parse(w, n));
       this.index = -1; this.state = 'ready'; this.timer = 0; this.queue = []; this.qi = 0; this.t = 0;
-      this.hpMul = 1 + levelIndex * 0.04;
+      this.hpMul = 0.78 + levelIndex * 0.035;
     },
     get total() { return this.list.length; },
     get shown() { return Math.max(1, Math.min(this.total, this.index + 1)); },
