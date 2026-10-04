@@ -127,8 +127,52 @@
     };
   }
 
+  /* ---------- trụ công trình 3D (phần tĩnh; cờ, lửa, nhân vật vẫn do fx vẽ) ---------- */
+  const towers = new Map();
+  function towerRoot(type, tier) {
+    const key = type + tier; let root = towers.get(key); if (root) return root;
+    Chars3D.setInk(1.0);
+    root = Towers3D.build(type, tier); optimize(root, { n: {} }); root.updateMatrixWorld(true);
+    towers.set(key, root); return root;
+  }
+  function drawTower(type, tier, g) {
+    drawStatic(towerRoot(type, tier), g);
+  }
+  function drawStatic(root, g) {
+    const r = gl(), c = g.canvas, m = g.getTransform(), W = c.width, H = c.height;
+    const sz = r.getSize(new T.Vector2()); if (sz.x !== W || sz.y !== H) r.setSize(W, H, false);
+    const s = 1 / (m.a * 40);
+    cam.left = -m.e * s; cam.right = (W - m.e) * s; cam.top = m.f * s; cam.bottom = -(H - m.f) * s; cam.updateProjectionMatrix();
+    scene.add(root); r.render(scene, cam); scene.remove(root);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(r.domElement, 0, 0); g.restore();
+  }
+  if (window.ArtTowers && window.Towers3D) ['archer', 'mage', 'barracks', 'artillery'].forEach(type => {
+    const d = ArtTowers[type]; if (!d) return;
+    const orig = d.static;
+    d.static = (g, tier) => (Art3D.enabled && !failed && gl() ? drawTower(type, tier, g) : orig(g, tier));
+  });
+
+  // ô xây trống 3D
+  const plotCache = new Map(); let plotRoot = null;
+  if (window.Painter && window.Towers3D && Towers3D.plot) {
+    const origPlot = Painter.plot.bind(Painter);
+    Painter.plot = function (ctx, x, y, hi, t) {
+      if (!(Art3D.enabled && !failed && gl())) return origPlot(ctx, x, y, hi, t);
+      const ppu = Math.max(0.5, Math.min(4, Math.round(this.res * 4) / 4));
+      let c = plotCache.get(ppu);
+      if (!c) {
+        if (!plotRoot) { Chars3D.setInk(1.0); plotRoot = Towers3D.plot(); optimize(plotRoot, { n: {} }); plotRoot.updateMatrixWorld(true); }
+        c = document.createElement('canvas'); c.width = Math.ceil(100 * ppu); c.height = Math.ceil(70 * ppu);
+        const g = c.getContext('2d'); g.setTransform(ppu, 0, 0, ppu, 50 * ppu, 41 * ppu);
+        drawStatic(plotRoot, g); plotCache.set(ppu, c);
+      }
+      ctx.drawImage(c, x - 50, y - 41, 100, 70);
+      if (hi) { const p = 0.6 + Math.sin(t * 6) * 0.3; ctx.save(); ctx.globalAlpha = p; ctx.strokeStyle = '#ffe58a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(x, y, 44, 17, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+    };
+  }
+
   Art3D.setEnabled = function (on) {
-    Art3D.enabled = !!on;
+    Art3D.enabled = !!on; plotCache.clear();
     if (window.Painter) Painter.clear();
   };
   Art3D.available = () => !!gl();

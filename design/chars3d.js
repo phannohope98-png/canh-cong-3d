@@ -1241,7 +1241,7 @@
     rig.root.name = 'root';
     if (def.scale) rig.root.scale.setScalar(def.scale);
     freeze(rig);
-    const K = made.anim.kind, clips = K === 'wolf' ? wolfClips(rig) : K === 'scorpion' ? scorpClips(rig) : K === 'drake' ? drakeClips(rig) : humanClips(rig, made.anim);
+    const K = made.anim.kind, clips = K === 'static' ? [Object.assign(new T.AnimationClip('idle', 1, []), { userData: { loop: true } })] : K === 'wolf' ? wolfClips(rig) : K === 'scorpion' ? scorpClips(rig) : K === 'drake' ? drakeClips(rig) : humanClips(rig, made.anim);
     rig.root.userData.charId = def.id; rig.root.userData.tier = t;
     return { root: rig.root, clips, rig, def, tier: t, skill: made.anim.skill, skillName: SKILL_NAME[def.id] };
   }

@@ -197,7 +197,7 @@
   function glb(id, tier) {
     return new Promise((res, rej) => {
       const b = C3.build(id, tier), ex = C3.toExportable(b.root);
-      new T.GLTFExporter().parse(ex, r => { freeGeo(b.root); res(r); }, rej, { binary: true, animations: b.clips });
+      new T.GLTFExporter().parse(ex, r => { freeGeo(b.root); res(r); }, rej, { binary: true, animations: b.clips.filter(c => c.tracks.length) });
     });
   }
   const fname = (id, t, ext) => 'canhcong_' + id + '_t' + t + ext;
