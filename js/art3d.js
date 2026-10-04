@@ -76,7 +76,7 @@
   }
   function pose(I, P) {
     let name, f;
-    if (P.w >= 0) { name = 'walk'; f = P.w; } else if (P.a >= 0) { name = 'attack'; f = P.a; } else { name = 'idle'; f = (((P.t || 0) / IDLE) % 1 + 1) % 1; }
+    if (P.d >= 0) { name = 'die'; f = P.d; } else if (P.w >= 0) { name = 'walk'; f = P.w; } else if (P.a >= 0) { name = 'attack'; f = P.a; } else { name = 'idle'; f = (((P.t || 0) / IDLE) % 1 + 1) % 1; }
     const a = I.actions[name] || I.actions.idle;
     if (I.cur !== a) { I.mixer.stopAllAction(); a.reset().play(); I.cur = a; }
     I.mixer.setTime(a.getClip().duration * Math.min(0.999, f));
@@ -170,6 +170,25 @@
       if (hi) { const p = 0.6 + Math.sin(t * 6) * 0.3; ctx.save(); ctx.globalAlpha = p; ctx.strokeStyle = '#ffe58a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(x, y, 44, 17, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
     };
   }
+
+  /** Chụp 1 mô hình tĩnh thành sprite (1 m = 40 đv): → { c: canvas, ox, oy, w, h, fw } theo đv game */
+  const _box = new T.Box3(), _v = new T.Vector3(), cE = Math.cos(EL), sE = Math.sin(EL);
+  Art3D.sprite = function (root, ppu) {
+    if (!gl()) return null;
+    optimize(root, { n: {} }); root.updateMatrixWorld(true); _box.setFromObject(root);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < 8; i++) {
+      _v.set(i & 1 ? _box.max.x : _box.min.x, i & 2 ? _box.max.y : _box.min.y, i & 4 ? _box.max.z : _box.min.z);
+      const sx = _v.x * 40, sy = -(_v.y * cE - _v.z * sE) * 40;
+      x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy);
+    }
+    const pad = 3, ox = -x0 + pad, oy = -y0 + pad, w = x1 - x0 + pad * 2, h = y1 - y0 + pad * 2;
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w * ppu)); c.height = Math.max(1, Math.ceil(h * ppu));
+    const g = c.getContext('2d'); g.setTransform(ppu, 0, 0, ppu, ox * ppu, oy * ppu);
+    drawStatic(root, g);
+    root.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    return { c, ox, oy, w, h, fw: (_box.max.x - _box.min.x) * 40 };
+  };
 
   Art3D.setEnabled = function (on) {
     Art3D.enabled = !!on; plotCache.clear();

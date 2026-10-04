@@ -465,6 +465,7 @@
     drawBridges(g, map, T);
     // 5) cây cối & công trình (theo chiều sâu)
     for (const d of map.decor) {
+      if (window.Map3D && Map3D.draw(g, d, T, theme, res)) continue;
       g.save(); g.translate(d.x, d.y);
       if (d.prop) { if (PROPS[d.k]) PROPS[d.k](g, d, T); }
       else { g.scale(d.s * d.flip, d.s); if (D[d.k]) D[d.k](g, T, d.v); }

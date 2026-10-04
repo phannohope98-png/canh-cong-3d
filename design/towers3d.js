@@ -219,5 +219,5 @@
   DEFS.forEach(([type, name, desc, palette]) => Chars3D.list.push({ id: 'tower_' + type, name, group: 'Công trình', role: 'Trụ · 4 cấp', tiers: 4, tierName: 'Cấp trụ', desc, palette,
     make: t => ({ rig: { root: build(type, t), n: {}, o: {} }, anim: { kind: 'static' } }) }));
 
-  window.Towers3D = { build, plot: PLOT, U, HY };
+  window.Towers3D = { build, plot: PLOT, U, HY, kit: { footing, tower, rAt, onCyl, win, door, banner, planks, beam, merlons, house, stakes, leafShape } };
 })();
