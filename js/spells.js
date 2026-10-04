@@ -32,7 +32,7 @@
         Game.map.paths.forEach((p, i) => { const n = p.nearest(x, y); if (!best || n.perp < best.perp) best = { perp: n.perp, dist: n.dist, i }; });
         if (!best || best.perp > 60) { UI.toast('Hãy chạm lên con đường'); AudioSys.play('error'); return true; }
         const p = Game.map.paths[best.i];
-        const arts = ['soldier3', 'orct3'];
+        const arts = ['soldier3', 'dwarf3'];
         [-1, 1].forEach((s, j) => {
           p.pointAt(Math.max(20, Math.min(p.length - 20, best.dist + s * 14)), tmp);
           const px = tmp.x + tmp.nx * s * 12, py = tmp.y + tmp.ny * s * 12, art = arts[j];
@@ -60,7 +60,7 @@
       for (let i = this.rocks.length - 1; i >= 0; i--) {
         const m = this.rocks[i]; m.t += dt;
         if (m.t >= m.delay + m.fall) {
-          Combat.splash(m.x, m.y, D.radius * 0.7, D.damage, 'physical');
+          Combat.splash(m.x, m.y, m.r || D.radius * 0.7, m.dmg || D.damage, 'physical');
           Effects.explosion(m.x, m.y, 70, '#ff6a1a'); Effects.burst(m.x, m.y, '#3a2a22', 10, 160, 0.6, 6, 300);
           Effects.shake(6, 0.25); AudioSys.play('explode'); Effects.comic(m.x, m.y - 50, 'BOOM!', '#ff7a2a');
           this.rocks.splice(i, 1);

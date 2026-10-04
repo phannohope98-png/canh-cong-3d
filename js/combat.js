@@ -17,8 +17,8 @@
     },
     hitUnit(u, dmg) {
       if (!u.active) return;
-      const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - u.armor)));
-      u.hp -= amt; u.flash = 0.1;
+      const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - u.armor) * (u.shieldT > 0 ? 0.5 : 1)));
+      u.hp -= amt; u.flash = 0.1; u.hitT = 0.2;
       if (u.hp <= 0) Units.kill(u);
     },
     splash(x, y, r, dmg, type, opts) {
@@ -76,6 +76,12 @@
       if (p.kind === 'enemyArrow') { if (alive) this.hitUnit(p.target, o.damage); return; }
       if (!alive) return;
       const e = p.target;
+      if (p.kind === 'bolt' && o.aoe) { // quả cầu phép nổ thành vòng phép dưới chân quái
+        this.splash(e.x, e.y, o.aoe, o.damage, 'magic', { air: true });
+        Effects.magicCircle(e.x, e.y, o.aoe); Effects.burst(p.tx, p.ty, '#c8b8ff', 10, 130, 0.4, 4);
+        if (Math.random() < 0.25) Effects.comic(e.x, e.y - 50, 'ZAP!', '#b89aff');
+        return;
+      }
       this.hitEnemy(e, o.damage, o.type);
       if (p.kind === 'bolt') {
         Effects.flash(p.tx, p.ty, 26, '#9fd8ff'); Effects.burst(p.tx, p.ty, '#c8e8ff', 8, 120, 0.35, 4);

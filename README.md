@@ -7,14 +7,15 @@ Bật GitHub Pages (Settings → Pages → Deploy from a branch → `main` / `(r
 `https://TÊN-TÀI-KHOẢN.github.io/TÊN-REPO/` trên điện thoại, **xoay ngang** → "Thêm vào màn hình chính".
 Mỗi lần sửa code: đổi `CACHE_NAME` trong `service-worker.js` để máy tải bản mới.
 
-## 5 nhân vật = 5 trụ (4 cấp mỗi trụ, đổi hình khi nâng cấp)
-| Nhân vật | Trụ | Vai trò |
-|---|---|---|
-| Con Người | Trụ Thành | Triệu hồi 3 lính kiếm chặn đường |
-| Elf | Trụ Cung | Bắn tên nhanh, trúng cả quân bay |
-| Người Lùn | Trụ Pháo | Đạn nổ diện rộng (không bắn quân bay) |
-| Phù Thủy | Trụ Pháp | Phép xuyên giáp, cấp 4 nảy tia |
-| Orc | Hang Chiến Binh | Gọi 3 lính Orc ra chặn đường, cấp 4 cứ 3 nhát làm choáng |
+## 4 trụ (4 cấp mỗi trụ, đổi hình khi nâng cấp)
+| Trụ | Vai trò |
+|---|---|
+| Người | Gọi 2 kiếm sĩ (tóc đen, giáp bạc, áo choàng đỏ sẫm, kiếm lớn + khiên). Chém ngang; cấp 4 giơ khiên tạo lá chắn |
+| Elf | Bắn rất nhanh, sát thương cao, tầm trung; 15% mũi tên phát sáng chí mạng; cấp 4 bắn 3 mũi liên tiếp |
+| Phù Thủy | Tầm xa nhất, quả cầu phép nổ vòng phép sát thương lan; cấp 4 gọi mưa thiên thạch |
+| Người Lùn | Gọi 1 chiến binh Lùn béo chắc, rìu hai tay; cứ 4 nhát đập đất gây choáng |
+
+Orc giờ là quái: Orc, Orc Cưỡi Sói (sói tăng tốc húc lính). Goblin tí hon đi thành bầy. Boss: Kỵ Sĩ Hắc Ám (giữa màn, triệu hồi bóng tối, giai đoạn 2 kiếm rực đỏ), Chúa Hắc Ám (boss cuối, 3 giai đoạn: đánh mạnh → triệu hồi Orc + Goblin → rực đỏ, tăng tốc).
 
 Bách khoa → "5 Nhân vật trụ" hiển thị bảng thiết kế từng nhân vật (4 cấp, biểu cảm, trụ, trang bị, bảng màu).
 

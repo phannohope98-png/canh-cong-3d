@@ -86,14 +86,14 @@
     /** Chân dung cho giao diện (canvas DOM) */
     towerPortrait(canvas, type, tier, fit) {
       const g = canvas.getContext('2d');
-      const TOP = { archer: [0, 82, 92, 98, 112], mage: [0, 82, 94, 104, 114], barracks: [0, 48, 56, 70, 80], artillery: [0, 40, 48, 52, 58], orc: [0, 56, 62, 66, 92] }[type] || [0, 100, 100, 100, 100];
+      const TOP = { archer: [0, 82, 92, 98, 112], mage: [0, 82, 94, 104, 114], barracks: [0, 48, 56, 70, 80], artillery: [0, 48, 54, 62, 72], orc: [0, 56, 62, 66, 92] }[type] || [0, 100, 100, 100, 100];
       g.clearRect(0, 0, canvas.width, canvas.height);
       const f = fit || 0.82, s = Math.min(canvas.width * f / 92, canvas.height * f / (TOP[tier] + 26));
       this.tower(g, type, tier, canvas.width / 2, canvas.height / 2 + (TOP[tier] - 26) * s / 2, s, 0.5, { a: -1, face: 1 });
     },
     charPortrait(canvas, type, opts) {
       opts = opts || {};
-      if (window.ArtImg && ArtImg.ready && ArtImg.portrait(canvas, type, opts)) return;
+      if (window.ArtImg && ArtImg.ready && !(ArtChars[type] && ArtChars[type].chibi) && ArtImg.portrait(canvas, type, opts)) return;
       const g = canvas.getContext('2d'), d = ArtChars[type], [w, h, ox, oy] = d.box;
       g.clearRect(0, 0, canvas.width, canvas.height);
       const z = opts.zoom || 1;
@@ -103,7 +103,8 @@
         return;
       }
       const s = Math.min(canvas.width / Math.max(d.tall * 1.15, d.wide || 0), canvas.height / (d.tall * 1.12)) * z;
-      this.char(g, type, canvas.width / 2 - d.tall * 0.06 * s, canvas.height / 2 + d.tall * 0.52 * s, s, 1, 'idle', 0.4, s);
+      const md = opts.mode === 'atk' ? 'atk' : opts.mode === 'walk' ? 'walk' : 'idle';
+      this.char(g, type, canvas.width / 2 - d.tall * 0.06 * s, canvas.height / 2 + d.tall * 0.52 * s, s, 1, md, md === 'atk' ? 0.5 : md === 'walk' ? 0.25 : 0.4, s);
     }
   };
   window.Painter = Painter;

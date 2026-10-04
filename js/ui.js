@@ -97,7 +97,7 @@
       Painter.res = z;
       const near = (x, y) => map.spots.slice().sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
       const items = [], used = new Set();
-      [['archer', 4, 700, 380], ['mage', 4, 1000, 640], ['barracks', 3, 840, 800], ['artillery', 4, 1250, 560], ['orc', 4, 1200, 400]].forEach(([t, lv, x, y]) => { const s = near(x, y); if (s && !used.has(s.id)) { used.add(s.id); items.push({ y: s.y + 14, f: () => Painter.tower(g, t, lv, s.x, s.y, 1.0, 0.8, { a: -1, face: 1 }) }); } });
+      [['archer', 4, 700, 380], ['mage', 4, 1000, 640], ['barracks', 3, 840, 800], ['artillery', 4, 1250, 560]].forEach(([t, lv, x, y]) => { const s = near(x, y); if (s && !used.has(s.id)) { used.add(s.id); items.push({ y: s.y + 14, f: () => Painter.tower(g, t, lv, s.x, s.y, 1.0, 0.8, { a: -1, face: 1 }) }); } });
       const p = map.paths[0], pt = d => p.pointAt(d, {});
       const L = p.length, ch = (type, d, face, mode, ph, lat, sc) => { const q = pt(d); items.push({ y: q.y, f: () => Painter.char(g, type, q.x + q.nx * (lat || 0), q.y + q.ny * (lat || 0) + 6, sc || (CONFIG.enemies[type] ? CONFIG.enemies[type].radius / ArtChars[type].dr : 1), face, mode, ph) }); };
       ch(ArtChars.heroKey('aldric'), L * 0.57, -1, 'atk', 0.5, -6, 1.1); ch('soldier4', L * 0.58, -1, 'idle', 0.2, 14, 1.1);
@@ -209,8 +209,8 @@
         html = '<div class="sheets">' + Object.keys(CONFIG.towers).map(k => {
           const T = CONFIG.towers[k], ch = CHAR[k], pal = T.palette, dk = K.shade(pal[0], -0.55);
           return `<div class="sheet" style="--c1:${pal[2]};--c2:${dk};--c3:${pal[4]}"><div class="sheet-head"><canvas data-char="${ch}4" data-head="1" data-zoom="1.3" width="108" height="108"></canvas><div><h3>${T.name.toUpperCase()}</h3><small>${T.role}</small></div></div>
-            <div class="sheet-sec">NHÂN VẬT</div><div class="sheet-row">${['front', 'side', 'back', 'q34'].map((v, i) => `<div class="cell"><img src="${ArtImg.src(IMG[ch] + '_' + v)}" alt=""><span>${['Trước', 'Bên', 'Sau', '3/4'][i]}</span></div>`).join('')}</div>
-            <div class="sheet-sec">BIỂU CẢM</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><img class="face" src="${ArtImg.src(IMG[ch] + '_face' + t)}" alt=""></div>`).join('')}</div>
+            <div class="sheet-sec">NHÂN VẬT (4 CẤP)</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><canvas data-char="${ch}${t}" data-zoom="0.95" width="150" height="170"></canvas><span>Cấp ${t}</span></div>`).join('')}</div>
+            <div class="sheet-sec">ĐỘNG TÁC</div><div class="sheet-row">${[['idle', 'Đứng'], ['walk', 'Đi'], ['atk', 'Tấn công'], ['back', 'Sau lưng']].map(([m, n]) => `<div class="cell"><canvas data-char="${ch}3${m === 'back' ? '_b' : ''}" data-mode="${m === 'back' ? 'walk' : m}" data-zoom="0.95" width="150" height="170"></canvas><span>${n}</span></div>`).join('')}</div>
             <div class="sheet-sec">TRỤ CÔNG TRÌNH (4 CẤP)</div><div class="sheet-row">${[1, 2, 3, 4].map(t => `<div class="cell"><canvas data-tower="${k}" data-tier="${t}" width="150" height="190"></canvas><span>${T.tierNames[t - 1]}</span></div>`).join('')}</div>
             <div class="sheet-sec">VŨ KHÍ & TRANG BỊ</div><div class="sheet-gear">${T.gear.map(x => `<b>${x}</b>`).join('')}</div>
             <div class="sheet-pal">BẢNG MÀU ${pal.map(c => `<i style="background:${c}"></i>`).join('')}</div>
@@ -223,7 +223,7 @@
     renderSettings() {
       const s = Save.data.settings, row = (k, label) => `<div class="setting"><span>${label}</span><button class="switch ${s[k] ? 'on' : ''}" data-action="toggle" data-key="${k}"><i></i></button></div>`;
       $('settings-list').innerHTML = `<div class="card">${row('music', 'Nhạc nền')}${row('sound', 'Âm thanh')}${row('shake', 'Rung màn hình')}</div>
-        <div class="card"><h3>Cách chơi</h3><p class="sub" style="line-height:1.55;font-size:14px">• Chạm ô đất có cọc gỗ để chọn 1 trong 5 trụ (Con người, Elf, Người Lùn, Phù thủy, Orc).<br>• Chạm trụ để nâng cấp (4 cấp đổi hình) hoặc bán.<br>• Kéo để di chuyển bản đồ, chụm 2 ngón để phóng to.<br>• Chạm anh hùng rồi chạm bản đồ để di chuyển; nút kỹ năng ở bên cạnh.<br>• Chạm đầu lâu đỏ để gọi đợt quái, gọi sớm được thưởng vàng.<br>• Xu kiếm được dùng mua anh hùng & trang bị.</p></div>
+        <div class="card"><h3>Cách chơi</h3><p class="sub" style="line-height:1.55;font-size:14px">• Chạm ô đất có cọc gỗ để chọn 1 trong 4 trụ: Người (2 kiếm sĩ), Elf (bắn nhanh), Phù thủy (tầm xa, sát thương lan), Người Lùn (1 chiến binh trâu bò).<br>• Chạm trụ để nâng cấp (4 cấp đổi hình) hoặc bán.<br>• Kéo để di chuyển bản đồ, chụm 2 ngón để phóng to.<br>• Chạm anh hùng rồi chạm bản đồ để di chuyển; nút kỹ năng ở bên cạnh.<br>• Chạm đầu lâu đỏ để gọi đợt quái, gọi sớm được thưởng vàng.<br>• Xu kiếm được dùng mua anh hùng & trang bị.</p></div>
         <div class="row"><button class="gbtn red sm" data-action="reset">${I('trash')}<span>Xoá dữ liệu</span></button></div>`;
     },
 

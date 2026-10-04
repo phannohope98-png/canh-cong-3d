@@ -14,6 +14,21 @@
     rings: [], rPool: [], bolts: [],
     shakeAmp: 0, shakeTime: 0, shakeX: 0, shakeY: 0,
 
+    /* Vòng phép (Phù Thủy) hiện dưới chân quái rồi tan */
+    circles: [],
+    magicCircle(x, y, r) { if (this.circles.length > 12) this.circles.shift(); this.circles.push({ x, y, r, t: 0 }); },
+    drawCircles(ctx) {
+      for (const c of this.circles) {
+        const k = c.t / 0.6, a = k < 0.2 ? k / 0.2 : 1 - (k - 0.2) / 0.8, r = c.r * (0.7 + 0.3 * Math.min(1, k * 3));
+        ctx.save(); ctx.globalAlpha = Math.max(0, a); ctx.globalCompositeOperation = 'lighter'; ctx.translate(c.x, c.y); ctx.scale(1, 0.42); ctx.rotate(c.t * 2);
+        ctx.strokeStyle = '#a07aff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#e0d0ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, r * 0.72, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); for (let i = 0; i <= 6; i++) { const q = i / 6 * Math.PI * 2 * 2; ctx.lineTo(Math.cos(q) * r * 0.72, Math.sin(q) * r * 0.72); } ctx.stroke(); // ngôi sao 6 cánh
+        for (let i = 0; i < 8; i++) { const q = i / 8 * Math.PI * 2; ctx.fillStyle = '#d8c8ff'; ctx.fillRect(Math.cos(q) * r * 0.86 - 2, Math.sin(q) * r * 0.86 - 2, 4, 4); }
+        const gr = ctx.createRadialGradient(0, 0, 0, 0, 0, r); gr.addColorStop(0, 'rgba(160,110,255,0.35)'); gr.addColorStop(1, 'rgba(160,110,255,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    },
     /* Chữ hiệu ứng truyện tranh kiểu Kingdom Rush: BOOM! POW! KAPOW!… */
     comics: [], comicCd: 0,
     comic(x, y, word, col, force) {
@@ -59,15 +74,20 @@
     },
     /* Xác ngã xuống rồi mờ dần (kiểu Kingdom Rush) */
     corpses: [],
-    corpse(type, x, y, scale, face, fly) {
+    corpse(type, x, y, scale, face, fly, roll) {
       if (this.corpses.length >= 40) this.corpses.shift();
-      this.corpses.push({ type, x, y, scale, face: face || 1, fly: !!fly, t: 0 });
+      this.corpses.push({ type, x, y, scale, face: face || 1, fly: !!fly, roll: !!roll, t: 0 });
     },
     drawCorpses(ctx) {
       for (const c of this.corpses) {
         const f = Math.min(1, c.t / 0.3), e = 1 - (1 - f) * (1 - f), a = c.t < 0.75 ? 1 : Math.max(0, 1 - (c.t - 0.75) / 0.65);
         if (a <= 0) continue;
-        ctx.save(); ctx.globalAlpha = a; ctx.translate(c.x, c.y + (c.fly ? e * 34 : 0)); ctx.rotate(-c.face * e * 1.42); ctx.scale(1, 1 - e * 0.12);
+        ctx.save(); ctx.globalAlpha = a;
+        if (c.roll) { // goblin ngã lăn vài vòng
+          const k = Math.min(1, c.t / 0.55), h = 10 * c.scale;
+          ctx.translate(c.x - c.face * k * 34, c.y - Math.sin(k * Math.PI) * 8 - h * (1 - k) * 0.5); ctx.rotate(-c.face * (k * Math.PI * 4 + (k >= 1 ? 0 : 0)) - c.face * k * 1.42 * 0); ctx.translate(0, h * (1 - k) * 0.5);
+          if (k >= 1) ctx.rotate(-c.face * 1.42);
+        } else { ctx.translate(c.x, c.y + (c.fly ? e * 34 : 0)); ctx.rotate(-c.face * e * 1.42); ctx.scale(1, 1 - e * 0.12); }
         Painter.char(ctx, c.type, 0, 0, c.scale, c.face, 'idle', 0);
         if (c.t < 0.18) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (0.18 - c.t) / 0.18 * 0.7; Painter.char(ctx, c.type, 0, 0, c.scale, c.face, 'idle', 0); }
         ctx.restore();
@@ -77,7 +97,7 @@
       while (this.particles.length) this.pPool.push(this.particles.pop());
       while (this.texts.length) this.tPool.push(this.texts.pop());
       while (this.rings.length) this.rPool.push(this.rings.pop());
-      this.bolts.length = 0; this.corpses.length = 0; this.decals.length = 0; this.comics.length = 0;
+      this.bolts.length = 0; this.corpses.length = 0; this.decals.length = 0; this.comics.length = 0; this.circles.length = 0;
       this.shakeAmp = this.shakeTime = this.shakeX = this.shakeY = 0;
     },
 
@@ -155,8 +175,9 @@
     },
 
     update(dt) {
-      for (let i = this.corpses.length - 1; i >= 0; i--) { const c = this.corpses[i]; c.t += dt; if (c.t > 1.4) this.corpses.splice(i, 1); }
+      for (let i = this.corpses.length - 1; i >= 0; i--) { const c = this.corpses[i]; c.t += dt; if (c.t > 1.6) this.corpses.splice(i, 1); }
       for (let i = this.decals.length - 1; i >= 0; i--) { const d = this.decals[i]; d.t += dt; if (d.t > d.life) this.decals.splice(i, 1); }
+      for (let i = this.circles.length - 1; i >= 0; i--) { this.circles[i].t += dt; if (this.circles[i].t > 0.6) this.circles.splice(i, 1); }
       if (this.comicCd > 0) this.comicCd -= dt; for (let i = this.comics.length - 1; i >= 0; i--) { const c = this.comics[i]; c.t += dt; if (c.t > 0.85) this.comics.splice(i, 1); }
       for (let i = this.particles.length - 1; i >= 0; i--) {
         const p = this.particles[i];

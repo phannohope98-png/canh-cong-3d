@@ -9,7 +9,7 @@
   class Unit {
     constructor(o) {
       Object.assign(this, { uid: ++uid, face: 1, walk: 0, atk: -1, cd: 0.3, idleT: Math.random() * 3, flash: 0, stun: 0, alpha: 1,
-        target: null, tUid: -1, scan: 0, moving: false, state: 'post', calm: 0, hits: 0 }, o);
+        target: null, tUid: -1, scan: 0, moving: false, state: 'post', calm: 0, hits: 0, hitT: 0, shieldT: 0 }, o);
     }
     get active() { return this.state === 'post' || this.state === 'move'; }
     get alive() { return this.active; }
@@ -27,6 +27,9 @@
 
     update(dt) {
       if (this.flash > 0) this.flash -= dt;
+      if (this.hitT > 0) this.hitT -= dt;
+      if (this.shieldT > 0) this.shieldT -= dt;
+      if (this.special === 'shieldwall' && this.active) { this.shieldCd = (this.shieldCd || 0) - dt; if (this.shieldCd <= 0 && this.hp < this.maxHp * 0.5) { this.shieldCd = 12; this.shieldT = 3; Effects.comic(this.x, this.y - 40, 'KHIÊN!', '#ffe14a', true); Effects.ring(this.x, this.y - 10, 6, 28, 0.4, '#ffe58a', 4); } }
       this.idleT += dt;
       if (this.state === 'dead') { this.respawnT -= dt; if (this.respawnT <= 0) this.respawn(); return; }
       if (this.alpha < 1) this.alpha = Math.min(1, this.alpha + dt * 3);
@@ -42,6 +45,11 @@
           if (this.range) { Combat.fire(this.proj, this.x + this.face * 9, this.y - 26, t, { damage: this.damage, type: this.dtype || 'physical' }); AudioSys.play(this.proj === 'bolt' ? 'magic' : 'arrow'); }
           else {
             Combat.hitEnemy(t, this.damage, 'physical'); Effects.comic(t.x + this.face * 6, t.y - 44, ['POW!', 'BAM!', 'KAPOW!', 'SHUNT!', 'WHAM!'][(Math.random() * 5) | 0], ['#ffe14a', '#ff7a4a', '#7ae0ff'][(Math.random() * 3) | 0]); AudioSys.play(this.tower && this.tower.type === 'orc' ? 'orc' : 'sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0');
+            if (this.special === 'slam' && ++this.hits % 4 === 0) { // chiến binh Lùn đập đất
+              Combat.splash(t.x, t.y, 58, [this.damage[0] * 0.6, this.damage[1] * 0.6], 'physical');
+              for (const e of Enemies.list) if (e.alive && !e.flying && !e.boss && Math.hypot(e.x - t.x, (e.y - t.y) * 1.25) < 58 + e.radius) e.stunT = Math.max(e.stunT || 0, 1.2);
+              Effects.ring(t.x, t.y, 8, 62, 0.4, '#e8d8b0', 6); Effects.burst(t.x, t.y, '#a89878', 16, 160, 0.5, 6, 260); Effects.shake(5, 0.2); Effects.comic(t.x, t.y - 50, 'RẦM!', '#ffb04a', true); AudioSys.play('explode');
+            }
             if (this.special === 'stun' && ++this.hits % 3 === 0 && !t.boss) { t.stunT = Math.max(t.stunT || 0, 1.0); Effects.comic(t.x, t.y - 50, 'BONK!', '#ffe14a', true); Effects.ring(t.x, t.y, 6, 30, 0.3, '#ffe58a', 3); }
           }
         }
@@ -99,11 +107,19 @@
         ctx.beginPath(); ctx.ellipse(this.x, fy, 20, 7.5, 0, 0, Math.PI * 2); ctx.stroke();
       }
       const mode = this.atk >= 0 ? 'atk' : this.moving ? 'walk' : 'idle';
+      const hb = this.hitT > 0 ? Math.sin(this.hitT / 0.2 * Math.PI) : 0; // bị đánh: lùi 1 bước
+      if (hb) { ctx.save(); ctx.translate(-this.face * hb * 5, 0); ctx.translate(this.x, fy); ctx.rotate(-this.face * hb * 0.12); ctx.translate(-this.x, -fy); }
       // ảnh art có 4 góc: đi lên → quay lưng, đi ngang → nghiêng, đi xuống → quay mặt
       let art = this.art;
       if (mode === 'walk') { const v = this.dvy || 0, s = v < -0.55 ? '_b' : v > 0.6 ? '_f' : Math.abs(this.dvx || 0) > 0.8 ? '_s' : ''; if (s && ArtChars[art + s]) art += s; }
       Painter.char(ctx, art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT);
       if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.6, this.flash * 6); Painter.char(ctx, art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT); ctx.restore(); }
+      if (hb) ctx.restore();
+      if (this.shieldT > 0) { // lá chắn khiên vàng
+        const k = Math.min(1, this.shieldT * 3), s = (CONFIG.unitScale || 1);
+        ctx.save(); ctx.globalAlpha = 0.55 * k; ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(this.x, fy - 14 * s, 4, this.x, fy - 14 * s, 26 * s); gr.addColorStop(0, 'rgba(255,230,120,0)'); gr.addColorStop(0.75, 'rgba(255,220,90,0.35)'); gr.addColorStop(1, 'rgba(255,245,180,0.9)');
+        ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(this.x, fy - 14 * s, 22 * s, 26 * s, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
       if (this.stun > 0) for (let i = 0; i < 3; i++) { const a = time * 5 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * 9, fy - 46 + Math.sin(a) * 3, 2, '#ffe58a'); }
       ctx.globalAlpha = 1;
     }
@@ -198,10 +214,10 @@
     remove(T) { for (let i = this.list.length - 1; i >= 0; i--) if (this.list[i].tower === T) this.list.splice(i, 1); },
     placePosts(T) {
       const path = Game.map.paths[T.rallyPath], L = path.length; let k = 0;
-      const offs = [[0, 0], [-20, -10], [20, 10]];
+      const n = T.def.soldiers || 3, offs = n === 1 ? [[0, 0]] : n === 2 ? [[-13, -11], [13, 11]] : [[0, 0], [-20, -10], [20, 10]];
       for (const u of this.list) {
         if (u.tower !== T) continue;
-        const o = offs[k % 3], p = path.pointAt(Math.max(30, Math.min(L - 30, T.rallyDist + o[0])), tmp);
+        const o = offs[k % offs.length], p = path.pointAt(Math.max(30, Math.min(L - 30, T.rallyDist + o[0])), tmp);
         u.postX = p.x + p.nx * o[1] * 1.4; u.postY = p.y + p.ny * o[1] * 1.4;
         if (u.state === 'post' && !u.target) u.state = 'move';
         k++;

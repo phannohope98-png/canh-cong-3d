@@ -42,20 +42,27 @@
       if (this.def.kind === 'barracks') return;
       const A = this.anim, st = this.stats;
       if (A.a >= 0) { const prev = A.a; A.a += dt / (this.type === 'artillery' ? 0.5 : this.type === 'orc' ? 0.45 : 0.36); if (prev < 0.5 && A.a >= 0.5) this.release(); if (A.a >= 1) A.a = -1; }
+      if (this.burstN > 0) { this.burstT -= dt; if (this.burstT <= 0) { const tg = TARGET.first(this, true); if (tg) { A.k++; this.shootArrow(tg, this.muzzle()); } this.burstN--; this.burstT = 0.09; } }
       this.cd -= dt;
       if (this.cd > 0 || A.a >= 0) return;
       const tg = this.type === 'artillery' ? TARGET.densest(this) : TARGET.first(this, this.def.targetsAir);
       if (!tg) { this.cd = 0.1; return; }
       this.pending = tg; A.face = tg.x >= this.x ? 1 : -1; A.a = 0; A.k++; this.cd = st.rate;
     }
+    /** Elf bắn 1 mũi tên; 15% chí mạng: mũi tên phát sáng, sát thương gấp đôi */
+    shootArrow(t, m) {
+      const st = this.stats, crit = Math.random() < 0.15;
+      Combat.fire('arrow', m.x, m.y, t, { damage: crit ? [st.damage[0] * 2, st.damage[1] * 2] : st.damage, type: 'physical', pierce: crit });
+      if (crit) Effects.comic(t.x, t.y - 46, 'CHÍ MẠNG!', '#ffe14a');
+      AudioSys.play('arrow');
+    }
     release() {
       const t = this.pending, st = this.stats; if (!t || !t.alive) return;
       const m = this.muzzle();
       if (this.type === 'archer') {
         this.shots++;
-        const pierce = st.special === 'pierce' && this.shots % 4 === 0;
-        Combat.fire('arrow', m.x, m.y, t, { damage: pierce ? [st.damage[0] * 3, st.damage[1] * 3] : st.damage, type: 'physical', pierce });
-        AudioSys.play('arrow');
+        this.shootArrow(t, m);
+        if (st.special === 'triple' && this.shots % 4 === 0) { this.burstN = 2; this.burstT = 0.09; }
       } else if (this.type === 'orc') {
         this.shots++;
         const stun = st.special === 'stun' && this.shots % 3 === 0, tx = t.x, ty = t.y;
@@ -64,7 +71,12 @@
         Effects.hit(tx, ty - t.height * 0.4, stun ? '#ffe58a' : '#fff4d0'); Effects.ring(tx, ty, 8, st.aoe, 0.3, stun ? '#ffe58a' : '#e8d8b0', 4);
         Effects.burst(tx, ty, '#c8b890', 6, 90, 0.35, 5, 180); Effects.shake(2.5, 0.12); AudioSys.play('sword');
       } else if (this.type === 'mage') {
-        Combat.fire('bolt', m.x, m.y, t, { damage: st.damage, type: 'magic', chain: st.special === 'chain' }); AudioSys.play('magic');
+        this.shots++;
+        Combat.fire('bolt', m.x, m.y, t, { damage: st.damage, type: 'magic', aoe: st.aoe }); AudioSys.play('magic');
+        if (st.special === 'meteor' && this.shots % 5 === 0) { // gọi mưa thiên thạch
+          for (let i = 0; i < 3; i++) { const a = Math.random() * 6.28, r = i ? 22 + Math.random() * 30 : 0; Spells.rocks.push({ x: t.x + Math.cos(a) * r, y: t.y + Math.sin(a) * r * 0.7, t: 0, delay: 0.2 + i * 0.2, fall: 0.5, dmg: [st.damage[0] * 1.2, st.damage[1] * 1.2], r: 50 }); }
+          Effects.comic(t.x, t.y - 60, 'THIÊN THẠCH!', '#ff9a3a', true);
+        }
       } else {
         Combat.fire('bomb', m.x, m.y, t, { damage: st.damage, aoe: st.aoe, cluster: st.special === 'cluster' }); AudioSys.play('cannon');
         Effects.burst(m.x, m.y, '#e8e0d8', 8, 80, 0.5, 7, -30);
