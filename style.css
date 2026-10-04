@@ -163,6 +163,7 @@ button { font-family: inherit; color: inherit; border: 0; padding: 0; background
 .chip .ico { width: 14px; height: 14px; }
 .tabs { display: flex; gap: 6px; padding: 8px calc(14px + var(--sr)) 0 calc(14px + var(--sl)); background: #1a1022; flex: none; }
 .tab { flex: 1; height: 38px; border-radius: 12px 12px 0 0; border: 3px solid var(--ink); border-bottom: 0; background: linear-gradient(#7a5a8a, #4a3058); font-size: 15px; color: #fff; text-shadow: 0 2px 0 var(--ink); }
+.tab3d { display: flex; align-items: center; justify-content: center; text-decoration: none; background: linear-gradient(#ffd24a, #c8861a); color: #3a2208; text-shadow: none; }
 .tab.on { background: linear-gradient(#ffe36a, #f0a21c); }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .codex-item { text-align: center; padding: 8px 6px; }

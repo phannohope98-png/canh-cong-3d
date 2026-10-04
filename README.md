@@ -47,3 +47,12 @@ Mọi thông số nằm trong `js/config.js`: `towers`, `heroes`, `equipment`, `
 - `art-kit.js` bộ vẽ hoạt hình · `art-chars.js` nhân vật/quái/anh hùng · `art-towers.js` trụ · `art.js` bộ đệm khung hình
 - `level.js` đường đi, ô xây, nền 6 vùng · `camera.js` kéo/phóng to
 - `enemies.js`, `units.js` (lính + anh hùng + kỹ năng), `towers.js`, `combat.js`, `waves.js`, `game.js`, `ui.js`, `save.js`
+
+## Xưởng nhân vật 3D (`design/nhan-vat-3d.html`)
+Mở từ Bách khoa → **Mô hình 3D**, hoặc trực tiếp `design/nhan-vat-3d.html?c=soldier&t=4`.
+14 nhân vật dựng lại bằng 3D theo đúng thiết kế chibi trong game (đầu to, tô toon 3 tông, viền mực dày kiểu Kingdom Rush):
+4 trụ (Kiếm Sĩ, Elf, Phù Thủy, Lùn – mỗi trụ 4 cấp), 4 anh hùng, Goblin, Bóng Tối, Orc (3 biến thể), Orc Cưỡi Sói, Kỵ Sĩ Hắc Ám (2 giai đoạn), Chúa Hắc Ám (3 giai đoạn).
+- Xoay/phóng to, đổi cấp, xem hoạt ảnh: Đứng · Đi · Đánh · Kỹ năng · Ngã; bảng màu, bảng quay 4 góc, tên khớp xương.
+- **Tải .GLB**: mô hình có khung khớp + mọi clip hoạt ảnh + viền mực, mở bằng Blender / Unity / Godot / three.js. Bản dựng sẵn (cấp cao nhất) nằm ở `assets/models/*.glb`.
+- **Sprite sheet 8 hướng**: 8 hàng hướng × 8 khung, nền trong suốt, góc nhìn chéo kiểu KR – dùng làm sprite 2D cho game.
+- Mã: `design/chars3d.js` (dựng hình + hoạt ảnh), `design/viewer3d.js` (giao diện), Three.js r147 để offline trong `design/vendor/`.
