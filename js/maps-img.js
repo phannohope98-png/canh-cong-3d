@@ -23,4 +23,21 @@
                [[-6, 108], [40, 110], [70, 118], [100, 128], [115, 142], [145, 132], [170, 124], [200, 123], [215, 112], [212, 98], [195, 88], [178, 82], [190, 72], [215, 70], [240, 68], [255, 58]]] }
   ];
   M.forEach((m, i) => { if (CONFIG.levels[i]) Object.assign(CONFIG.levels[i], m); });
+  /* Địa hình code (toạ độ ô map gốc) – theo bố cục ảnh thiết kế */
+  const FEAT = [
+    { rivers: [{ pts: [[505, 92], [472, 118], [447, 150], [440, 185], [426, 214], [412, 245]], w: 22 }, { pts: [[322, 86], [330, 120], [338, 150], [333, 185], [322, 245]], w: 9 }, { pts: [[-8, 132], [28, 148], [47, 178], [44, 245]], w: 13 }],
+      lakes: [{ x: 438, y: 222, rx: 38, ry: 15 }],
+      props: [{ k: 'castle', x: 412, y: 60 }, { k: 'gateway', x: 288, y: 50 }, { k: 'cabin', x: 160, y: 80 }, { k: 'cabin', x: 476, y: 70 }, { k: 'well', x: 120, y: 160 }] },
+    { rivers: [{ pts: [[198, 22], [214, 60], [238, 95], [262, 128], [300, 148], [350, 150], [410, 126], [490, 108]], w: 15 }],
+      props: [{ k: 'castle', x: 387, y: 42 }, { k: 'house', x: 150, y: 70 }, { k: 'house', x: 190, y: 62 }, { k: 'house', x: 70, y: 190 }, { k: 'house', x: 140, y: 205 }, { k: 'ruin', x: 70, y: 135 }, { k: 'house', x: 460, y: 190 }] },
+    { lakes: [{ x: 300, y: 112, rx: 20, ry: 9 }],
+      props: [{ k: 'fort', x: 405, y: 56 }, { k: 'tent', x: 60, y: 196 }, { k: 'tent', x: 98, y: 204 }, { k: 'tent', x: 36, y: 92 }, { k: 'mesa', x: 470, y: 150 }, { k: 'mesa', x: 485, y: 205 }, { k: 'mesa', x: 30, y: 40 }, { k: 'ruin', x: 225, y: 70 }, { k: 'ruin', x: 120, y: 95 }] },
+    { lakes: [{ x: 190, y: 166, rx: 46, ry: 10, kind: 'ice' }], rivers: [{ pts: [[110, 25], [140, 55], [200, 76], [262, 72], [300, 48], [322, 25]], w: 11, kind: 'ice' }],
+      props: [{ k: 'castle', x: 320, y: 84, snow: true }, { k: 'ruin', x: 60, y: 60 }, { k: 'house', x: 250, y: 60, snow: true }] },
+    { rivers: [{ pts: [[60, 25], [70, 60], [42, 100], [22, 150], [30, 190]], w: 16, kind: 'lava' }, { pts: [[140, 192], [166, 172], [200, 176], [262, 192]], w: 13, kind: 'lava' }, { pts: [[330, 192], [342, 150], [370, 122], [395, 102]], w: 16, kind: 'lava' }, { pts: [[178, 25], [200, 48], [230, 42], [262, 25]], w: 12, kind: 'lava' }],
+      props: [{ k: 'fort', x: 302, y: 56, dark: true }, { k: 'tent', x: 74, y: 80, dark: true }, { k: 'ruin', x: 190, y: 100 }] },
+    { void: true, props: [{ k: 'portal', x: 256, y: 54 }] }
+  ];
+  FEAT.forEach((f, i) => { if (CONFIG.levels[i]) CONFIG.levels[i].feat = f; });
+  CONFIG.mapStyle = 'coded'; // 'coded' = map vẽ bằng code kiểu Kingdom Rush · 'image' = dùng ảnh làm nền
 })();

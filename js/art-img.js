@@ -38,7 +38,7 @@
       im.src = (window.ART_BASE || 'assets/art/') + name + '.jpg'; this.bgs[name] = im;
       return null;
     },
-    preloadBgs() { (CONFIG.levels || []).forEach(L => L.bg && this.bg(L.bg.img)); },
+    preloadBgs() { if (CONFIG.mapStyle === 'coded') return; (CONFIG.levels || []).forEach(L => L.bg && this.bg(L.bg.img)); },
     /** 'elf3' → { n:'elf', tier:3 } */
     parse(type) { const m = /^(soldier|elf|dwarf|mage|orct)(\d)$/.exec(type || ''); return m ? { n: KEY2IMG[m[1]], tier: +m[2] } : null; },
 

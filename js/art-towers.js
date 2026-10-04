@@ -326,6 +326,7 @@
     mage:      { static: mageStatic,      fx: mageFx,      box: [130, 230, 65, 205] },
     artillery: { static: artilleryStatic, fx: artilleryFx, box: [130, 130, 65, 100] },
     orc:       { static: orcStatic,       fx: orcFx,       box: [130, 170, 65, 145] },
-    ARCH_TOP, MAGE_TOP, ART_Y, ORC_TOP, CH
+    ARCH_TOP, MAGE_TOP, ART_Y, ORC_TOP, CH,
+    H: { F, cyl, cone, house, win, door, merlons, banner, flag, planks, rail, post, stakes, footing, outline, hGrad, line, dot, skull, cross, poly, rr, ell, circ, RY }
   };
 })();

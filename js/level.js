@@ -301,7 +301,7 @@
   }
 
   const Level = {
-    Path,
+    Path, spawnFlag: (g, x, y, T) => spawnFlag(g, x, y, T), defendFlag: (g, x, y, T) => defendFlag(g, x, y, T),
 
     build(index) {
       const L = CONFIG.levels[index], PW = CONFIG.pathWidth, B = L.bg && L.ipaths ? L.bg : null;
@@ -313,7 +313,8 @@
       const paths = ctrl.map(c => new Path(smooth(c, 10)));
       const rivers = F.rivers.map(c => new Path(smooth(c, 12)));
       const chaos = L.theme === 'chaos';
-      const probe = B && window.ArtImg ? terrainProbe(ArtImg.bg(B.img), W, H) : null;
+      const coded = !!(B && CONFIG.mapStyle === 'coded' && window.MapArt), feat = coded ? MapArt.prepare(L, B, sc) : null;
+      const probe = coded ? MapArt.okSpot(feat, paths) : B && window.ArtImg ? terrainProbe(ArtImg.bg(B.img), W, H) : null;
       const spots = pickSpots(paths, rivers, L.spots || 14, W, H, PW, chaos, probe);
 
       // ---- Cây cối / đá / vật trang trí (tránh đường, ô xây, sông) ----
@@ -357,7 +358,7 @@
       const end = paths[0].points[paths[0].points.length - 1];
       // điểm đường đi bắt đầu lọt vào khung nhìn (cho nút gọi quái & cờ xuất phát)
       const entry = paths.map(p => { const q = {}; for (let d = 0; d < p.length; d += 8) { p.pointAt(d, q); if (q.x > 30 && q.y > 30 && q.x < W - 30 && q.y < H - 30) return d + 40; } return 70; });
-      return { index, def: L, W, H, sc, image: B ? B.img : null, theme, paths, entry, river: rivers[0] || null, rivers, riverKind: F.kind, pond: F.pond || [], spots, decor, exit: { x: end.x, y: end.y }, starts: paths.map(p => p.points[0]) };
+      return { index, def: L, W, H, sc, image: B && !coded ? B.img : null, coded, feat, theme, paths, entry, river: rivers[0] || null, rivers, riverKind: F.kind, pond: F.pond || [], spots, decor: coded ? MapArt.decor(feat, paths, spots, W, H, L.theme, index * 31 + 7) : decor, exit: { x: end.x, y: end.y }, starts: paths.map(p => p.points[0]) };
     },
 
     /** Nền map ảnh thật: vẽ ảnh + cờ xuất phát + cờ phòng thủ ở cổng */
@@ -379,6 +380,7 @@
 
     /* ================= VẼ NỀN ================= */
     renderBackground(map, res) {
+      if (map.coded) return MapArt.render(map, res);
       if (map.image) return this.renderImageBackground(map, res);
       const W = map.W, H = map.H, th = map.theme, PW = CONFIG.pathWidth, T = map.def.theme;
       const c = document.createElement('canvas'); c.width = Math.ceil(W * res); c.height = Math.ceil(H * res);
