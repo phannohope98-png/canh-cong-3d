@@ -13,7 +13,7 @@
       if (!Props3D.has(d.k, !!prop)) return false;
       const vi = Math.min(2, (d.v * 3) | 0);
       const ppu = Math.min(4, Math.ceil(res * (prop ? 1.1 : 1.9) * 4) / 4);
-      const key = (prop ? [d.k, d.theme, d.snow ? 1 : 0, d.dark ? 1 : 0].join('|') : d.k + '|' + theme + '|' + vi) + '@' + ppu;
+      const key = (Art3D.lightTheme ? Art3D.lightTheme() + ':' : '') + (prop ? [d.k, d.theme, d.snow ? 1 : 0, d.dark ? 1 : 0].join('|') : d.k + '|' + theme + '|' + vi) + '@' + ppu;
       let sp = cache.get(key);
       if (sp === undefined) {
         Chars3D.setInk(1.0);

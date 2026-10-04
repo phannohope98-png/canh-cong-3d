@@ -61,5 +61,7 @@ Mở từ Bách khoa → **Mô hình 3D**, hoặc trực tiếp `design/nhan-vat
 Trận đánh vẽ trực tiếp từ mô hình 3D (`js/art3d.js` + `design/chars3d.js` + `design/towers3d.js`): mỗi khung đi / đánh / đứng / ngã và các hướng nhìn được chụp từ mô hình bằng WebGL rồi lưu đệm như sprite, nên vẫn mượt trên điện thoại.
 - **Nhân vật**: 4 loại lính trụ (mọi cấp), 4 anh hùng (theo trang bị), toàn bộ 26 loại quái, kể cả 4 boss (Kỵ Sĩ Hắc Ám, Chúa Hắc Ám, Vua Troll Đá, Chúa Tể Hỗn Mang). Quái chết dùng hoạt ảnh ngã 3D.
 - **Công trình**: 4 trụ × 4 cấp và ô xây trống. Cờ, lửa, khói, cửa mở vẫn là lớp hiệu ứng động vẽ chồng lên.
-- Bản đồ giữ kiểu tranh vẽ tay như Kingdom Rush.
+- **Bản đồ**: mặt đất, đường, sông vẽ tay; toàn bộ cây, đá, xương rồng, pha lê, đèn, nhà, lều, lâu đài cổng, pháo đài, tượng đài, cổng hư vô là mô hình 3D (`design/props3d.js`, `js/map3d.js`). Bản đồ chiến dịch cũng dựng lại bằng vật 3D theo 6 vùng.
+- **Hiệu ứng**: mũi tên, tinh thể phép, bom, thiên thạch và cờ vải bay là 3D (`js/fx3d.js`); vệt sáng, lửa, khói giữ dạng hiệu ứng.
+- **Ánh sáng theo vùng**: núi lửa ánh cam, băng giá ánh lạnh, hỗn mang ánh tím…
 - Cài đặt → **Nhân vật 3D** để tắt (quay về hình 2D) nếu máy yếu; máy không có WebGL tự dùng 2D.

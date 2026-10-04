@@ -31,6 +31,7 @@
       this.measure();
       Camera.setup(this.map.W, this.map.H, this.viewW, this.viewH);
       Camera.x = this.map.W / 2; Camera.y = this.map.H / 2; Camera.clamp();
+      if (window.Art3D && Art3D.setTheme) Art3D.setTheme(L.theme);
       this.renderBg();
       Units.addHero(this.map);
       this.state = 'playing';

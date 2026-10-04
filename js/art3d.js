@@ -12,16 +12,25 @@
   const YAW = { side: 0.78, back: Math.PI - 0.6, front: 0.4 }; // gốc: nhìn sang PHẢI
   const IDLE = 2.618;                                    // chu kỳ idle của Painter (giây)
 
-  let renderer = null, scene = null, cam = null, failed = false;
+  let renderer = null, scene = null, cam = null, failed = false, theme = 'forest';
+  const L3 = {};
+  /** ánh sáng theo vùng: [trời, đất, độ sáng trời, màu chính, độ sáng chính, màu viền, độ sáng viền] */
+  const LIGHT = {
+    forest: [0xfff4e8, 0x5a4a6a, 0.85, 0xffffff, 1.0, 0xa8c4ff, 0.4], castle: [0xfff4e8, 0x5a4a6a, 0.85, 0xffffff, 1.0, 0xa8c4ff, 0.4],
+    desert: [0xfff0d8, 0x8a6a4a, 0.85, 0xfff2d8, 1.05, 0xffd8a0, 0.35], ice: [0xeaf4ff, 0x6a7a9a, 0.9, 0xeef6ff, 0.95, 0x9ad8ff, 0.5],
+    lava: [0xffe0c8, 0x5a2a2a, 0.75, 0xffd0a8, 0.95, 0xff6a2a, 0.75], chaos: [0xf0e4ff, 0x4a2a6a, 0.8, 0xf2e8ff, 0.95, 0xc070ff, 0.75]
+  };
+  function applyTheme() { const p = LIGHT[theme] || LIGHT.forest; if (!L3.hemi) return; L3.hemi.color.setHex(p[0]); L3.hemi.groundColor.setHex(p[1]); L3.hemi.intensity = p[2]; L3.key.color.setHex(p[3]); L3.key.intensity = p[4]; L3.rim.color.setHex(p[5]); L3.rim.intensity = p[6]; }
   function gl() {
     if (renderer || failed) return renderer;
     try {
       renderer = new T.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
       renderer.outputEncoding = T.sRGBEncoding; renderer.setPixelRatio(1); renderer.setClearColor(0x000000, 0);
       scene = new T.Scene();
-      scene.add(new T.HemisphereLight(0xfff4e8, 0x5a4a6a, 0.85));
-      const key = new T.DirectionalLight(0xffffff, 1.0); key.position.set(-1.5, 5, 4); scene.add(key);
-      const rim = new T.DirectionalLight(0xa8c4ff, 0.4); rim.position.set(3, 2.5, -4); scene.add(rim);
+      scene.add(L3.hemi = new T.HemisphereLight(0xfff4e8, 0x5a4a6a, 0.85));
+      const key = L3.key = new T.DirectionalLight(0xffffff, 1.0); key.position.set(-1.5, 5, 4); scene.add(key);
+      const rim = L3.rim = new T.DirectionalLight(0xa8c4ff, 0.4); rim.position.set(3, 2.5, -4); scene.add(rim);
+      applyTheme();
       cam = new T.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
       cam.position.set(0, Math.sin(EL) * 60, Math.cos(EL) * 60); cam.lookAt(0, 0, 0);
     } catch (e) { failed = true; renderer = null; console.warn('Art3D: không có WebGL, dùng hình 2D'); }
@@ -195,5 +204,11 @@
     if (window.Painter) Painter.clear();
   };
   Art3D.available = () => !!gl();
+  Art3D.lightTheme = () => theme;
+  /** đổi ánh sáng theo vùng của màn chơi (xoá đệm khung hình để vẽ lại) */
+  Art3D.setTheme = function (name) {
+    if (!LIGHT[name] || name === theme) return; theme = name; applyTheme(); plotCache.clear();
+    if (window.Painter) Painter.clear(); if (window.Fx3D) Fx3D.clear();
+  };
   window.Art3D = Art3D;
 })();
