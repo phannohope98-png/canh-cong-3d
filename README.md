@@ -13,7 +13,7 @@ Mỗi lần sửa code: đổi `CACHE_NAME` trong `service-worker.js` để máy
 | Người | Gọi 2 kiếm sĩ (tóc đen, giáp bạc, áo choàng đỏ sẫm, kiếm lớn + khiên). Chém ngang; cấp 4 giơ khiên tạo lá chắn |
 | Elf | Bắn rất nhanh, sát thương cao, tầm trung; 15% mũi tên phát sáng chí mạng; cấp 4 bắn 3 mũi liên tiếp |
 | Phù Thủy | Tầm xa nhất, quả cầu phép nổ vòng phép sát thương lan; cấp 4 gọi mưa thiên thạch |
-| Người Lùn | Gọi 1 chiến binh Lùn béo chắc, rìu hai tay; cứ 4 nhát đập đất gây choáng |
+| Người Lùn | Pháo thủ Lùn bắn súng cối: tầm xa, nổ lan cả nhóm quái đi bộ, mỗi phát rất mạnh nhưng nạp đạn chậm hơn Elf nhiều, không bắn quân bay; luôn nhắm chỗ quái đông nhất; cấp 4 đạn chùm |
 
 Orc giờ là quái: Orc, Orc Cưỡi Sói (sói tăng tốc húc lính). Goblin tí hon đi thành bầy. Boss: Kỵ Sĩ Hắc Ám (giữa màn, triệu hồi bóng tối, giai đoạn 2 kiếm rực đỏ), Chúa Hắc Ám (boss cuối, 3 giai đoạn: đánh mạnh → triệu hồi Orc + Goblin → rực đỏ, tăng tốc).
 
@@ -76,3 +76,6 @@ Trận đánh vẽ trực tiếp từ mô hình 3D (`js/art3d.js` + `design/char
 - **Bóng đổ thật**: cây, đá, nhà, lâu đài… được dựng chung cảnh với mặt đất và đổ bóng bằng shadow map theo một hướng nắng (sau-trái → trước-phải). Trụ đổ bóng chiếu theo cùng hướng (`js/art3d.js`).
 - **Chi tiết mặt đất 3D**: bụi cỏ, hoa, sỏi, đá viền đường, phiến đá lát (vẽ theo lô), gò đất thoai thoải có sáng tối mềm; nền trận dựng nét hơn khi phóng to.
 - **Giao diện**: thanh thông số bằng gỗ viền vàng, nút phép vành kim loại, biểu tượng 3D cho kỹ năng và trang bị (màu theo bậc), màn Nâng Cấp Trụ có trụ 3D lớn.
+
+### Trụ lâu đài chibi (`design/towers3d.js`)
+16 trụ dựng lại theo kiểu lâu đài: đế đá phình, thân tháp phình bụng, mái chóp nhọn quá khổ có núm vàng, cờ huy hiệu (thập tự / lá / sao / búa). Trại lính cấp 3–4 là thành trì mái xanh lam; tháp Elf trắng ngà mái xanh lá; tháp Phù Thủy mái tím; pháo đài Lùn có súng cối. Nhóm `front` (lan can trước) được vẽ đè lên chân lính đứng trên trụ (`js/art3d.js`).

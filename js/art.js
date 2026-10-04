@@ -5,11 +5,12 @@
 (function () {
   const K = ArtKit, TAU = Math.PI * 2;
   const N = { walk: 16, atk: 12, idle: 10, die: 10 }, IDLE = 2.618;
-  const BUCKETS = [0.35, 0.5, 0.7, 1, 1.4, 2, 2.8, 4];
-  const bucket = v => { v = Math.min(v, (window.Painter && Painter.ppuCap) || 4); for (const b of BUCKETS) if (v <= b * 1.15) return b; return 4; };
+  const BUCKETS = [0.35, 0.5, 0.7, 1, 1.4, 2, 2.4, 2.8, 3.4, 4];
+  const bucket = v => { v = Math.min(v, (window.Painter && Painter.ppuCap) || 4); for (const b of BUCKETS) if (v <= b * 1.02) return b; return 4; }; // làm tròn LÊN: luôn thu nhỏ khi vẽ → nét
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; };
   const cache = new Map();
-  function remember(key, c) { if (cache.size > 1600) cache.clear(); cache.set(key, c); return c; }
+  let px = 0;
+  function remember(key, c) { px += c.width * c.height; if (cache.size > 1600 || px > 60e6) { cache.clear(); px = c.width * c.height; } cache.set(key, c); return c; } // giới hạn ~240 MB ảnh đệm
 
   function charFrame(type, mode, i, ppu) {
     const key = 'c' + type + mode + i + '|' + ppu; let c = cache.get(key); if (c) return c;
@@ -55,7 +56,7 @@
 
   const Painter = {
     res: 1,
-    clear() { cache.clear(); },
+    clear() { cache.clear(); px = 0; },
     char(ctx, type, x, y, scale, face, mode, phase, ppuOverride, aim) {
       if (aim !== undefined && window.Art3D && Art3D.dirKey) { const dk = Art3D.dirKey(type, aim); if (dk) { type = dk; face = 1; } }
       const d = ArtChars[type]; if (!d) return;
@@ -88,7 +89,7 @@
     /** Chân dung cho giao diện (canvas DOM) */
     towerPortrait(canvas, type, tier, fit) {
       const g = canvas.getContext('2d');
-      const TOP = { archer: [0, 82, 92, 98, 112], mage: [0, 82, 94, 104, 114], barracks: [0, 48, 56, 70, 80], artillery: [0, 48, 54, 62, 72], orc: [0, 56, 62, 66, 92] }[type] || [0, 100, 100, 100, 100];
+      const TOP = { archer: [0, 100, 108, 120, 134], mage: [0, 92, 106, 128, 146], barracks: [0, 60, 70, 92, 112], artillery: [0, 66, 74, 82, 96], orc: [0, 56, 62, 66, 92] }[type] || [0, 100, 100, 100, 100];
       g.clearRect(0, 0, canvas.width, canvas.height);
       const f = fit || 0.82, s = Math.min(canvas.width * f / 92, canvas.height * f / (TOP[tier] + 26));
       this.tower(g, type, tier, canvas.width / 2, canvas.height / 2 + (TOP[tier] - 26) * s / 2, s, 0.5, { a: -1, face: 1, portrait: true });

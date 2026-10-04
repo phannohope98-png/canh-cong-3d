@@ -66,19 +66,19 @@ window.CONFIG = {
       desc: 'Tầm xa nhất. Quả cầu phép nổ thành vòng phép dưới chân quái, gây sát thương lan cả nhóm và xuyên giáp, nhưng mỗi phát yếu hơn Elf. Cấp 4: cứ 5 phát lại gọi mưa thiên thạch.'
     },
     artillery: {
-      name: 'Người Lùn', short: 'Chiến binh Lùn', role: 'HANG NGƯỜI LÙN - 1 CHIẾN BINH LÙN ĐẶC BIỆT', icon: 'axe', color: '#c0502a', kind: 'barracks',
+      name: 'Người Lùn', short: 'Pháo thủ Lùn', role: 'PHÁO ĐÀI NGƯỜI LÙN - ĐẠI BÁC TẦM XA, NỔ LAN, BẮN CHẬM', icon: 'bomb', color: '#c0502a', kind: 'shooter',
       art: 'dwarf', palette: ['#a8481e', '#d8682a', '#e89050', '#6a6e78', '#f0c898'],
-      soldiers: 1, respawn: 12, engage: 95, rallyRange: 160,
+      projectile: 'bomb', targetsAir: false, damageType: 'physical',
       cost: [100, 140, 190, 250],
-      tierNames: ['Hầm Đá', 'Lò Rèn Lùn', 'Sảnh Núi', 'Pháo Đài Tổ Tiên'],
+      tierNames: ['Ụ Pháo Gỗ', 'Pháo Đài Đá', 'Pháo Đài Sắt', 'Pháo Đài Tổ Tiên'],
       levels: [
-        { hp: 240, damage: [12, 18], armor: 0.3, art: 'dwarf1', special: 'slam' },
-        { hp: 380, damage: [20, 30], armor: 0.4, art: 'dwarf2', special: 'slam' },
-        { hp: 560, damage: [32, 46], armor: 0.5, art: 'dwarf3', special: 'slam' },
-        { hp: 820, damage: [48, 68], armor: 0.6, art: 'dwarf4', special: 'slam' }
+        { damage: [14, 24], range: 180, rate: 2.2, aoe: 50 },
+        { damage: [26, 40], range: 192, rate: 2.1, aoe: 56 },
+        { damage: [42, 62], range: 206, rate: 2.0, aoe: 62 },
+        { damage: [62, 90], range: 220, rate: 1.9, aoe: 70, special: 'cluster' }
       ],
-      gear: ['Rìu hai tay', 'Mũ sắt', 'Giáp nặng', 'Râu khổng lồ'],
-      desc: 'Gọi 1 chiến binh Lùn thấp, béo, cực trâu, cầm rìu hai tay bổ xuống. Cứ 4 nhát lại đập đất gây choáng cả nhóm quái xung quanh. Đứng chờ thì vuốt râu.'
+      gear: ['Súng cối', 'Mũ sắt', 'Giáp nặng', 'Râu khổng lồ'],
+      desc: 'Pháo thủ Lùn nã đại bác cầu vồng thật xa, đạn nổ tung gây sát thương lan cả nhóm quái đi bộ. Mỗi phát rất mạnh nhưng nạp đạn chậm hơn Elf nhiều và không bắn được quân bay. Luôn nhắm vào chỗ quái đông nhất. Cấp 4: đạn chùm – nổ xong văng thêm 3 quả nhỏ.'
     }
   },
 
@@ -168,7 +168,7 @@ window.CONFIG = {
   upgrades: {
     barracks:  { name: 'Người',     icon: 'shield', cost: [1, 1, 2, 2], perLevel: { hp: 0.1, damage: 0.06 },   text: '+10% máu kiếm sĩ, +6% sát thương' },
     archer:    { name: 'Elf',       icon: 'bow',    cost: [1, 1, 2, 2], perLevel: { damage: 0.08, range: 0.04 }, text: '+8% sát thương, +4% tầm' },
-    artillery: { name: 'Người Lùn', icon: 'axe',    cost: [1, 1, 2, 2], perLevel: { hp: 0.1, damage: 0.08 },   text: '+10% máu chiến binh Lùn, +8% sát thương' },
+    artillery: { name: 'Người Lùn', icon: 'bomb',   cost: [1, 1, 2, 2], perLevel: { damage: 0.08, aoe: 0.06 }, text: '+8% sát thương đại bác, +6% vùng nổ' },
     mage:      { name: 'Phù Thủy',  icon: 'staff',  cost: [1, 1, 2, 2], perLevel: { damage: 0.08, aoe: 0.05 }, text: '+8% sát thương, +5% vùng phép' }
   },
 
@@ -202,7 +202,27 @@ window.CONFIG = {
       story: 'Trận chiến cuối cùng bên rìa thế giới. Chúa Tể Hỗn Mang đang mở cổng!',
       paths: [[[-80, 450], [250, 450], [400, 250], [700, 200], [900, 350], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]],
               [[-80, 790], [250, 790], [500, 710], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]]],
-      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:4,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:2,voidWalker:4', 'magmaGolem:2,voidWalker:4,voidling:8', 'iceGolem:3,drake:4,voidWalker:5', 'deathKnight:4,voidWalker:8,drake:4', 'darkLord:1,voidWalker:8,voidling:14,drake:2'] }
+      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:4,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:2,voidWalker:4', 'magmaGolem:2,voidWalker:4,voidling:8', 'iceGolem:3,drake:4,voidWalker:5', 'deathKnight:4,voidWalker:8,drake:4', 'darkLord:1,voidWalker:8,voidling:14,drake:2'] },
+    /* ---------- CHƯƠNG 2: 6 vùng đất cũ, bố cục mới, quái mạnh hơn ---------- */
+    { name: 'Thung Lũng Sương Mù', theme: 'forest', diff: 'Khó', gold: 600, spots: 15, chapter: 2, hpMul: 1.65,
+      story: 'Hai đạo quân Orc men theo thung lũng sương mù. Chặn chúng ở ngã ba trước khi tới thành!',
+      waves: ['goblin:14,warg:4', 'orc:6,warg:6', 'treant:2,goblin:12', 'orcArcher:6,wolfRider:5', 'troll:1,orc:6,warg:6', 'treant:3,orcArcher:6', 'wolfRider:8,warg:8', 'troll:2,treant:2,orc:8', 'blackOrc:4,wolfRider:6,orcArcher:6', 'troll:2,treant:3,warg:12'] },
+    { name: 'Cầu Đá Hoàng Gia', theme: 'castle', diff: 'Khó', gold: 640, spots: 15, chapter: 2, hpMul: 1.3,
+      story: 'Đạo quân xương khô vượt cầu đá vào kinh thành. Đừng để chúng qua sông!',
+      waves: ['skeleton:10', 'wraith:6,skeleton:6', 'deathKnight:1,skeleton:10', 'orcArcher:6,wraith:6', 'darkKnight:1,deathKnight:1,skeleton:8', 'wraith:10,warg:8', 'deathKnight:3,skeleton:12', 'darkKnight:2,wraith:8', 'deathKnight:4,wraith:10,skeleton:10', 'darkKnight:2,deathKnight:4,wraith:10'] },
+    { name: 'Ốc Đảo Bão Cát', theme: 'desert', diff: 'Rất khó', gold: 680, spots: 16, chapter: 2, hpMul: 1.85,
+      story: 'Bão cát che mắt, cướp và xác ướp ập tới từ hai phía ốc đảo.',
+      waves: ['bandit:12', 'scorpion:6,bandit:8', 'mummy:4,scorpion:5', 'bandit:14,mummy:3', 'blackOrc:3,scorpion:8', 'mummy:6,bandit:12', 'troll:1,scorpion:10', 'blackOrc:5,mummy:5', 'scorpion:12,bandit:14,mummy:4', 'troll:2,blackOrc:5,mummy:6'] },
+    { name: 'Đỉnh Tuyết Vĩnh Cửu', theme: 'ice', diff: 'Rất khó', gold: 740, spots: 16, chapter: 2, hpMul: 1.3,
+      story: 'Con đèo ngoằn ngoèo trên đỉnh tuyết. Vua Troll Đá đang xuống núi!',
+      waves: ['frostWolf:12', 'iceGolem:2,frostWolf:8', 'wraith:8,frostWolf:8', 'iceGolem:3,orc:8', 'drake:2,frostWolf:10', 'troll:1,iceGolem:3', 'blackOrc:5,frostWolf:12', 'drake:3,iceGolem:3,wraith:6', 'troll:2,frostWolf:14', 'trollKing:1,iceGolem:4,frostWolf:12'] },
+    { name: 'Lò Rèn Địa Ngục', theme: 'lava', diff: 'Cực khó', gold: 800, spots: 16, chapter: 2, hpMul: 1.25,
+      story: 'Lò rèn của quỷ lửa giữa hồ dung nham. Hai đường hành quân đổ về một cây cầu.',
+      waves: ['imp:12', 'drake:2,imp:8', 'magmaGolem:2,imp:8', 'blackOrc:5,imp:10', 'drake:4,magmaGolem:1', 'troll:2,imp:12', 'magmaGolem:3,drake:3', 'blackOrc:6,drake:4,imp:10', 'trollKing:1,magmaGolem:2,imp:12', 'trollKing:1,drake:5,magmaGolem:3'] },
+    { name: 'Vực Thẳm Hư Không', theme: 'chaos', diff: 'Boss tối thượng', gold: 900, hpMul: 1.1, spots: 17, chapter: 2,
+      story: 'Chúa Tể Hỗn Mang tự mình bước ra khỏi vực thẳm. Đây là trận chiến cuối cùng của thế giới!',
+      waves: ['voidling:14', 'voidWalker:4,voidling:10', 'wraith:8,voidWalker:4', 'drake:4,voidling:12', 'magmaGolem:3,voidWalker:5', 'deathKnight:4,voidWalker:6', 'iceGolem:4,drake:4,voidling:12', 'darkKnight:2,voidWalker:8,drake:4', 'darkLord:1,voidWalker:8,voidling:14', 'voidLord:1,voidWalker:10,drake:5,voidling:16'] }
+
   ],
 
   spawnInterval: { goblin: 0.6, wolfRider: 1.2, shade: 0.5, darkKnight: 1, darkLord: 1, orc: 1.3, orcArcher: 1.3, warg: 0.7, treant: 3.5, skeleton: 1.2, wraith: 1.4, deathKnight: 3, bandit: 0.8, mummy: 2, scorpion: 1.1,

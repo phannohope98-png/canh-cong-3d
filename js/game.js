@@ -55,9 +55,10 @@
     measure() {
       const r = this.wrap.getBoundingClientRect();
       this.viewW = Math.max(1, r.width); this.viewH = Math.max(1, r.height);
+      if (Save.data.settings.qv !== 2) { Save.data.settings.qv = 2; Save.data.settings.q = 1; Save.save(); } // bản cũ hạ chất lượng vĩnh viễn → đặt lại
       this.q = this.q || (Save.data.settings.q || 1);
-      this.dpr = Math.max(0.75, Math.min(2, window.devicePixelRatio || 1) * this.q);
-      if (window.Painter) Painter.ppuCap = this.q < 0.8 ? 2 : 2.8;
+      this.dpr = Math.max(0.75, Math.min(2.5, window.devicePixelRatio || 1) * this.q);
+      if (window.Painter) Painter.ppuCap = this.q >= 0.85 ? 4 : this.q >= 0.7 ? 2.8 : 2;
       this.canvas.width = Math.round(this.viewW * this.dpr); this.canvas.height = Math.round(this.viewH * this.dpr);
       this.canvas.style.width = this.viewW + 'px'; this.canvas.style.height = this.viewH + 'px';
     },
@@ -74,11 +75,12 @@
     stopLoop() { cancelAnimationFrame(this.raf); this.raf = 0; },
     /** tự giảm độ phân giải khi máy chậm (trung bình > 24 ms/khung trong ~1,5 s), nhớ lại cho lần sau */
     perfWatch(raw) {
-      if (this.state !== 'playing' || this.paused || !(raw > 0 && raw < 250)) return;
+      if (this.state !== 'playing' || this.paused || this.time < 5 || !(raw > 0 && raw < 250)) return; // bỏ qua lúc mới vào màn (đang dựng hình 3D)
       const p = this.perf || (this.perf = { sum: 0, n: 0 }); p.sum += raw; p.n++;
       if (p.n < 90) return;
       const avg = p.sum / p.n; p.sum = p.n = 0;
-      if (avg > 24 && this.q > 0.55) { this.q = Math.max(0.55, +(this.q - 0.15).toFixed(2)); Save.data.settings.q = this.q; Save.save(); this.measure(); }
+      if (avg > 30 && this.q > 0.55) { this.q = Math.max(0.55, +(this.q - 0.15).toFixed(2)); Save.data.settings.q = this.q; Save.save(); this.measure(); }
+      else if (avg < 17 && this.q < 1) { this.q = Math.min(1, +(this.q + 0.15).toFixed(2)); Save.data.settings.q = this.q; Save.save(); this.measure(); } // máy chạy mượt lại → nét trở lại
     },
     frame(ts) {
       const raw = ts - this.last, dt = Math.min(0.05, Math.max(0, raw / 1000)); this.last = ts;

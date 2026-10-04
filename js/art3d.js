@@ -147,11 +147,15 @@
   }
 
   /* ---------- trụ công trình 3D (phần tĩnh; cờ, lửa, nhân vật vẫn do fx vẽ) ---------- */
-  const towers = new Map();
+  const towers = new Map(), fronts = new Map();
+  /** mô hình trụ; nhóm 'front' (lan can trước) tách riêng để vẽ ĐÈ lên chân lính đứng trên trụ */
   function towerRoot(type, tier) {
     const key = type + tier; let root = towers.get(key); if (root) return root;
     Chars3D.setInk(1.0);
-    root = Towers3D.build(type, tier); optimize(root, { n: {} }); root.updateMatrixWorld(true);
+    root = Towers3D.build(type, tier);
+    const fr = root.getObjectByName('front');
+    if (fr) { root.remove(fr); const fRoot = new T.Group(); fRoot.add(fr); optimize(fRoot, { n: {} }); fRoot.updateMatrixWorld(true); fronts.set(key, fRoot); }
+    optimize(root, { n: {} }); root.updateMatrixWorld(true);
     towers.set(key, root); return root;
   }
   function drawTower(type, tier, g) {
@@ -160,10 +164,46 @@
   function drawStatic(root, g) {
     renderInto(root, g, 40);
   }
+  const frontCache = new Map();
+  function drawFront(type, tier, g) {
+    towerRoot(type, tier); const fr = fronts.get(type + tier); if (!fr) return;
+    const m = g.getTransform(), ppu = Math.max(0.5, Math.min(4, Math.ceil(Math.hypot(m.a, m.b) * 2) / 2)), k = type + tier + '|' + ppu, [w, h, ox, oy] = ArtTowers[type].box;
+    let c = frontCache.get(k);
+    if (!c) { c = document.createElement('canvas'); c.width = Math.ceil(w * ppu); c.height = Math.ceil(h * ppu); const cg = c.getContext('2d'); cg.setTransform(ppu, 0, 0, ppu, ox * ppu, oy * ppu); renderInto(fr, cg, 40); frontCache.set(k, c); }
+    g.drawImage(c, -ox, -oy, w, h);
+  }
+  /* độ cao sàn trên đỉnh trụ 3D → các hàm hiệu ứng / nòng súng dùng chung */
+  if (window.ArtTowers && window.Towers3D && Towers3D.TOPS) {
+    const TP = Towers3D.TOPS, A = ArtTowers;
+    for (let i = 1; i <= 4; i++) { A.ARCH_TOP[i] = -TP.archer[i]; A.MAGE_TOP[i] = -TP.mage[i]; A.ART_Y[i] = -TP.artillery[i]; }
+    A.barracks.box = [150, 215, 75, 190]; A.artillery.box = [140, 180, 70, 150]; A.archer.box = [140, 240, 70, 212]; A.mage.box = [140, 250, 70, 222];
+  }
+  /* hiệu ứng động khớp mô hình 3D (2D cũ vẽ cửa, lan can, cờ ở chỗ khác) */
+  const K2 = window.ArtKit, FX3 = {
+    archer(g, t, time, st, env) {
+      const top = ArtTowers.ARCH_TOP[t], f = st.face || 1, a = st.a === undefined ? -1 : st.a, k = st.k || 0;
+      if (t === 4) K2.glow(g, 0, top - 56, 16, '#9affc8', 0.45 + Math.sin(time * 3) * 0.15);
+      env.char('elf' + t, -10, top + 2, f, k % 2 ? -1 : a, time + 0.7);
+      env.char('elf' + t, 10, top + 4, f, k % 2 ? a : -1, time);
+    },
+    barracks(g, t, time, st) { if ((st.door || 0) > 0) K2.glow(g, 0, -12, 16, '#ffd080', 0.55); },
+    artillery(g, t, time, st, env) {
+      const top = ArtTowers.ART_Y[t], f = st.face || 1, a = st.a === undefined ? -1 : st.a;
+      const fire = a >= 0.48 && a < 0.85 ? 1 - (a - 0.48) / 0.37 : 0, mx = 14, my = top - 22 - t;
+      if (t >= 3) for (let i = 0; i < 3; i++) { const p = (time * 0.4 + i / 3) % 1; K2.glow(g, -22 + Math.sin(p * 5 + i) * 3, top - 22 - p * 34, 4 + p * 7, '#b8b2b8', (1 - p) * 0.45); }
+      env.char('dwarf' + t, -12, top + 2, f, a, time);
+      if (fire > 0) { K2.glow(g, mx + 4, my - 4, 12 + fire * 14, '#ffd060', fire); K2.glow(g, mx + 8, my - 10, 8 + (1 - fire) * 16, '#e8e0d8', fire * 0.7); }
+    }
+  };
   if (window.ArtTowers && window.Towers3D) ['archer', 'mage', 'barracks', 'artillery'].forEach(type => {
     const d = ArtTowers[type]; if (!d) return;
-    const orig = d.static;
+    const orig = d.static, origFx = d.fx;
     d.static = (g, tier) => (Art3D.enabled && !failed && gl() ? drawTower(type, tier, g) : orig(g, tier));
+    d.fx = (g, tier, time, st, env) => {
+      if (!(Art3D.enabled && !failed && gl())) return origFx(g, tier, time, st, env);
+      (FX3[type] || origFx)(g, tier, time, st, env);
+      drawFront(type, tier, g);
+    };
   });
 
   /* bóng đổ của trụ: chiếu mô hình xuống mặt đất theo cùng hướng nắng với cây cối (terrain3d SDIR) */
@@ -253,7 +293,7 @@
   Art3D.warmClear = () => { warmQ.length = 0; };
 
   Art3D.setEnabled = function (on) {
-    Art3D.enabled = !!on; plotCache.clear();
+    Art3D.enabled = !!on; plotCache.clear(); frontCache.clear(); shadowCache.clear();
     if (window.Painter) Painter.clear();
   };
   Art3D.available = () => !!gl();
@@ -269,7 +309,7 @@
   };
   /** đổi ánh sáng theo vùng của màn chơi (xoá đệm khung hình để vẽ lại) */
   Art3D.setTheme = function (name) {
-    if (!LIGHT[name] || name === theme) return; theme = name; applyTheme(); plotCache.clear();
+    if (!LIGHT[name] || name === theme) return; theme = name; applyTheme(); plotCache.clear(); frontCache.clear(); shadowCache.clear();
     if (window.Painter) Painter.clear(); if (window.Fx3D) Fx3D.clear();
   };
   window.Art3D = Art3D;

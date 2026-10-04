@@ -35,7 +35,7 @@
       const T = ArtTowers, f = this.anim.face;
       if (this.type === 'archer') return { x: this.x + ((this.anim.k % 2 ? 9 : -9) + 10 * f) * TS, y: this.y + (T.ARCH_TOP[this.level] - 14) * TS };
       if (this.type === 'mage') return { x: this.x + 6 * f * TS, y: this.y + (T.MAGE_TOP[this.level] - 30) * TS };
-      return { x: this.x + (4 + 18 * f) * TS, y: this.y + (T.ART_Y[this.level] - 20) * TS };
+      return { x: this.x + 15 * TS, y: this.y + (T.ART_Y[this.level] - 24 - this.level) * TS };
     }
     update(dt) {
       this.t += dt; this.born += dt; if (this.pulse > 0) this.pulse -= dt; if (this.anim.door > 0) this.anim.door -= dt;

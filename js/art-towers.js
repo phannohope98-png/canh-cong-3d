@@ -366,7 +366,7 @@
     archer:    { static: archerStatic,    fx: archerFx,    box: [130, 230, 65, 205] },
     barracks:  { static: barracksStatic,  fx: barracksFx,  box: [130, 150, 65, 125] },
     mage:      { static: mageStatic,      fx: mageFx,      box: [130, 230, 65, 205] },
-    artillery: { static: dwarfStatic, fx: dwarfFx, box: [130, 160, 65, 130] },
+    artillery: { static: artilleryStatic, fx: artilleryFx, box: [130, 160, 65, 130] },
     orc:       { static: orcStatic,       fx: orcFx,       box: [130, 170, 65, 145] },
     ARCH_TOP, MAGE_TOP, ART_Y, ORC_TOP, CH,
     H: { F, cyl, cone, house, win, door, merlons, banner, flag, planks, rail, post, stakes, footing, outline, hGrad, line, dot, skull, cross, poly, rr, ell, circ, RY }

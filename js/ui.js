@@ -108,14 +108,23 @@
 
     /* ================= BẢN ĐỒ CHIẾN DỊCH (ngang) ================= */
     renderMap() {
-      const wrap = $('map-scroll'), inner = $('map-inner'), H = wrap.clientHeight || 300, W = Math.max(wrap.clientWidth || 700, Math.round(H * 2.4)), dpr = Math.min(2, window.devicePixelRatio || 1);
+      // Chương 2 nối tiếp bên phải: bản đồ dài gấp đôi, mỗi chương 6 vùng
+      const CH2 = CONFIG.levels.length > 6, LW = CH2 ? 2400 : 1200;
+      const wrap = $('map-scroll'), inner = $('map-inner'), H = wrap.clientHeight || 300, W = Math.max(wrap.clientWidth || 700, Math.round(H * 2.4 * LW / 1200)), dpr = Math.min(2, window.devicePixelRatio || 1);
       inner.style.width = W + 'px'; inner.style.height = H + 'px';
       const c = $('world-map'); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
-      const g = c.getContext('2d'); g.scale(W * dpr / 1200, H * dpr / 500);
-      const nodes = [[9, 74], [25, 38], [41, 72], [58, 34], [75, 70], [91, 36]];
-      if (!(window.Map3D && Map3D.paintWorld(g, 1200, 500, nodes))) paintWorld(g, 1200, 500);
+      const g = c.getContext('2d'); g.scale(W * dpr / LW, H * dpr / 500);
+      const n1 = [[9, 74], [25, 38], [41, 72], [58, 34], [75, 70], [91, 36]], n2 = [[9, 42], [25, 74], [41, 36], [58, 72], [75, 38], [91, 70]];
+      const nodes = CH2 ? n1.map(n => [n[0] / 2, n[1]]).concat(n2.map(n => [50 + n[0] / 2, n[1]])) : n1;
+      if (!(window.Map3D && Map3D.paintWorld(g, 1200, 500, n1))) paintWorld(g, 1200, 500);
+      if (CH2) {
+        g.save(); g.translate(1200, 0); if (!(window.Map3D && Map3D.paintWorld(g, 1200, 500, n2))) paintWorld(g, 1200, 500); g.restore();
+        const sm = g.createLinearGradient(1130, 0, 1270, 0); sm.addColorStop(0, 'rgba(20,10,40,0)'); sm.addColorStop(0.5, 'rgba(20,10,40,.85)'); sm.addColorStop(1, 'rgba(20,10,40,0)'); g.fillStyle = sm; g.fillRect(1130, 0, 140, 500);
+        g.save(); g.font = 'bold 30px "Alegreya SC", Georgia, serif'; g.textAlign = 'center'; g.lineWidth = 7; g.strokeStyle = '#2a1630'; g.fillStyle = '#ffe27a';
+        g.translate(1200, 250); g.rotate(-Math.PI / 2); g.strokeText('CHƯƠNG 2', 0, 10); g.fillText('CHƯƠNG 2', 0, 10); g.restore();
+      }
       g.setLineDash([2, 12]); g.lineCap = 'round'; g.strokeStyle = 'rgba(40,20,30,.8)'; g.lineWidth = 6;
-      g.beginPath(); nodes.forEach((n, i) => { const x = n[0] * 12, y = n[1] * 5; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
+      g.beginPath(); nodes.forEach((n, i) => { const x = n[0] * LW / 100, y = n[1] * 5; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
       g.strokeStyle = '#fff3c8'; g.lineWidth = 3.4; g.stroke(); g.setLineDash([]);
       const un = Save.data.unlocked;
       $('map-nodes').innerHTML = CONFIG.levels.map((L, i) => {
@@ -136,7 +145,7 @@
         <div class="lvcard"><div><img class="lvimg" src="${window.ART_BASE || "assets/art/"}map_${i}.jpg" alt="">
           <p>${L.story}</p>
           <div class="row" style="margin:6px 0">${foes.map(f => `<canvas class="portrait dark" data-char="${f}" width="120" height="120" style="width:44px;height:44px;border-radius:12px"></canvas>`).join('')}</div>
-          <p style="font-size:13px">${L.waves.length} đợt quái · ${L.paths.length > 1 ? L.paths.length + ' cửa vào · ' : ''}${L.gold} vàng khởi đầu · Độ khó: ${L.diff}</p>
+          <p style="font-size:13px">${L.waves.length} đợt quái · ${(L.ipaths || L.paths).length > 1 ? (L.ipaths || L.paths).length + ' cửa vào · ' : ''}${L.gold} vàng khởi đầu · Độ khó: ${L.diff}</p>
         </div><div>
           <div class="big-stars">${[1, 2, 3].map(k => `<span class="s ${k <= st ? 'got' : ''}">${I('star')}</span>`).join('')}</div>
           <p style="font-size:13px">Anh hùng: <b>${H.name}</b> (cấp ${Progress.heroLevel(hid)})</p>
