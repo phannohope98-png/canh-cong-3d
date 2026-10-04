@@ -33,6 +33,7 @@
       Camera.x = this.map.W / 2; Camera.y = this.map.H / 2; Camera.clamp();
       if (window.Art3D && Art3D.setTheme) Art3D.setTheme(L.theme);
       this.renderBg();
+      if (window.WaterFx) WaterFx.setup(this.map);
       Units.addHero(this.map);
       this.state = 'playing';
       UI.setupBattle();
@@ -102,6 +103,7 @@
       Painter.res = z * d;
       c.setTransform(d * z, 0, 0, d * z, d * (this.viewW / 2 - (Camera.x - Effects.shakeX) * z), d * (this.viewH / 2 - (Camera.y - Effects.shakeY) * z));
       c.drawImage(this.bg, 0, 0, this.map.W, this.map.H);
+      if (window.WaterFx) WaterFx.draw(c, performance.now() / 1000);
       c.lineJoin = 'round'; c.lineCap = 'round';
       const t = this.time, now = performance.now() / 1000;
       // ô trống
