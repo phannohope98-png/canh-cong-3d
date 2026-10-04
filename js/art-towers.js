@@ -80,6 +80,7 @@
   }
   /** Cờ nhỏ có cán (động) */
   function flag(g, x, y, h, col, t, dir) {
+    if (window.Fx3D && Fx3D.flag(g, x, y, h, col, t, dir || 1)) return;
     dir = dir || 1;
     line(g, x, y, x, y - h, INK, 3); line(g, x, y, x, y - h, '#7a4a26', 1.5); dot(g, x, y - h - 1, 1.8, GOLD);
     F(g, c => { c.moveTo(x, y - h + 1); for (let i = 1; i <= 6; i++) { const f = i / 6; c.lineTo(x + dir * f * 16, y - h + 1 + Math.sin(t * 6 + f * 3) * 2.2 * f); } for (let i = 6; i >= 0; i--) { const f = i / 6; c.lineTo(x + dir * f * 14, y - h + 10 + Math.sin(t * 6 + f * 3 + 0.4) * 2.2 * f); } c.closePath(); }, col, { s: 1.2, h: 0.6, lw: 1.5 });

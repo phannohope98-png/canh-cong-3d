@@ -80,7 +80,7 @@
         ctx.strokeStyle = gr; ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(sx - 110, sy - 220); ctx.lineTo(sx, sy); ctx.stroke();
         ArtKit.glow(ctx, sx, sy, 34, '#ff8a2a', 0.9); ArtKit.glow(ctx, sx, sy, 16, '#fff0a0', 1);
         ctx.restore();
-        ArtKit.dot(ctx, sx, sy, 9, '#4a2a1a'); ArtKit.dot(ctx, sx - 2, sy - 2, 4, '#ff9a3a');
+        if (!(window.Fx3D && Fx3D.draw(ctx, 'meteor', sx, sy, m.t * 3, 1.1))) { ArtKit.dot(ctx, sx, sy, 9, '#4a2a1a'); ArtKit.dot(ctx, sx - 2, sy - 2, 4, '#ff9a3a'); }
       }
     }
   };

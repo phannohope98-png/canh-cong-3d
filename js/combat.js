@@ -109,6 +109,7 @@
           trail(ctx, tr, col, p.o.pierce ? 4 : 2.2, 0.55);
           ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
           if (p.o.pierce) K.glow(ctx, 0, 0, 18, '#ffd860', 0.9);
+          if (window.Fx3D && Fx3D.draw(ctx, 'arrow', 0, 0, 0, 1, { dark: p.kind === 'enemyArrow', gold: !!p.o.pierce })) { ctx.restore(); continue; }
           K.line(ctx, -12, 0, 5, 0, '#2a1810', 3.4); K.line(ctx, -12, 0, 5, 0, p.kind === 'enemyArrow' ? '#5a3a20' : '#d8b070', 1.8);
           K.flat(ctx, [4, -3, 11, 0, 4, 3], '#eef3f8');
           K.flat(ctx, [-12, 0, -16, -3.6, -9, -0.8], p.kind === 'enemyArrow' ? '#3a2a2a' : '#6ad06a'); K.flat(ctx, [-12, 0, -16, 3.6, -9, 0.8], p.kind === 'enemyArrow' ? '#2a1a1a' : '#4ab04a');
@@ -116,6 +117,7 @@
         } else if (p.kind === 'bolt') {
           trail(ctx, tr, '#9fdcff', 7, 0.8);
           K.glow(ctx, p.x, p.y, 24, '#8fd0ff', 1);
+          if (window.Fx3D && Fx3D.draw(ctx, 'bolt', p.x, p.y, (p.age || 0) * 8, 1)) continue;
           ctx.save(); ctx.translate(p.x, p.y); ctx.rotate((p.age || 0) * 8);
           ctx.fillStyle = '#ffffff'; ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r = i % 2 ? 2.4 : 7; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); ctx.fill();
           ctx.restore();
@@ -123,6 +125,7 @@
         } else if (p.kind === 'bomb') {
           K.shadow(ctx, p.sx + (p.tx - p.sx) * p.k, p.sy + (p.ty - p.sy) * p.k + 6, 8 * (0.5 + p.k * 0.5), 3, 0.3);
           trail(ctx, tr, '#d8d0c8', 5, 0.35);
+          if (window.Fx3D && Fx3D.draw(ctx, 'bomb', p.x, p.y, (p.age || 0) * 5, 1)) { K.glow(ctx, p.x + 3, p.y - 6, 6, '#ffb030', 0.8); continue; }
           K.circ(ctx, p.x, p.y, 7, '#3a3a44', { lw: 1.8 });
           K.dot(ctx, p.x - 2.4, p.y - 2.4, 1.8, 'rgba(255,255,255,0.6)');
           K.glow(ctx, p.x + 3, p.y - 6, 6, '#ffb030', 0.8);

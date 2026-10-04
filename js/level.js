@@ -600,6 +600,7 @@
     const col = T === 'chaos' ? '#7a2ac0' : '#a8202a';
     g.save(); g.globalAlpha = 0.5; g.strokeStyle = col; g.lineWidth = 3; g.setLineDash([8, 6]); g.beginPath(); g.ellipse(x, y, 38, 15, 0, 0, TAU); g.stroke(); g.restore();
     K.shadow(g, x + 30, y - 8, 10, 4, 0.4);
+    if (window.Fx3D && Fx3D.flag(g, x + 30, y - 4, 54, col, 0.6, 1, '#f4e6c8')) return;
     K.limb(g, x + 30, y - 6, x + 30, y - 58, 3, '#4a3020');
     K.cel(g, c => { c.moveTo(x + 31, y - 58); c.lineTo(x + 58, y - 52); c.lineTo(x + 48, y - 43); c.lineTo(x + 58, y - 34); c.lineTo(x + 31, y - 34); c.closePath(); }, col, { s: 2, h: 1, lw: 1.8 });
     K.dot(g, x + 42, y - 46, 4, '#f4e6c8'); K.dot(g, x + 40.5, y - 47, 1, '#2a1010'); K.dot(g, x + 43.5, y - 47, 1, '#2a1010');
@@ -608,6 +609,7 @@
   function defendFlag(g, x, y, T) {
     g.save(); g.globalAlpha = 0.55; g.strokeStyle = '#7ad0ff'; g.lineWidth = 3; g.beginPath(); g.ellipse(x, y, 34, 13, 0, 0, TAU); g.stroke(); g.restore();
     K.shadow(g, x - 26, y + 2, 10, 4, 0.4);
+    if (window.Fx3D && Fx3D.flag(g, x - 26, y + 3, 59, '#2a5ab8', 0.3, 1, '#f2c14e')) return;
     K.limb(g, x - 26, y + 3, x - 26, y - 56, 3, '#4a3020');
     K.cel(g, c => { c.moveTo(x - 25, y - 56); c.lineTo(x + 2, y - 56); c.lineTo(x + 2, y - 36); c.lineTo(x - 11, y - 30); c.lineTo(x - 25, y - 36); c.closePath(); }, '#2a5ab8', { s: 2, h: 1, lw: 1.8 });
     K.cel(g, c => { c.moveTo(x - 17, y - 50); c.lineTo(x - 6, y - 50); c.lineTo(x - 6, y - 42); c.lineTo(x - 11.5, y - 38); c.lineTo(x - 17, y - 42); c.closePath(); }, '#f2c14e', { s: 1, h: 0.6, lw: 1.2 });
