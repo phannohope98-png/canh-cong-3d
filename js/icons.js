@@ -57,6 +57,8 @@
   };
 
   function Icon(name, cls) {
+    const u = window.Icons3D && Icons3D.url(name); // vật thể 3D (xu, sao, tim…) nếu có
+    if (u) return `<img class="ico ico3d ${cls || ''}" src="${u}" alt="" aria-hidden="true">`;
     return `<svg class="ico ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${P[name] || P.star}</svg>`;
   }
   Icon.has = n => !!P[n];

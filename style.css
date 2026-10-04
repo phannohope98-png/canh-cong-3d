@@ -23,6 +23,8 @@ body { position: fixed; inset: 0; }
 button { font-family: inherit; color: inherit; border: 0; padding: 0; background: none; cursor: pointer; touch-action: manipulation; }
 .hidden { display: none !important; }
 .ico { width: 1.2em; height: 1.2em; display: inline-block; vertical-align: -0.22em; flex: none; }
+.ico3d { object-fit: contain; image-rendering: auto; }
+.nstars span:not(.got) .ico3d, .big-stars .s:not(.got) .ico3d, .locked .ico3d:not(.keep) { filter: grayscale(1) brightness(0.55); }
 .screen { position: absolute; inset: 0; display: none; flex-direction: column; }
 .screen.active { display: flex; }
 .outl { text-shadow: var(--outline); color: #fff; }
