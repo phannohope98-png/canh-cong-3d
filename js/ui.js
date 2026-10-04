@@ -112,8 +112,8 @@
       inner.style.width = W + 'px'; inner.style.height = H + 'px';
       const c = $('world-map'); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
       const g = c.getContext('2d'); g.scale(W * dpr / 1200, H * dpr / 500);
-      paintWorld(g, 1200, 500);
       const nodes = [[9, 74], [25, 38], [41, 72], [58, 34], [75, 70], [91, 36]];
+      if (!(window.Map3D && Map3D.paintWorld(g, 1200, 500, nodes))) paintWorld(g, 1200, 500);
       g.setLineDash([2, 12]); g.lineCap = 'round'; g.strokeStyle = 'rgba(40,20,30,.8)'; g.lineWidth = 6;
       g.beginPath(); nodes.forEach((n, i) => { const x = n[0] * 12, y = n[1] * 5; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
       g.strokeStyle = '#fff3c8'; g.lineWidth = 3.4; g.stroke(); g.setLineDash([]);
