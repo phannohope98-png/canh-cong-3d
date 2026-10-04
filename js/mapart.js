@@ -435,7 +435,7 @@
   /* ---------------- VẼ TOÀN BỘ ---------------- */
   function render(map, res) {
     const W = map.W, H = map.H, T = TH[map.def.theme] || TH.forest, theme = map.def.theme, rnd = K.seeded(map.index * 97 + 13);
-    const c = mk(W * res, H * res), g = c.getContext('2d'); g.scale(res, res); g.lineJoin = 'round'; g.lineCap = 'round';
+    let c = mk(W * res, H * res), g = c.getContext('2d'); g.scale(res, res); g.lineJoin = 'round'; g.lineCap = 'round';
     // 1) mặt đất
     if (map.feat.void) chaosGround(g, map, T, rnd);
     else {
@@ -462,7 +462,9 @@
     for (let i = 0; i < 160; i++) { const x = rnd() * W, y = rnd() * H; if (!free(x, y, 8)) continue; if (map.feat.void) { let d = Infinity; for (const p of map.paths) d = Math.min(d, p.nearest(x, y).perp); if (d > 130) continue; } F(g, ell(x, y, 2 + rnd() * 2.5, 1.4 + rnd() * 1.2), theme === 'lava' ? '#2a2022' : theme === 'chaos' ? '#3a2a6a' : '#9a968e', { s: 0.6, h: 0.3, lw: 1 }); }
     // 4) đường đi + cầu
     drawRoad(g, map, T, res, rnd);
-    drawBridges(g, map, T);
+    const t3 = window.Terrain3D && Terrain3D.render(map, res, c, T); // mặt đất 3D: bờ sông dốc, đường trũng, cầu 3D
+    if (t3) { c = t3; g = c.getContext('2d'); g.setTransform(res, 0, 0, res, 0, 0); g.lineJoin = 'round'; g.lineCap = 'round'; }
+    else drawBridges(g, map, T);
     // 5) cây cối & công trình (theo chiều sâu)
     for (const d of map.decor) {
       if (window.Map3D && Map3D.draw(g, d, T, theme, res)) continue;

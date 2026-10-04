@@ -1,0 +1,131 @@
+/* =========================================================
+ * terrain3d.js – Mặt đất bản đồ dựng 3D
+ * Lưới mặt đất phủ bằng tranh vẽ tay (cỏ, đường, nước của mapart.js) rồi:
+ *   · khoét lòng sông / hồ / dung nham thành bờ dốc thật, mặt nước trong suốt phủ lên
+ *   · đường đi trũng nhẹ có gờ hai bên
+ *   · đổ bóng theo độ dốc (3 tông kiểu toon) với cùng hướng nắng của nhân vật
+ *   · cầu gỗ / cầu đá 3D bắc qua chỗ đường cắt nước
+ * Kết quả được chụp 1 lần thành ảnh nền (chia ô ≤ 2048 điểm ảnh để vừa mọi máy).
+ * ========================================================= */
+(function () {
+  if (!window.THREE || !window.Chars3D || !window.MapArt || !window.Art3D) return;
+  const T = THREE, { part, G, add, node, mat } = Chars3D.kit, EL = 0.34, cE = Math.cos(EL), sE = Math.sin(EL);
+  const WX = x => x / 40, WZ = y => y / (40 * sE);           // toạ độ màn hình (mặt đất) → mét
+  const DEPTH = 0.32, WATER_Y = -0.11, ROAD = 0.035;
+  const LDIR = new T.Vector3(-1.5, 5, 4).normalize(), FLAT = LDIR.y;
+
+  function bridge(scene, p, d0, d1, theme, PW) {
+    const tmp = {}, stone = theme === 'castle' || theme === 'ice' || theme === 'chaos';
+    const wood = theme === 'lava' ? '#4a3a36' : theme === 'desert' ? '#b88a52' : '#9a6a3a';
+    const deck = stone ? (theme === 'chaos' ? '#6a5aa0' : theme === 'ice' ? '#c8d4e2' : '#a8a296') : wood;
+    const half = (PW / 2 + 9), len = d1 - d0, g = node('bridge'); scene.add(g);
+    // điểm 2 mép cầu tại khoảng cách d (tính trên màn hình rồi đổi sang mét để đúng phép chiếu)
+    const at = d => { p.pointAt(d, tmp); const L = { x: WX(tmp.x - tmp.nx * half), z: WZ(tmp.y - tmp.ny * half) }, R = { x: WX(tmp.x + tmp.nx * half), z: WZ(tmp.y + tmp.ny * half) }; return { L, R, k: (d - d0) / len }; };
+    const lift = k => 0.05 + Math.sin(Math.PI * k) * 0.1;
+    for (let d = d0; d < d1; d += stone ? 9 : 6.5) {
+      const a = at(d + 3), dx = a.R.x - a.L.x, dz = a.R.z - a.L.z, w = Math.hypot(dx, dz), ang = Math.atan2(-dz, dx);
+      add(g, part(G.sbox(w, 0.05, stone ? 0.2 : 0.14, 0.3), (d / 6.5 | 0) % 2 && !stone ? Chars3D.kit.sh(wood, 0.08) : deck, { ink: 0.012 }), (a.L.x + a.R.x) / 2, lift(a.k), (a.L.z + a.R.z) / 2, 0, ang, 0);
+    }
+    for (const s of [-1, 1]) {
+      let prev = null;
+      for (let d = d0; d <= d1 + 0.01; d += (d1 - d0) / Math.max(2, Math.round(len / 26))) {
+        const a = at(d), q = s < 0 ? a.L : a.R, px = q.x, pz = q.z, y = lift(a.k);
+        if (stone) add(g, part(G.sbox(0.1, 0.16, 0.1, 0.3), theme === 'chaos' ? '#5a4a90' : '#8a8478', { ink: 0.012 }), px, y + 0.1, pz);
+        else add(g, part(G.cyl(0.025, 0.03, 0.26, 6), wood, { ink: 0.01 }), px, y + 0.13, pz);
+        if (prev) Towers3D.kit.beam(g, [prev[0], prev[1] + (stone ? 0.14 : 0.22), prev[2]], [px, y + (stone ? 0.14 : 0.22), pz], stone ? 0.035 : 0.022, stone ? '#8a8478' : Chars3D.kit.sh(wood, -0.1));
+        prev = [px, y, pz];
+      }
+    }
+  }
+
+  window.Terrain3D = {
+    /** tex: canvas đã vẽ mặt đất + nước + đường (W*res × H*res) → canvas mới đã dựng 3D (hoặc null) */
+    render(map, res, tex, TH) {
+      if (!Art3D.enabled || !Art3D.available() || map.feat.void) return null;
+      const W = map.W, H = map.H, F_ = map.feat, PW = CONFIG.pathWidth, theme = map.def.theme;
+      const renderer = Art3D.renderer(); if (!renderer) return null;
+      const tA = performance.now();
+
+      const scene = new T.Scene(), lp = Art3D.lights ? Art3D.lights() : null;
+      scene.add(new T.HemisphereLight(lp ? lp[0] : 0xfff4e8, lp ? lp[1] : 0x5a4a6a, lp ? lp[2] : 0.85));
+      const key = new T.DirectionalLight(lp ? lp[3] : 0xffffff, lp ? lp[4] : 1); key.position.copy(LDIR); scene.add(key);
+
+      /* --- lưới mặt đất --- */
+      const cell = 10, nx = Math.ceil(W / cell) + 1, ny = Math.ceil((H + 60) / cell) + 1, tmp0 = {};
+      const pos = new Float32Array(nx * ny * 3), uv = new Float32Array(nx * ny * 2), idx = [];
+      const hasWater = F_.rivers.length || F_.lakes.length;
+      // trường khoảng cách "đóng dấu": mw = khoảng cách tới mép nước (âm = trong nước), mr = tới tim đường
+      const mw = new Float32Array(nx * ny).fill(99), mr = new Float32Array(nx * ny).fill(999);
+      const stamp = (arr, sx, sy, R, base) => {
+        const i0 = Math.max(0, Math.floor(sx / cell - R / cell)), i1 = Math.min(nx - 1, Math.ceil(sx / cell + R / cell));
+        const j0 = Math.max(0, Math.floor((sy + 30) / cell - R / cell)), j1 = Math.min(ny - 1, Math.ceil((sy + 30) / cell + R / cell));
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const v = Math.hypot(i * cell - sx, -30 + j * cell - sy) - base, k = j * nx + i; if (v < arr[k]) arr[k] = v; }
+      };
+      for (const r of F_.rivers) for (let s = 0; s < r.pts.length - 1; s++) {
+        const A = r.pts[s], B = r.pts[s + 1], ax = A.x !== undefined ? A.x : A[0], ay = A.y !== undefined ? A.y : A[1], bx = B.x !== undefined ? B.x : B[0], by = B.y !== undefined ? B.y : B[1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 4));
+        for (let q = 0; q < n; q++) stamp(mw, ax + (bx - ax) * q / n, ay + (by - ay) * q / n, r.w / 2 + 24, r.w / 2);
+      }
+      for (const l of F_.lakes) {
+        const R = Math.max(l.rx, l.ry) + 26;
+        for (let j = Math.max(0, Math.floor((l.y - R + 30) / cell)); j <= Math.min(ny - 1, Math.ceil((l.y + R + 30) / cell)); j++)
+          for (let i = Math.max(0, Math.floor((l.x - R) / cell)); i <= Math.min(nx - 1, Math.ceil((l.x + R) / cell)); i++) {
+            const dx = (i * cell - l.x) / l.rx, dy = (-30 + j * cell - l.y) / l.ry, e = Math.sqrt(dx * dx + dy * dy), v = (e - 1) * Math.min(l.rx, l.ry * 1.4), k = j * nx + i;
+            if (v < mw[k]) mw[k] = v;
+          }
+      }
+      for (const p of map.paths) for (let d = 0; d <= p.length; d += 5) { p.pointAt(d, tmp0); stamp(mr, tmp0.x, tmp0.y, PW / 2 + 10, 0); }
+      for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+        const x = Math.min(W, i * cell), y = -30 + j * cell, k = j * nx + i, w = mw[k];
+        let h = w < 0 ? -DEPTH : w < 22 ? -DEPTH * Math.pow(1 - w / 22, 2.2) : 0;
+        if (h > -0.02 && mr[k] < PW / 2 + 6) h = -ROAD * Math.min(1, Math.max(0, (PW / 2 + 6 - mr[k]) / 10));
+        pos[k * 3] = WX(x); pos[k * 3 + 1] = h; pos[k * 3 + 2] = WZ(y);
+        uv[k * 2] = x / W; uv[k * 2 + 1] = 1 - y / H;
+        if (i < nx - 1 && j < ny - 1) idx.push(k, k + nx, k + 1, k + 1, k + nx, k + nx + 1);
+      }
+      const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.BufferAttribute(uv, 2)); geo.setIndex(idx);
+      geo.computeVertexNormals();
+      const nrm = geo.attributes.normal, col = new Float32Array(nx * ny * 3);
+      for (let k = 0; k < nx * ny; k++) { // đổ bóng theo độ dốc, lượng tử 4 tông kiểu toon
+        const d = nrm.getX(k) * LDIR.x + nrm.getY(k) * LDIR.y + nrm.getZ(k) * LDIR.z, f = 1 + (d - FLAT) * 1.6;
+        const q = f < 0.72 ? 0.66 : f < 0.9 ? 0.82 : f > 1.08 ? 1.1 : 1;
+        col[k * 3] = col[k * 3 + 1] = col[k * 3 + 2] = q;
+      }
+      geo.setAttribute('color', new T.BufferAttribute(col, 3));
+      const tx = new T.CanvasTexture(tex); tx.encoding = T.sRGBEncoding; tx.anisotropy = 4;
+      scene.add(new T.Mesh(geo, new T.MeshBasicMaterial({ map: tx, vertexColors: true })));
+
+      /* --- mặt nước / dung nham --- */
+      if (hasWater) {
+        const lava = theme === 'lava', wg = new T.PlaneGeometry(WX(W), WZ(H + 60)).rotateX(-Math.PI / 2).translate(WX(W) / 2, WATER_Y, WZ(H / 2));
+        scene.add(new T.Mesh(wg, new T.MeshBasicMaterial({ color: lava ? '#ff8a2a' : TH.water, transparent: true, opacity: lava ? 0.3 : 0.42, depthWrite: false })));
+      }
+      /* --- cầu 3D --- */
+      const tmp = {}, Chars = Chars3D; Chars.setInk(1.0);
+      if (hasWater) for (const p of map.paths) {
+        let start = -1;
+        for (let d = 0; d <= p.length + 5; d += 4) {
+          p.pointAt(Math.min(d, p.length), tmp); const wet = d <= p.length && MapArt.wetAt(F_, tmp.x, tmp.y, 6);
+          if (wet && start < 0) start = d;
+          if ((!wet || d > p.length) && start >= 0) { bridge(scene, p, Math.max(0, start - 16), Math.min(p.length, d + 12), theme, PW); start = -1; }
+        }
+      }
+
+      const tB = performance.now();
+      /* --- chụp theo ô --- */
+      const OW = Math.ceil(W * res), OH = Math.ceil(H * res), out = document.createElement('canvas'); out.width = OW; out.height = OH;
+      const og = out.getContext('2d'), TILE = 2048, cam = new T.OrthographicCamera(0, 1, 0, -1, 0.1, 400);
+      cam.position.set(0, sE * 150, cE * 150); cam.lookAt(0, 0, 0);
+      for (let py = 0; py < OH; py += TILE) for (let px = 0; px < OW; px += TILE) {
+        const tw = Math.min(TILE, OW - px), th = Math.min(TILE, OH - py);
+        renderer.setSize(tw, th, false); renderer.setViewport(0, 0, tw, th); renderer.setScissorTest(false);
+        cam.left = WX(px / res); cam.right = WX((px + tw) / res); cam.top = -(py / res) / 40; cam.bottom = -((py + th) / res) / 40; cam.updateProjectionMatrix();
+        renderer.render(scene, cam);
+        og.drawImage(renderer.domElement, px, py);
+      }
+      scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+      tx.dispose(); renderer.setScissorTest(false);
+      Terrain3D.timing = { build: Math.round(tB - tA), render: Math.round(performance.now() - tB) };
+      return out;
+    }
+  };
+})();

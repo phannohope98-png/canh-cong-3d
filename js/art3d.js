@@ -228,6 +228,8 @@
   };
   Art3D.available = () => !!gl();
   Art3D.lightTheme = () => theme;
+  Art3D.lights = () => LIGHT[theme] || LIGHT.forest;
+  Art3D.renderer = () => gl();
   /** đổi ánh sáng theo vùng của màn chơi (xoá đệm khung hình để vẽ lại) */
   Art3D.setTheme = function (name) {
     if (!LIGHT[name] || name === theme) return; theme = name; applyTheme(); plotCache.clear();
