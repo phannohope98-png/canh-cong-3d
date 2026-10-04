@@ -19,7 +19,10 @@ Orc giờ là quái: Orc, Orc Cưỡi Sói (sói tăng tốc húc lính). Goblin
 
 Bách khoa → "5 Nhân vật trụ" hiển thị bảng thiết kế từng nhân vật (4 cấp, biểu cảm, trụ, trang bị, bảng màu).
 
-## 6 vùng đất – dùng ẢNH MAP THẬT làm chiến trường
+## 12 màn, 2 chương
+**Chương 2** (`chapter: 2` trong `js/config.js`, bố cục ở cuối `js/maps-img.js`): Thung Lũng Sương Mù · Cầu Đá Hoàng Gia · Ốc Đảo Bão Cát · Đỉnh Tuyết Vĩnh Cửu · Lò Rèn Địa Ngục · Vực Thẳm Hư Không (boss Chúa Tể Hỗn Mang). Bố cục mới, nhiều lối vào, quái máu cao hơn (`hpMul`). Bản đồ chiến dịch nối Chương 2 sang bên phải.
+
+### Chương 1 – 6 vùng đất
 Rừng Xanh · Thành Cổ · Sa Mạc · Băng Giá · Núi Lửa · Cổng Hỗn Mang (boss cuối). Nền trận là chính ảnh map (`assets/art/battle_N.jpg`, cắt từ `assets/art/src/maps.png` bằng `test/mkbattle.ps1`). Đường quái đi được dò theo con đường vẽ trong ảnh (`js/maps-img.js`, toạ độ theo ảnh gốc). Ô xây tự đặt dọc đường, tránh nước / dung nham / vực bằng cách đọc màu ảnh.
 
 ## Anh hùng & trang bị
