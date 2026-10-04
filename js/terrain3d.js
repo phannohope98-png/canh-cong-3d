@@ -223,7 +223,7 @@
       }
       if (renderer.shadowMap.enabled) { renderer.shadowMap.enabled = false; renderer.shadowMap.autoUpdate = true; if (sunL && sunL.shadow.map) { sunL.shadow.map.dispose(); sunL.shadow.map = null; } }
       scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
-      tx.dispose(); renderer.setScissorTest(false);
+      tx.dispose(); renderer.setScissorTest(false); renderer.setSize(256, 256, false); // trả bộ đệm về cỡ nhỏ: khung nhân vật đọc lại nhanh hơn
       placed.forEach(d => { d._in3d = true; }); // mapart.js khỏi vẽ lại các vật này
       Terrain3D.timing = { build: Math.round(tB - tA), render: Math.round(performance.now() - tB) };
       return out;
