@@ -38,6 +38,13 @@
       UI.setupBattle();
       AudioSys.playMusic('battle');
       UI.story(L.name, L.story);
+      if (window.Art3D && Art3D.warm) setTimeout(() => { // dựng sẵn khung 3D của quái trong màn + anh hùng
+        const keys = new Set(); L.waves.join(',').split(',').forEach(s => keys.add(s.split(':')[0].trim()));
+        if (keys.has('darkKnight')) { keys.add('darkKnight2'); keys.add('shade'); } if (keys.has('darkLord')) { keys.add('darkLord3'); keys.add('goblin'); keys.add('orc'); }
+        const list = [], h = Units.list.find(u => u.isHero); if (h) list.push({ key: h.art, scale: h.scale, modes: ['walk', 'atk', 'idle'] });
+        keys.forEach(k => { const d = CONFIG.enemies[k], a = ArtChars[k]; if (d && a) list.push({ key: k, scale: d.radius / a.dr * (CONFIG.unitScale || 1) }); });
+        Art3D.warmClear(); Art3D.warm(list);
+      }, 300);
       this.startLoop();
     },
     restart() { this.start(this.levelIndex); },
@@ -46,7 +53,9 @@
     measure() {
       const r = this.wrap.getBoundingClientRect();
       this.viewW = Math.max(1, r.width); this.viewH = Math.max(1, r.height);
-      this.dpr = Math.min(2.5, window.devicePixelRatio || 1);
+      this.q = this.q || (Save.data.settings.q || 1);
+      this.dpr = Math.max(0.75, Math.min(2, window.devicePixelRatio || 1) * this.q);
+      if (window.Painter) Painter.ppuCap = this.q < 0.8 ? 2 : 2.8;
       this.canvas.width = Math.round(this.viewW * this.dpr); this.canvas.height = Math.round(this.viewH * this.dpr);
       this.canvas.style.width = this.viewW + 'px'; this.canvas.style.height = this.viewH + 'px';
     },
@@ -61,8 +70,17 @@
     /* ================= VÒNG LẶP ================= */
     startLoop() { if (this.raf) return; this.last = performance.now(); const f = ts => { this.raf = requestAnimationFrame(f); this.frame(ts); }; this.raf = requestAnimationFrame(f); },
     stopLoop() { cancelAnimationFrame(this.raf); this.raf = 0; },
+    /** tự giảm độ phân giải khi máy chậm (trung bình > 24 ms/khung trong ~1,5 s), nhớ lại cho lần sau */
+    perfWatch(raw) {
+      if (this.state !== 'playing' || this.paused || !(raw > 0 && raw < 250)) return;
+      const p = this.perf || (this.perf = { sum: 0, n: 0 }); p.sum += raw; p.n++;
+      if (p.n < 90) return;
+      const avg = p.sum / p.n; p.sum = p.n = 0;
+      if (avg > 24 && this.q > 0.55) { this.q = Math.max(0.55, +(this.q - 0.15).toFixed(2)); Save.data.settings.q = this.q; Save.save(); this.measure(); }
+    },
     frame(ts) {
-      const dt = Math.min(0.05, Math.max(0, (ts - this.last) / 1000)); this.last = ts;
+      const raw = ts - this.last, dt = Math.min(0.05, Math.max(0, raw / 1000)); this.last = ts;
+      this.perfWatch(raw);
       Camera.update(dt);
       if (this.state === 'playing' && !this.paused) {
         let sim = dt * this.speed;

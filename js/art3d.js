@@ -98,18 +98,26 @@
     const I = inst(spec.cid, spec.tier, spec.tall);
     pose(I, P);
     I.root.rotation.y = YAW[spec.view];
-    const c = g.canvas, m = g.getTransform(), W = c.width, H = c.height;
-    const sz = r.getSize(new T.Vector2()); if (sz.x !== W || sz.y !== H) r.setSize(W, H, false);
-    const s = 1 / (m.a * I.k); // mét / điểm ảnh
-    cam.left = -m.e * s; cam.right = (W - m.e) * s; cam.top = m.f * s; cam.bottom = -(H - m.f) * s; cam.updateProjectionMatrix();
-    scene.add(I.root); r.render(scene, cam); scene.remove(I.root);
     K.shadow(g, 0, 0.6, spec.shadow, spec.shadow * 0.24, 0.42);
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(r.domElement, 0, 0); g.restore();
+    renderInto(I.root, g, I.k);
     Art3D.stats.frames++; Art3D.stats.ms += performance.now() - t0;
+  }
+  /** dựng 1 mô hình vào vùng góc dưới-trái của bộ đệm WebGL (không cấp phát lại khi đổi cỡ) rồi chép sang g */
+  const _sz = new T.Vector2();
+  function renderInto(root, g, k) {
+    const r = gl(), c = g.canvas, m = g.getTransform(), W = c.width, H = c.height;
+    r.getSize(_sz);
+    if (_sz.x < W || _sz.y < H) { r.setSize(Math.max(_sz.x, Math.ceil(W / 128) * 128), Math.max(_sz.y, Math.ceil(H / 128) * 128), false); r.getSize(_sz); }
+    r.setViewport(0, 0, W, H); r.setScissor(0, 0, W, H); r.setScissorTest(true);
+    const s = 1 / (m.a * k); // mét / điểm ảnh
+    cam.left = -m.e * s; cam.right = (W - m.e) * s; cam.top = m.f * s; cam.bottom = -(H - m.f) * s; cam.updateProjectionMatrix();
+    scene.add(root); r.render(scene, cam); scene.remove(root);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(r.domElement, 0, _sz.y - H, W, H, 0, 0, W, H); g.restore();
   }
 
   /* ---------- thay hình 2D bằng 3D (giữ hình 2D để quay về khi tắt) ---------- */
   const Art3D = { enabled: true, keys: [], stats: { frames: 0, ms: 0 } };
+  Chars3D.setDetail(0.62); // trong trận: ít đa giác hơn (nhân vật chỉ cao vài chục điểm ảnh)
   function wrap(key, cid, tier, view, baseKey) {
     const base = reg[baseKey || key]; if (!base || (reg[key] && reg[key].__3d)) return;
     const orig = (reg[key] || base).draw;
@@ -148,12 +156,7 @@
     drawStatic(towerRoot(type, tier), g);
   }
   function drawStatic(root, g) {
-    const r = gl(), c = g.canvas, m = g.getTransform(), W = c.width, H = c.height;
-    const sz = r.getSize(new T.Vector2()); if (sz.x !== W || sz.y !== H) r.setSize(W, H, false);
-    const s = 1 / (m.a * 40);
-    cam.left = -m.e * s; cam.right = (W - m.e) * s; cam.top = m.f * s; cam.bottom = -(H - m.f) * s; cam.updateProjectionMatrix();
-    scene.add(root); r.render(scene, cam); scene.remove(root);
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(r.domElement, 0, 0); g.restore();
+    renderInto(root, g, 40);
   }
   if (window.ArtTowers && window.Towers3D) ['archer', 'mage', 'barracks', 'artillery'].forEach(type => {
     const d = ArtTowers[type]; if (!d) return;
@@ -198,6 +201,26 @@
     root.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     return { c, ox, oy, w, h, fw: (_box.max.x - _box.min.x) * 40 };
   };
+
+  /* ---------- dựng sẵn khung hình lúc rảnh (≤ 6 ms mỗi khung màn hình) để khỏi khựng khi quái mới xuất hiện ---------- */
+  const warmQ = []; let warmRaf = 0, scratch = null;
+  const MODES = [['walk', 16], ['atk', 12], ['idle', 10], ['die', 10]];
+  Art3D.warm = function (list) {
+    if (!Art3D.enabled || failed) return;
+    for (const it of list) {
+      if (!reg[it.key] || !reg[it.key].__3d) continue;
+      for (const [mode, n] of (it.modes ? MODES.filter(m => it.modes.includes(m[0])) : MODES))
+        for (let i = 0; i < n; i++) warmQ.push({ key: it.key, scale: it.scale, mode, ph: mode === 'idle' ? (i + 0.5) / n * IDLE : (i + 0.5) / n });
+    }
+    if (!warmRaf && warmQ.length) warmRaf = requestAnimationFrame(pump);
+  };
+  function pump() {
+    warmRaf = 0; if (!scratch) scratch = document.createElement('canvas').getContext('2d');
+    const t0 = performance.now();
+    while (warmQ.length && performance.now() - t0 < 6) { const j = warmQ.shift(); try { Painter.char(scratch, j.key, 0, 0, j.scale, 1, j.mode, j.ph); } catch (e) { } }
+    if (warmQ.length) warmRaf = requestAnimationFrame(pump);
+  }
+  Art3D.warmClear = () => { warmQ.length = 0; };
 
   Art3D.setEnabled = function (on) {
     Art3D.enabled = !!on; plotCache.clear();

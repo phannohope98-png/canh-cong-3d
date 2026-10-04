@@ -6,7 +6,7 @@
   const K = ArtKit, TAU = Math.PI * 2;
   const N = { walk: 16, atk: 12, idle: 10, die: 10 }, IDLE = 2.618;
   const BUCKETS = [0.35, 0.5, 0.7, 1, 1.4, 2, 2.8, 4];
-  const bucket = v => { for (const b of BUCKETS) if (v <= b * 1.15) return b; return 4; };
+  const bucket = v => { v = Math.min(v, (window.Painter && Painter.ppuCap) || 4); for (const b of BUCKETS) if (v <= b * 1.15) return b; return 4; };
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; };
   const cache = new Map();
   function remember(key, c) { if (cache.size > 1600) cache.clear(); cache.set(key, c); return c; }

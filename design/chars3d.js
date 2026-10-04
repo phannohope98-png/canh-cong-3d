@@ -14,6 +14,8 @@
 
   const INK = '#1b0f16', GOLD = '#f5c542', SKIN = '#ffd9b8', OUT = 0.026;
   let INKK = 1; // hệ số độ dày viền (trong trận dùng dày hơn cho rõ ở cỡ nhỏ)
+  let DET = 1; // mức chi tiết (trong trận < 1 cho nhẹ máy)
+  const Q = n => Math.max(5, Math.round(n * DET));
 
   /* ---------- vật liệu toon ---------- */
   const GRAD = (() => {
@@ -64,29 +66,29 @@
 
   /* ---------- hình học (đã nướng tỉ lệ để viền dày đều) ---------- */
   const G = {
-    ball: (r, sx, sy, sz, seg) => new T.SphereGeometry(r, seg || 18, Math.round((seg || 18) * 0.7)).scale(sx || 1, sy || 1, sz || 1),
-    cap: (r, len, seg) => new T.CapsuleGeometry(r, Math.max(0.001, len), 5, seg || 12),
-    cyl: (rt, rb, h, seg) => new T.CylinderGeometry(rt, rb, h, seg || 14),
-    cone: (r, h, seg) => new T.ConeGeometry(r, h, seg || 12),
+    ball: (r, sx, sy, sz, seg) => new T.SphereGeometry(r, Q(seg || 18), Math.max(4, Math.round(Q(seg || 18) * 0.7))).scale(sx || 1, sy || 1, sz || 1),
+    cap: (r, len, seg) => new T.CapsuleGeometry(r, Math.max(0.001, len), Math.max(2, Math.round(5 * DET)), Q(seg || 12)),
+    cyl: (rt, rb, h, seg) => new T.CylinderGeometry(rt, rb, h, seg && seg <= 6 ? seg : Q(seg || 14)),
+    cone: (r, h, seg) => new T.ConeGeometry(r, h, seg && seg <= 6 ? seg : Q(seg || 12)),
     torus: (R, r, arc) => new T.TorusGeometry(R, r, 8, 26, arc || TAU),
     oct: (r, sy) => new T.OctahedronGeometry(r, 0).scale(1, sy || 1, 1),
     /** khối hộp bo tròn (siêu elip) – giáp, giày, ngực */
     sbox(w, h, d, e) {
       e = e === undefined ? 0.35 : e;
-      const g = new T.SphereGeometry(1, 20, 14), p = g.attributes.position;
+      const g = new T.SphereGeometry(1, Q(20), Q(14)), p = g.attributes.position;
       const f = v => Math.sign(v) * Math.pow(Math.abs(v), e);
       for (let i = 0; i < p.count; i++) p.setXYZ(i, f(p.getX(i)) * w / 2, f(p.getY(i)) * h / 2, f(p.getZ(i)) * d / 2);
       g.computeVertexNormals(); return g;
     },
     /** xoay biên dạng quanh trục Y; pts = [[bán kính, y], …] */
-    lathe(pts, seg, sz) { const g = new T.LatheGeometry(pts.map(q => new T.Vector2(q[0], q[1])), seg || 22); if (sz) g.scale(1, 1, sz); return g; },
+    lathe(pts, seg, sz) { const g = new T.LatheGeometry(pts.map(q => new T.Vector2(q[0], q[1])), seg && seg <= 9 ? seg : Q(seg || 22)); if (sz) g.scale(1, 1, sz); return g; },
     /** đùn đa giác phẳng (mặt XY), dày theo Z, căn giữa */
     ext(pts, depth, bevel) {
       const s = pts instanceof T.Shape ? pts : (() => { const q = new T.Shape(); q.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) q.lineTo(pts[i], pts[i + 1]); return q; })();
       const g = new T.ExtrudeGeometry(s, { depth, bevelEnabled: !!bevel, bevelThickness: bevel || 0, bevelSize: bevel || 0, bevelSegments: 2, curveSegments: 10 });
       g.translate(0, 0, -depth / 2); return g;
     },
-    tube(pts, r, seg) { return new T.TubeGeometry(new T.CatmullRomCurve3(pts.map(q => new T.Vector3(q[0], q[1], q[2]))), seg || 20, r, 8, false); },
+    tube(pts, r, seg) { return new T.TubeGeometry(new T.CatmullRomCurve3(pts.map(q => new T.Vector3(q[0], q[1], q[2]))), Q(seg || 20), r, Q(8), false); },
     /** áo choàng cong, xoè ra ở dưới (khối kín để viền đủ) */
     cape(w, L, flare) {
       const s = new T.Shape(), n = 10, th = 0.035, bulge = w * 0.24;
@@ -1268,5 +1270,5 @@
     return c;
   }
 
-  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; }, kit: { part, G, add, node, mat, glow, sh, flipY, freeze, GOLD, INK } };
+  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; }, setDetail: k => { DET = k; }, kit: { part, G, add, node, mat, glow, sh, flipY, freeze, GOLD, INK } };
 })();
