@@ -66,7 +66,7 @@
       const o = p.o;
       if (p.kind === 'bomb') {
         this.splash(p.tx, p.ty, o.aoe, o.damage, 'physical');
-        Effects.explosion(p.tx, p.ty, o.aoe); Effects.shake(3, 0.15); AudioSys.play('explode');
+        Effects.explosion(p.tx, p.ty, o.aoe); Effects.shake(3, 0.15); AudioSys.play('explode'); Effects.comic(p.tx, p.ty - 46, Math.random() < 0.5 ? 'BOOM!' : 'KABOOM!', '#ff9a2a');
         if (o.cluster) for (let k = 0; k < 3; k++) {
           const a = Math.random() * Math.PI * 2, r = 40 + Math.random() * 30, x = p.tx + Math.cos(a) * r, y = p.ty + Math.sin(a) * r * 0.7;
           setTimeout(() => { if (Game.state !== 'playing') return; this.splash(x, y, o.aoe * 0.55, [o.damage[0] * 0.4, o.damage[1] * 0.4], 'physical'); Effects.explosion(x, y, o.aoe * 0.55); }, 140 + k * 110);

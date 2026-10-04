@@ -14,6 +14,27 @@
     rings: [], rPool: [], bolts: [],
     shakeAmp: 0, shakeTime: 0, shakeX: 0, shakeY: 0,
 
+    /* Chữ hiệu ứng truyện tranh kiểu Kingdom Rush: BOOM! POW! KAPOW!… */
+    comics: [], comicCd: 0,
+    comic(x, y, word, col, force) {
+      if (!force && (this.comicCd > 0 || Math.random() > 0.35)) return;
+      this.comicCd = 0.7; if (this.comics.length > 5) this.comics.shift();
+      this.comics.push({ x, y, word, col: col || '#ffe14a', t: 0, rot: (Math.random() - 0.5) * 0.35 });
+    },
+    drawComics(ctx) {
+      for (const c of this.comics) {
+        const k = c.t / 0.85, pop = k < 0.15 ? 0.4 + k / 0.15 * 0.85 : k < 0.25 ? 1.25 - (k - 0.15) * 2.5 : 1;
+        ctx.save(); ctx.globalAlpha = k > 0.7 ? Math.max(0, 1 - (k - 0.7) / 0.3) : 1;
+        ctx.translate(c.x, c.y - k * 14); ctx.rotate(c.rot); ctx.scale(pop, pop);
+        // nổ sao phía sau chữ
+        ctx.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, r = i % 2 ? 22 : 34; ctx.lineTo(Math.cos(a) * r * 1.5, Math.sin(a) * r * 0.75); } ctx.closePath();
+        ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#1b0f16'; ctx.stroke();
+        ctx.font = '900 22px "Alegreya SC", "Alegreya Sans", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round'; ctx.lineWidth = 6; ctx.strokeStyle = '#1b0f16'; ctx.strokeText(c.word, 0, 1);
+        ctx.fillStyle = c.col; ctx.fillText(c.word, 0, 1);
+        ctx.restore();
+      }
+    },
     /* Vết trên mặt đất: cháy xém (nổ) / vết máu (quái chết) – mờ dần */
     decals: [],
     decal(x, y, r, kind) {
@@ -56,7 +77,7 @@
       while (this.particles.length) this.pPool.push(this.particles.pop());
       while (this.texts.length) this.tPool.push(this.texts.pop());
       while (this.rings.length) this.rPool.push(this.rings.pop());
-      this.bolts.length = 0; this.corpses.length = 0; this.decals.length = 0;
+      this.bolts.length = 0; this.corpses.length = 0; this.decals.length = 0; this.comics.length = 0;
       this.shakeAmp = this.shakeTime = this.shakeX = this.shakeY = 0;
     },
 
@@ -136,6 +157,7 @@
     update(dt) {
       for (let i = this.corpses.length - 1; i >= 0; i--) { const c = this.corpses[i]; c.t += dt; if (c.t > 1.4) this.corpses.splice(i, 1); }
       for (let i = this.decals.length - 1; i >= 0; i--) { const d = this.decals[i]; d.t += dt; if (d.t > d.life) this.decals.splice(i, 1); }
+      if (this.comicCd > 0) this.comicCd -= dt; for (let i = this.comics.length - 1; i >= 0; i--) { const c = this.comics[i]; c.t += dt; if (c.t > 0.85) this.comics.splice(i, 1); }
       for (let i = this.particles.length - 1; i >= 0; i--) {
         const p = this.particles[i];
         p.life -= dt;

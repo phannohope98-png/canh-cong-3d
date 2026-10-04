@@ -15,17 +15,17 @@
 
   /* ---------------- Bảng màu theo vùng ---------------- */
   const TH = {
-    forest: { g0: '#5e9a3a', g1: '#3f7428', g2: '#8ac04e', road: '#c9a46c', roadD: '#8a6438', roadL: '#e6c890', edge: '#5a4026', water: '#2f8fc0', waterL: '#7fd0ee', bank: '#5a4a30',
+    forest: { g0: '#6aa83e', g1: '#4a842c', g2: '#9ccc56', road: '#e8cf94', roadD: '#c09a60', roadL: '#f8e8bc', edge: '#8a6a3c', water: '#2f8fc0', waterL: '#7fd0ee', bank: '#5a4a30',
       tree: ['#3f8a2e', '#4f9a34', '#2f7a2a'], flowers: ['#fff6a0', '#ffffff', '#ff9ab8', '#c8b0ff'], mix: [['tree', 0.5], ['pine', 0.14], ['bush', 0.15], ['rock', 0.1], ['stump', 0.05], ['mush', 0.06]] },
-    castle: { g0: '#68a044', g1: '#457a2e', g2: '#94c45a', road: '#b4ab9c', roadD: '#7e766a', roadL: '#d8d0c0', edge: '#4a463e', cobble: true, water: '#2f86b8', waterL: '#80cce8', bank: '#6a6458',
+    castle: { g0: '#74ae48', g1: '#4e8630', g2: '#a2d062', road: '#e2d6b8', roadD: '#b0a284', roadL: '#f4ecd6', edge: '#7a6e58', cobble: true, water: '#2f86b8', waterL: '#80cce8', bank: '#6a6458',
       tree: ['#3f8a2e', '#4f9a34', '#2f7a2a'], flowers: ['#fff6a0', '#ffffff', '#ff9ab8'], mix: [['tree', 0.36], ['bush', 0.2], ['rock', 0.14], ['pine', 0.1], ['barrel', 0.06], ['crate', 0.06], ['hay', 0.08]] },
-    desert: { g0: '#d8a45e', g1: '#b8803e', g2: '#f0c884', road: '#eccb8e', roadD: '#b88a4e', roadL: '#fbe3b0', edge: '#8a5a2e', water: '#2fa0b8', waterL: '#8ae0e8', bank: '#7a9a3a',
+    desert: { g0: '#dca85e', g1: '#c08440', g2: '#f2cc88', road: '#f6deae', roadD: '#d2aa70', roadL: '#fff2d4', edge: '#a8743e', water: '#2fa0b8', waterL: '#8ae0e8', bank: '#7a9a3a',
       tree: ['#6a9a3a', '#5a8a32', '#7aaa42'], flowers: ['#ffe080', '#ff8a5a'], mix: [['cactus', 0.24], ['rock', 0.3], ['deadtree', 0.1], ['bones', 0.1], ['palm', 0.08], ['drybush', 0.12], ['barrel', 0.06]] },
-    ice: { g0: '#e4eef8', g1: '#b4c8de', g2: '#ffffff', road: '#b8c8da', roadD: '#8a9cb4', roadL: '#dfe8f2', edge: '#5e7088', water: '#8ad0ee', waterL: '#e0f6ff', bank: '#9ab0c8',
+    ice: { g0: '#e4eef8', g1: '#bccee2', g2: '#ffffff', road: '#c4d8ea', roadD: '#98b0c8', roadL: '#e8f2fa', edge: '#7088a4', water: '#8ad0ee', waterL: '#e0f6ff', bank: '#9ab0c8',
       tree: ['#2f6a4a', '#3a7a56', '#285a40'], flowers: ['#ffffff'], mix: [['snowpine', 0.52], ['rock', 0.2], ['icecrystal', 0.16], ['bush', 0.08], ['deadtree', 0.04]] },
-    lava: { g0: '#4c3a38', g1: '#2e2224', g2: '#6a5250', road: '#8a6c56', roadD: '#5a4434', roadL: '#a88a70', edge: '#24181a', water: '#ff6a1a', waterL: '#ffd23a', bank: '#1e1416',
+    lava: { g0: '#4c3a38', g1: '#2e2224', g2: '#6a5250', road: '#a8886a', roadD: '#7a5e48', roadL: '#c8a888', edge: '#3a2620', water: '#ff6a1a', waterL: '#ffd23a', bank: '#1e1416',
       tree: ['#3a2c2c', '#2e2222', '#4a3838'], flowers: [], mix: [['spire', 0.3], ['rock', 0.3], ['deadtree', 0.14], ['redcrystal', 0.1], ['bones', 0.1], ['brazier', 0.06]] },
-    chaos: { g0: '#5a4a8a', g1: '#3a2c66', g2: '#7a6ab0', road: '#8a7cc0', roadD: '#5a4a90', roadL: '#b8a8ea', edge: '#2a1c52', water: '#a050ff', waterL: '#e0b0ff', bank: '#2a1c52',
+    chaos: { g0: '#5a4a8a', g1: '#3a2c66', g2: '#7a6ab0', road: '#a898d8', roadD: '#7a6ab0', roadL: '#d4c8f4', edge: '#3a2c66', water: '#a050ff', waterL: '#e0b0ff', bank: '#2a1c52',
       tree: ['#4a3a7a', '#3a2c6a', '#5a4a8a'], flowers: ['#d8a0ff'], mix: [['voidcrystal', 0.34], ['rock', 0.24], ['deadtree', 0.2], ['rune', 0.12], ['bones', 0.1]] }
   };
 
@@ -60,7 +60,7 @@
       props: (f.props || []).map(p => Object.assign({}, p, cv([p.x, p.y])))
     };
   }
-  const PROP_R = { castle: 230, fort: 190, gateway: 70, cabin: 80, house: 80, ruin: 75, tent: 60, mesa: 110, well: 40, portal: 150 };
+  const PROP_R = { monument: 190, castle: 230, fort: 190, gateway: 70, cabin: 80, house: 80, ruin: 75, tent: 60, mesa: 110, well: 40, portal: 150 };
   /** Loại nước/dung nham tại điểm (có lề m), hoặc null */
   function wetAt(F_, x, y, m) {
     for (const r of F_.rivers) if (distPoly(r.pts, x, y) < r.w / 2 + m) return r.kind;
@@ -76,25 +76,50 @@
   function okSpot(F_, paths) {
     return (x, y) => { if (blocked(F_, x, y, 30)) return false; if (F_.void) { let d = Infinity; for (const p of paths) d = Math.min(d, p.nearest(x, y).perp); if (d > 125) return false; } return true; };
   }
-  /** Rải cây, đá, bụi… quanh đường */
+  /** Rải đồ trang trí kiểu Kingdom Rush: khu chơi giữa thoáng, cây & nhà dày ở viền làm khung,
+   *  cột đèn dọc đường, 1 quảng trường / tượng đài ở khoảng trống lớn nhất */
   function decor(F_, paths, spots, W, H, theme, seed) {
-    const T = TH[theme] || TH.forest, r = K.seeded(seed), out = [], PW = CONFIG.pathWidth;
+    const T = TH[theme] || TH.forest, r = K.seeded(seed), out = [], PW = CONFIG.pathWidth, tmp = {};
     const pick = () => { let a = 0, v = r(); for (const [k, p] of T.mix) { a += p; if (v < a) return k; } return T.mix[0][0]; };
-    const ph1 = r() * 9, ph2 = r() * 9, dens = (x, y) => 0.5 + 0.28 * Math.sin(x * 0.0042 + ph1) * Math.cos(y * 0.0061 + ph2) + 0.22 * Math.sin((x + y) * 0.0093 + ph2);
-    for (let y = -30; y < H + 40; y += 38) for (let x = -30; x < W + 40; x += 38) {
-      const jx = x + (r() - 0.5) * 32, jy = y + (r() - 0.5) * 32;
-      let dp = Infinity; for (const p of paths) dp = Math.min(dp, p.nearest(jx, jy).perp);
-      if (dp < PW / 2 + 26) continue;
+    const BIG = new Set(['tree', 'pine', 'snowpine', 'palm', 'spire', 'mesa']);
+    const SMALL = theme === 'ice' ? ['rock', 'bush', 'icecrystal'] : theme === 'lava' ? ['rock', 'bones', 'redcrystal'] : theme === 'desert' ? ['rock', 'drybush', 'cactus', 'bones'] : theme === 'chaos' ? ['rock', 'rune', 'voidcrystal'] : ['bush', 'rock', 'stump', 'mush', 'flowerbed', 'flowerbed'];
+    const dpOf = (x, y) => { let d = Infinity; for (const p of paths) d = Math.min(d, p.nearest(x, y).perp); return d; };
+    const nearSpot = (x, y, m) => { for (const s of spots) if (Math.hypot(s.x - x, (s.y - y) * 1.2) < m) return true; return false; };
+    // 1) quảng trường / tượng đài
+    if (!F_.void) {
+      let best = null, bs = 0;
+      for (let y = 140; y < H - 100; y += 30) for (let x = W * 0.18; x < W * 0.82; x += 30) {
+        const d = dpOf(x, y); if (d < 160 || nearSpot(x, y, 150) || blocked(F_, x, y, 90)) continue;
+        const sc = Math.min(d, 260) - Math.abs(x - W / 2) * 0.05; if (sc > bs) { bs = sc; best = { x, y }; }
+      }
+      if (best) { const p = { k: 'monument', x: best.x, y: best.y, theme }; F_.props.push(p); }
+    }
+    // 2) cột đèn dọc đường
+    let side = 1;
+    for (const p of paths) for (let d = 160; d < p.length - 120; d += 230 + r() * 80) {
+      p.pointAt(d, tmp); side = -side; const o = side * (PW / 2 + 16), x = tmp.x + tmp.nx * o, y = tmp.y + tmp.ny * o;
+      if (x < 40 || x > W - 40 || y < 50 || y > H - 20 || nearSpot(x, y, 58) || blocked(F_, x, y, 10) || dpOf(x, y) < PW / 2 + 10) continue;
+      let clash = false; for (const q of out) if (q.k === 'lamp' && Math.hypot(q.x - x, q.y - y) < 150) clash = true; if (clash) continue;
+      out.push({ k: 'lamp', x, y, s: 1, v: r(), flip: 1, theme });
+    }
+    // 3) cây cối & vật nhỏ
+    const ph1 = r() * 9, ph2 = r() * 9, dens = (x, y) => 0.55 + 0.25 * Math.sin(x * 0.0042 + ph1) * Math.cos(y * 0.0061 + ph2) + 0.2 * Math.sin((x + y) * 0.0093 + ph2);
+    for (let y = -30; y < H + 40; y += 34) for (let x = -30; x < W + 40; x += 34) {
+      const jx = x + (r() - 0.5) * 30, jy = y + (r() - 0.5) * 30;
+      const dp = dpOf(jx, jy);
+      if (dp < PW / 2 + 22) continue;
       if (F_.void && dp > 140) continue;
-      let near = false; for (const s of spots) if (Math.hypot(s.x - jx, (s.y - jy) * 1.2) < 70) { near = true; break; } if (near) continue;
-      if (blocked(F_, jx, jy, 16)) continue;
-      const edge = Math.min(jx, W - jx, jy + 20, H - jy) < 70;
-      const dn = dens(jx, jy), chance = F_.void ? (dp > 70 ? 0.3 : 0.1) : (edge ? 0.85 : dp > 190 ? 0.95 : dp > 110 ? 0.45 : 0.12) * (edge ? 1 : Math.max(0.08, dn * dn * 1.6));
-      if (r() > chance) continue;
-      let k = pick();
-      if (dp < 110 && (k === 'tree' || k === 'pine' || k === 'snowpine' || k === 'spire' || k === 'palm')) k = theme === 'ice' ? 'bush' : theme === 'lava' ? 'rock' : theme === 'desert' ? 'drybush' : 'bush';
-      const big = k === 'tree' || k === 'pine' || k === 'snowpine' || k === 'palm' || k === 'spire';
-      out.push({ k, x: jx, y: jy, s: big ? 1.3 + r() * 0.5 : 1.05 + r() * 0.4, v: r(), flip: r() < 0.5 ? -1 : 1 });
+      if (nearSpot(jx, jy, 66) || blocked(F_, jx, jy, 16)) continue;
+      const edge = Math.min(jx, W - jx, (jy + 30) * 1.4, (H - jy) * 1.6), dn = dens(jx, jy);
+      let k, ch;
+      if (F_.void) { k = dp > 80 ? pick() : SMALL[(r() * SMALL.length) | 0]; ch = dp > 70 ? 0.28 : 0.08; }
+      else if (edge < 120 && dp > 90) { k = pick(); ch = 0.95; }                       // khung viền: dày đặc
+      else if (dp > 230) { k = pick(); ch = 0.42 * Math.max(0.15, dn * dn * 1.8); }       // xa đường: cụm cây thưa
+      else if (dp > 120) { k = r() < 0.35 ? pick() : SMALL[(r() * SMALL.length) | 0]; ch = 0.16 * Math.max(0.2, dn * 1.6); }
+      else { k = SMALL[(r() * SMALL.length) | 0]; ch = 0.07; }
+      if (r() > ch) continue;
+      if (dp < 150 && BIG.has(k)) k = SMALL[(r() * SMALL.length) | 0];
+      out.push({ k, x: jx, y: jy, s: BIG.has(k) ? 1.3 + r() * 0.5 : 1.05 + r() * 0.35, v: r(), flip: r() < 0.5 ? -1 : 1 });
     }
     for (const p of F_.props) out.push(Object.assign({ prop: true, s: 1, v: 0.5, flip: 1 }, p));
     out.sort((a, b) => a.y - b.y);
@@ -150,16 +175,22 @@
     for (const p of map.paths) { polyPath(g, p.points); g.lineWidth = PW + 30; g.strokeStyle = 'rgba(30,16,6,0.28)'; g.stroke(); }
     g.restore();
     const rl = mk(W * res, H * res), r = rl.getContext('2d'); r.scale(res, res); r.lineCap = 'round'; r.lineJoin = 'round';
-    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 12; r.strokeStyle = T.edge; r.stroke(); }
-    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 4; r.strokeStyle = T.roadD; r.stroke(); }
-    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW - 4; r.strokeStyle = T.road; r.stroke(); }
+    // viền cỏ tối (môi cỏ) → mép đất → mặt đường sáng
+    const lip = map.feat.void ? '#2a1c52' : map.def.theme === 'ice' ? '#8aa4c0' : sh(T.g0, -0.42);
+    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 14; r.strokeStyle = lip; r.stroke(); }
+    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 6; r.strokeStyle = T.edge; r.stroke(); }
+    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW; r.strokeStyle = T.roadD; r.stroke(); }
+    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW - 8; r.strokeStyle = T.road; r.stroke(); }
     r.globalCompositeOperation = 'source-atop';
     patches(r, W, H, T.roadD, 46, 0.55, map.index * 7 + 1, 0.5, 1);
     patches(r, W, H, T.roadL, 30, 0.5, map.index * 7 + 2, 0.55, 1);
     r.save(); r.filter = 'blur(6px)'; for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW * 0.42; r.strokeStyle = K.alpha(T.roadL, 0.55); r.stroke(); } r.restore();
+    // mảng đá lát ngẫu nhiên trên đường đất (kiểu KR)
+    if (!T.cobble) for (const p of map.paths) for (let d = 40; d < p.length; d += 70 + rnd() * 90) { p.pointAt(d, tmp); const cx = tmp.x + tmp.nx * (rnd() - 0.5) * PW * 0.4, cy = tmp.y + tmp.ny * (rnd() - 0.5) * PW * 0.4, n = 4 + (rnd() * 6 | 0);
+      for (let i = 0; i < n; i++) { const x = cx + (rnd() - 0.5) * 30, y = cy + (rnd() - 0.5) * 18, w = 5 + rnd() * 5; r.fillStyle = K.alpha(sh(T.roadD, -0.05), 0.85); r.beginPath(); r.ellipse(x, y + 1, w, w * 0.62, 0, 0, TAU); r.fill(); r.fillStyle = sh(T.roadL, -0.02); r.beginPath(); r.ellipse(x, y, w * 0.9, w * 0.55, 0, 0, TAU); r.fill(); } }
     if (T.cobble) { // đường lát đá
       for (const p of map.paths) for (let d = 0; d < p.length; d += 9) { p.pointAt(d, tmp);
-        for (let o = -PW / 2 + 4, k = 0; o <= PW / 2 - 3; o += 9, k++) { const x = tmp.x + tmp.nx * (o + ((d / 9 | 0) % 2) * 4.5), y = tmp.y + tmp.ny * (o + ((d / 9 | 0) % 2) * 4.5), c = rnd();
+        for (let o = -PW / 2 + 6, k = 0; o <= PW / 2 - 5; o += 9, k++) { const x = tmp.x + tmp.nx * (o + ((d / 9 | 0) % 2) * 4.5), y = tmp.y + tmp.ny * (o + ((d / 9 | 0) % 2) * 4.5), c = rnd();
           r.fillStyle = c < 0.33 ? sh(T.road, 0.12) : c < 0.66 ? T.road : sh(T.road, -0.1); r.strokeStyle = K.alpha(T.edge, 0.55); r.lineWidth = 1;
           r.beginPath(); r.ellipse(x, y, 4.2, 3.4, Math.atan2(tmp.ty, tmp.tx), 0, TAU); r.fill(); r.stroke(); } }
     } else {
@@ -222,6 +253,28 @@
   /* ---------------- Vật trang trí ---------------- */
   function shadow(g, rx, ry) { K.shadow(g, rx * 0.25, 2, rx, ry, 0.42); }
   const D = {
+    lamp(g, T, v) { // cột đèn dọc đường (theo vùng)
+      const th = T === TH.desert ? 'desert' : T === TH.ice ? 'ice' : T === TH.lava ? 'lava' : T === TH.chaos ? 'chaos' : 'town';
+      shadow(g, 8, 3);
+      if (th === 'desert' || th === 'lava') { // đuốc
+        line(g, 0, 0, 0, -30, INK, 5.6); line(g, 0, 0, 0, -30, '#6a4426', 3); F(g, P_.rr(-4.5, -36, 9, 7, 2), '#3a3036', { s: 0.6, h: 0.3, lw: 1.4 });
+        K.glow(g, 0, -42, 20, '#ff9a2a', 0.65); F(g, c => { c.moveTo(-4, -36); c.quadraticCurveTo(-5, -43, 0, -50); c.quadraticCurveTo(5, -43, 4, -36); c.closePath(); }, '#ff8a1a', { s: 0, h: 0.8, lw: 1.1, light: '#ffe060' });
+        return;
+      }
+      const glow = th === 'ice' ? '#9ae0ff' : th === 'chaos' ? '#d08aff' : '#ffd060';
+      F(g, P_.rr(-4, -4, 8, 5, 1.5), '#4a4a56', { s: 0.6, h: 0.3, lw: 1.4 });
+      line(g, 0, -2, 0, -38, INK, 5); line(g, 0, -2, 0, -38, '#5a5a6a', 2.6); line(g, -1, -4, -1, -36, '#8a8a9a', 0.9);
+      F(g, poly([-6, -38, 6, -38, 4, -50, -4, -50]), K.alpha(glow, 1), { s: 0, h: 0, lw: 1.6, flat: true });
+      K.glow(g, 0, -44, 24, glow, 0.6);
+      F(g, poly([-7.5, -50, 7.5, -50, 0, -57]), th === 'chaos' ? '#3a2c66' : '#3a3a48', { s: 0.6, h: 0.4, lw: 1.5 });
+      F(g, P_.rr(-7, -39.5, 14, 2.6, 1), '#3a3a48', { s: 0.3, h: 0.2, lw: 1.2 });
+      line(g, -3.5, -40, -3, -49, 'rgba(40,40,50,0.8)', 1); line(g, 3.5, -40, 3, -49, 'rgba(40,40,50,0.8)', 1);
+    },
+    flowerbed(g, T, v) {
+      const cols = T.flowers.length ? T.flowers : ['#ff9ab8'];
+      F(g, ell(0, 0, 16, 6.5), sh(T.g0, -0.2), { s: 1, h: 0.4, lw: 1.5 });
+      for (let i = 0; i < 9; i++) { const a = i * 2.4 + v * 6, rr = (i % 3) * 4.2, x = Math.cos(a) * rr * 1.5, y = Math.sin(a) * rr * 0.5 - 2; K.dot(g, x, y, 2.6, INK); K.dot(g, x, y, 2, cols[(i + (v * 10 | 0)) % cols.length]); K.dot(g, x - 0.5, y - 0.6, 0.7, '#ffffff'); }
+    },
     tree(g, T, v) {
       const c = T.tree[(v * 3) | 0], c2 = sh(c, 0.12);
       shadow(g, 30, 10);
@@ -266,6 +319,40 @@
   /* ---------------- Công trình lớn ---------------- */
   function tH() { return ArtTowers.H; }
   const PROPS = {
+    monument(g, p, T) { // quảng trường tròn lát đá + tượng đài ở giữa (như KR)
+      const H = tH(), th = p.theme, stone = th === 'desert' ? '#e2c48e' : th === 'ice' ? '#d4e0ec' : th === 'lava' ? '#6a5a58' : '#c8c0b0';
+      K.shadow(g, 0, 6, 120, 44, 0.25);
+      F(g, ell(0, 0, 112, 42), sh(stone, -0.25), { s: 2, h: 0, lw: 2.2 });
+      F(g, ell(0, -3, 106, 39), stone, { s: 3, h: 1.4, lw: 1.6 });
+      g.save(); g.beginPath(); g.ellipse(0, -3, 106, 39, 0, 0, TAU); g.clip(); g.strokeStyle = K.alpha(sh(stone, -0.5), 0.5); g.lineWidth = 1.1;
+      for (const rr of [30, 56, 82]) { g.beginPath(); g.ellipse(0, -3, rr, rr * 0.37, 0, 0, TAU); g.stroke(); }
+      for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; g.beginPath(); g.moveTo(Math.cos(a) * 30, -3 + Math.sin(a) * 11); g.lineTo(Math.cos(a) * 106, -3 + Math.sin(a) * 39); g.stroke(); }
+      g.restore();
+      // bồn hoa / cỏ vòng trong
+      F(g, ell(0, -3, 46, 17), th === 'lava' ? '#3a2a28' : th === 'ice' ? '#ffffff' : th === 'desert' ? '#c8a050' : '#6aa83e', { s: 2, h: 0.8, lw: 1.8 });
+      if (th === 'forest' || th === 'castle') { // đài phun nước
+        H.cyl(g, 0, 2, -8, 30, 30, '#b8b2a6', { rowH: 5, capCol: '#4aa8d8' });
+        g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(160,230,255,0.5)'; g.beginPath(); g.ellipse(-6, -10, 14, 4, 0, 0, TAU); g.fill(); g.restore();
+        H.cyl(g, 0, -8, -30, 7, 6, '#c8c2b6', { bricks: false });
+        F(g, ell(0, -30, 16, 6), '#b8b2a6', { s: 1, h: 0.6, lw: 1.6 });
+        H.cyl(g, 0, -30, -46, 4, 4, '#c8c2b6', { bricks: false });
+        for (const s of [-1, 1]) { g.strokeStyle = 'rgba(200,240,255,0.9)'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(0, -48); g.quadraticCurveTo(s * 12, -60, s * 16, -32); g.stroke(); g.beginPath(); g.moveTo(0, -30); g.quadraticCurveTo(s * 22, -38, s * 26, -10); g.stroke(); }
+        F(g, P_.circ(0, -50, 3.5), '#bfeaff', { s: 0, h: 0.4, lw: 1.2 });
+      } else if (th === 'desert') { // tháp đá cổ (obelisk)
+        H.cyl(g, 0, 2, -10, 20, 20, '#d2b07a', { rowH: 5 });
+        F(g, poly([-9, -10, -6, -78, 0, -88, 6, -78, 9, -10]), '#e8c88e', { s: 3, h: 1.2 });
+        for (const y of [-30, -50]) F(g, poly([-2, y, 0, y - 5, 2, y, 0, y + 5]), '#3ab0c8', { s: 0, h: 0.4, lw: 1 });
+      } else if (th === 'ice') { // tượng pha lê băng
+        H.cyl(g, 0, 2, -12, 22, 22, '#b8c8da', { rowH: 5 });
+        K.glow(g, 0, -46, 40, '#9ae0ff', 0.5);
+        for (const [x, h, a] of [[-10, 40, -0.25], [0, 62, 0], [10, 44, 0.25]]) { g.save(); g.translate(x, -12); g.rotate(a); F(g, poly([-6, 0, -5, -h * 0.75, 0, -h, 5, -h * 0.75, 6, 0]), '#9ad8f4', { s: 1.4, h: 1, lw: 1.6, light: '#ffffff' }); g.restore(); }
+      } else { // núi lửa: bệ đá + lửa thiêng
+        H.cyl(g, 0, 2, -14, 24, 22, '#4a3e44', { rowH: 6 });
+        H.skull(g, 0, -6, 1.4);
+        K.glow(g, 0, -34, 40, '#ff7a2a', 0.7);
+        F(g, c => { c.moveTo(-14, -16); c.quadraticCurveTo(-18, -36, -2, -58); c.quadraticCurveTo(0, -42, 6, -48); c.quadraticCurveTo(16, -32, 14, -16); c.closePath(); }, '#ff7a1a', { s: 0, h: 1.2, lw: 1.4, light: '#ffe060' });
+      }
+    },
     castle(g, p, T) { // lâu đài canh cổng – cổng ngay trên đường (điểm cuối)
       const H = tH(), wall = p.snow ? '#d6dee8' : '#c4beb2', s = 1.25; g.save(); g.scale(s, s);
       K.shadow(g, 6, 4, 110, 26, 0.45);

@@ -5,7 +5,8 @@
  * ========================================================= */
 window.CONFIG = {
   world: { width: 1800, height: 900 },
-  pathWidth: 62,
+  pathWidth: 88,
+  unitScale: 0.72,            // tỉ lệ vẽ nhân vật (nhỏ so với đường & trụ như Kingdom Rush)
 
   match: {
     lives: 20,
@@ -213,7 +214,7 @@ window.CONFIG = {
       story: 'Trận chiến cuối cùng bên rìa thế giới. Chúa Tể Hỗn Mang đang mở cổng!',
       paths: [[[-80, 450], [250, 450], [400, 250], [700, 200], [900, 350], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]],
               [[-80, 790], [250, 790], [500, 710], [700, 520], [900, 660], [1200, 710], [1350, 530], [1200, 340], [1450, 200], [1650, 350], [1790, 450]]],
-      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:4,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:2,voidWalker:4', 'magmaGolem:2,voidWalker:5,voidling:8', 'iceGolem:3,drake:5,voidWalker:6', 'deathKnight:4,voidWalker:8,drake:4', 'voidLord:1,voidWalker:8,voidling:14,drake:2'] }
+      waves: ['voidling:10', 'voidling:8,voidWalker:2', 'wraith:4,voidWalker:3', 'voidWalker:4,voidling:12', 'drake:2,voidWalker:4', 'magmaGolem:2,voidWalker:4,voidling:8', 'iceGolem:3,drake:4,voidWalker:5', 'deathKnight:4,voidWalker:8,drake:4', 'voidLord:1,voidWalker:8,voidling:14,drake:2'] }
   ],
 
   spawnInterval: { goblin: 0.8, orc: 1.3, orcArcher: 1.3, warg: 0.7, treant: 3.5, skeleton: 1.2, wraith: 1.4, deathKnight: 3, bandit: 0.8, mummy: 2, scorpion: 1.1,

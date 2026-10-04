@@ -37,7 +37,7 @@
           p.pointAt(Math.max(20, Math.min(p.length - 20, best.dist + s * 14)), tmp);
           const px = tmp.x + tmp.nx * s * 12, py = tmp.y + tmp.ny * s * 12, art = arts[j];
           const u = new Unit({ temp: true, life: DEF.reinforce.life, x: px, y: py - 40, postX: px, postY: py, state: 'move', alpha: 0, radius: 12, speed: 90, rate: 0.95, engage: 90,
-            maxHp: DEF.reinforce.hp, hp: DEF.reinforce.hp, damage: DEF.reinforce.damage.slice(), armor: DEF.reinforce.armor, art, scale: 12 / ArtChars[art].dr * 1.05, regen: 6 });
+            maxHp: DEF.reinforce.hp, hp: DEF.reinforce.hp, damage: DEF.reinforce.damage.slice(), armor: DEF.reinforce.armor, art, scale: 12 / ArtChars[art].dr * 1.05 * (CONFIG.unitScale || 1), regen: 6 });
           Units.list.push(u);
           Effects.ring(px, py, 6, 34, 0.45, '#8ac8ff', 4); Effects.burst(px, py - 10, '#dfefff', 12, 140, 0.45, 5, -40);
         });
@@ -62,7 +62,7 @@
         if (m.t >= m.delay + m.fall) {
           Combat.splash(m.x, m.y, D.radius * 0.7, D.damage, 'physical');
           Effects.explosion(m.x, m.y, 70, '#ff6a1a'); Effects.burst(m.x, m.y, '#3a2a22', 10, 160, 0.6, 6, 300);
-          Effects.shake(6, 0.25); AudioSys.play('explode');
+          Effects.shake(6, 0.25); AudioSys.play('explode'); Effects.comic(m.x, m.y - 50, 'BOOM!', '#ff7a2a');
           this.rocks.splice(i, 1);
         }
       }

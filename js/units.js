@@ -41,8 +41,8 @@
         if (prev < 0.5 && this.atk >= 0.5 && t && t.alive && t.uid === this.tUid) {
           if (this.range) { Combat.fire(this.proj, this.x + this.face * 9, this.y - 26, t, { damage: this.damage, type: this.dtype || 'physical' }); AudioSys.play(this.proj === 'bolt' ? 'magic' : 'arrow'); }
           else {
-            Combat.hitEnemy(t, this.damage, 'physical'); AudioSys.play(this.tower && this.tower.type === 'orc' ? 'orc' : 'sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0');
-            if (this.special === 'stun' && ++this.hits % 3 === 0 && !t.boss) { t.stunT = Math.max(t.stunT || 0, 1.0); Effects.ring(t.x, t.y, 6, 30, 0.3, '#ffe58a', 3); }
+            Combat.hitEnemy(t, this.damage, 'physical'); Effects.comic(t.x + this.face * 6, t.y - 44, ['POW!', 'BAM!', 'KAPOW!', 'SHUNT!', 'WHAM!'][(Math.random() * 5) | 0], ['#ffe14a', '#ff7a4a', '#7ae0ff'][(Math.random() * 3) | 0]); AudioSys.play(this.tower && this.tower.type === 'orc' ? 'orc' : 'sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0');
+            if (this.special === 'stun' && ++this.hits % 3 === 0 && !t.boss) { t.stunT = Math.max(t.stunT || 0, 1.0); Effects.comic(t.x, t.y - 50, 'BONK!', '#ffe14a', true); Effects.ring(t.x, t.y, 6, 30, 0.3, '#ffe58a', 3); }
           }
         }
         if (this.atk >= 1) this.atk = -1;
@@ -109,7 +109,7 @@
     }
     drawBar(ctx) {
       if (this.state === 'dead' || this.hp >= this.maxHp) return;
-      hpBar(ctx, this.x, this.y + this.radius * 0.5 - (this.isHero ? 62 : 48), this.isHero ? 34 : 24, this.hp / this.maxHp, '#6ad04a');
+      hpBar(ctx, this.x, this.y + this.radius * 0.5 - (this.isHero ? 62 : 48) * (CONFIG.unitScale || 1), this.isHero ? 30 : 20, this.hp / this.maxHp, '#6ad04a');
     }
   }
 
@@ -119,7 +119,7 @@
       const id = Progress.selectedHero(), H = CONFIG.heroes[id], lv = Progress.heroLevel(id), m = 1 + (lv - 1) * CONFIG.heroPerLevel, gm = Progress.gearMods(id);
       const art = ArtChars.heroKey(id, Progress.wornTiers(id)), p = map.paths[0].pointAt(map.paths[0].length - 190, {});
       const hp = Math.round(H.hp * m * (1 + gm.hp)), dm = m * (1 + gm.dmg);
-      const u = new Unit({ isHero: true, heroId: id, heroDef: H, art, radius: H.radius, scale: H.radius / ArtChars[art].dr, x: p.x, y: p.y, postX: p.x, postY: p.y,
+      const u = new Unit({ isHero: true, heroId: id, heroDef: H, art, radius: H.radius, scale: H.radius / ArtChars[art].dr * (CONFIG.unitScale || 1) * 1.1, x: p.x, y: p.y, postX: p.x, postY: p.y,
         maxHp: hp, hp, damage: [H.damage[0] * dm, H.damage[1] * dm], armor: Math.min(0.8, H.armor + gm.arm), rate: H.attackRate / (1 + gm.rate),
         speed: H.speed * (1 + gm.spd), regen: H.regen, engage: 80, level: lv, skillCd: 0, range: H.range || 0, proj: H.proj, air: !!H.air, dtype: H.type, fx: null });
       return u;
@@ -152,7 +152,7 @@
         Effects.burst(u.x, u.y - 20, '#fff6c0', 28, 220, 0.7, 6, -40);
         Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'magic', { air: true });
         for (const o of Units.list) if (o.active && Math.hypot(o.x - u.x, o.y - u.y) < S.radius * 1.4) { o.hp = Math.min(o.maxHp, o.hp + o.maxHp * S.heal); Effects.text(o.x, o.y - 50, '+', '#8aff6a', 22); }
-        AudioSys.play('holy'); Effects.shake(6, 0.3);
+        AudioSys.play('holy'); Effects.shake(6, 0.3); Effects.comic(u.x, u.y - 70, 'SHINE!', '#fff27a', true);
       } else if (S.id === 'rain') {
         // tâm mưa tên: cụm quái đông nhất quanh anh hùng
         let cx = u.x, cy = u.y, best = -1;
@@ -170,7 +170,7 @@
         Effects.burst(u.x, u.y, '#a89878', 30, 200, 0.6, 7, 260);
         Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'physical');
         for (const e of Enemies.list) if (e.alive && !e.flying && Math.hypot(e.x - u.x, (e.y - u.y) * 1.2) < S.radius + e.radius) e.stunT = Math.max(e.stunT || 0, S.stun * (e.boss ? 0.4 : 1));
-        AudioSys.play('explode'); Effects.shake(12, 0.5);
+        AudioSys.play('explode'); Effects.shake(12, 0.5); Effects.comic(u.x, u.y - 70, 'KRAKOOM!', '#ffb04a', true);
       }
       return true;
     }
@@ -192,7 +192,7 @@
       for (const u of this.list) if (u.tower === T) {
         const r = full || !u.maxHp ? 1 : u.hp / u.maxHp;
         u.maxHp = Math.round(lv.hp * hb); u.hp = Math.max(1, Math.round(u.maxHp * r)); u.damage = [lv.damage[0] * db, lv.damage[1] * db];
-        u.armor = lv.armor; u.art = lv.art; u.special = lv.special; u.scale = 12 / ArtChars[lv.art].dr * 1.05; u.regen = u.maxHp * 0.08;
+        u.armor = lv.armor; u.art = lv.art; u.special = lv.special; u.scale = 12 / ArtChars[lv.art].dr * 1.05 * (CONFIG.unitScale || 1); u.regen = u.maxHp * 0.08;
       }
     },
     remove(T) { for (let i = this.list.length - 1; i >= 0; i--) if (this.list[i].tower === T) this.list.splice(i, 1); },

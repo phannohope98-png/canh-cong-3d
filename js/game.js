@@ -102,7 +102,7 @@
       for (const e of Enemies.list) e.drawBar(c);
       for (const u of Units.list) u.drawBar(c);
       for (const T of Towers.list) T.drawOverlay(c);
-      Effects.drawTexts(c);
+      Effects.drawTexts(c); Effects.drawComics(c);
       if (this.heroSelected && Units.hero && Units.hero.state === 'move') { const h = Units.hero; drawRallyFlag(c, h.postX, h.postY, '#f2c14e', now); }
     },
 

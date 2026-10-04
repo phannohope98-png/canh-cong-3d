@@ -13,8 +13,8 @@
       this.maxHp = Math.round(d.hp * (hpMul || 1)); this.hp = this.maxHp;
       this.armor = d.armor; this.mres = d.mres; this.speed = d.speed; this.radius = d.radius;
       this.flying = !!d.flying; this.boss = !!d.boss; this.reward = d.reward;
-      this.scale = d.radius / art.dr; this.height = art.box[3] * this.scale * 0.78 + (this.flying ? 18 : 0);
-      this.path = Game.map.paths[pathIndex]; this.dist = 0; this.lat = (Math.random() - 0.5) * 26;
+      this.scale = d.radius / art.dr * (CONFIG.unitScale || 1); this.height = art.box[3] * this.scale * 0.78 + (this.flying ? 18 : 0);
+      this.path = Game.map.paths[pathIndex]; this.dist = 0; this.lat = (Math.random() - 0.5) * CONFIG.pathWidth * 0.5;
       this.alive = true; this.state = 'walk'; this.cd = 0.4; this.atk = -1; this.flash = 0; this.slow = 0;
       this.walk = Math.random(); this.anim = Math.random() * 3; this.face = 1; this.slamT = d.slam ? d.slam.every : 0; this.shootCd = 1;
       this.place();

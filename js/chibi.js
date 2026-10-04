@@ -106,7 +106,7 @@
     const ys = hy + R * 0.12;
     for (const [ex, s] of [[hx + R * 0.1, 0.82], [hx + R * 0.58, 1]]) {
       if (blink) { line(g, ex - 1.6 * s, ys + 0.5, ex + 1.6 * s, ys + 0.5, INK, 1.3); continue; }
-      const w = 1.75 * s, h = mode === 'fierce' ? 1.9 * s : 2.9 * s;
+      const w = 1.35 * s, h = mode === "fierce" ? 1.6 * s : 2.2 * s;
       g.fillStyle = INK; g.beginPath(); g.ellipse(ex, ys, w + 0.5, h + 0.5, 0, 0, TAU); g.fill();
       g.fillStyle = iris; g.beginPath(); g.ellipse(ex, ys + 0.3, w, h, 0, 0, TAU); g.fill();
       g.fillStyle = sh(iris, -0.45); g.beginPath(); g.ellipse(ex, ys - h * 0.35, w, h * 0.55, 0, Math.PI, TAU); g.fill();
@@ -135,22 +135,37 @@
   /* ================== KHUNG CHUNG ================== */
   function body(g, P, S, back) {
     const tt = P.t || 0, walk = P.w >= 0, ph = walk ? P.w * TAU : 0, a = P.a;
-    const bob = walk ? Math.abs(Math.sin(ph)) * 1.7 : Math.sin(tt * 2.6) * 0.35;
-    const legA = walk ? Math.sin(ph) * 0.62 : 0, swing = walk ? Math.sin(ph) : 0;
-    const sw = a >= 0 ? K.swing(a) : 0, lean = (S.ranged ? 0 : sw * 0.07) + (walk ? 0.05 : 0);
+    const swing = walk ? Math.sin(ph) : 0;
+    const sw = a >= 0 ? K.swing(a) : 0;
     const blink = !walk && a < 0 && (tt % 3.9) < 0.13;
     const bw = S.bw || 6, hipY = -(S.leg || 6.5), torsoH = S.torso || 11, R = S.R || 10;
     const shY = hipY - torsoH + 2.6, hx = 0.6, hy = hipY - torsoH - R * 0.78;
 
-    // bóng
-    K.shadow(g, 0, 0.6, bw * 1.7, 3.2, 0.42);
-
-    // ---- chân ----
-    const legW = S.legW || 4.4;
-    for (const k of [-1, 1]) {
-      const ang = legA * k, hxp = k * bw * 0.36, fx = hxp + Math.sin(ang) * 4.6, fy = -1.2 - Math.max(0, Math.sin(ang * k * k)) * (k > 0 ? 1.4 : 0);
-      if (k < 0) { limb(g, hxp, hipY - bob, fx, fy, legW, S.legs); F(g, ell(fx + 1.2, fy, 3.2, 2.1), S.boots, { s: 0.8, h: 0.4, lw: 1.5 }); }
+    /* ---- chuyển động kiểu Kingdom Rush: nảy, co giãn, lấy đà, đầu lắc trễ nhịp ---- */
+    let bob = 0, sx = 1, sy = 1, lean = 0, lx = 0, headDy = 0, headRot = 0;
+    const ease = k => k * k * (3 - 2 * k);
+    if (walk) {
+      const s = Math.abs(Math.sin(ph)), land = Math.pow(1 - s, 3);
+      bob = s * 3.4; sy = 1 - land * 0.12 + s * 0.05; sx = 1 + land * 0.1 - s * 0.03;
+      lean = 0.12 + Math.sin(ph * 2) * 0.03; headDy = Math.cos(ph * 2) * 1.1; headRot = Math.sin(ph) * 0.1;
+    } else if (a >= 0) {
+      const m = S.kind === 'melee' ? 1 : 0.5;
+      if (a < 0.38) { const k = ease(a / 0.38); sy = 1 - 0.13 * k * m; sx = 1 + 0.11 * k * m; lean = -0.24 * k * m; lx = -2.5 * k * m; }
+      else if (a < 0.55) { const k = ease((a - 0.38) / 0.17); sy = 1 - 0.13 * m + 0.22 * k * m; sx = 1 + 0.11 * m - 0.17 * k * m; lean = (-0.24 + 0.56 * k) * m; lx = (-2.5 + 8.5 * k) * m; }
+      else { const k = ease((a - 0.55) / 0.45); sy = 1 + 0.09 * m * (1 - k); sx = 1 - 0.06 * m * (1 - k); lean = 0.32 * m * (1 - k); lx = 6 * m * (1 - k); }
+      headRot = lean * 0.5; headDy = (1 - sy) * 6;
+    } else {
+      const b = Math.sin(tt * 3.1); sy = 1 + b * 0.035; sx = 1 - b * 0.022; headDy = Math.sin(tt * 3.1 - 0.9) * 0.6; headRot = Math.sin(tt * 1.3) * 0.05;
     }
+
+    // bóng (nhỏ lại khi nhảy lên)
+    K.shadow(g, lx * 0.5, 0.6, bw * 1.7 * (1 - bob * 0.04), 3.2, 0.42);
+    g.save(); g.translate(lx, 0); g.scale(sx, sy);
+
+    // ---- chân: nhấc gối cao khi bước ----
+    const legW = S.legW || 4.4;
+    const foot = k => { const q = ph + (k > 0 ? 0 : Math.PI); return walk ? { x: k * bw * 0.36 + Math.sin(q) * 5.2, y: -1.2 - Math.max(0, Math.cos(q)) * 3.6 } : { x: k * bw * 0.36 + (a >= 0 ? k * 1.4 : 0), y: -1.2 }; };
+    { const f = foot(-1); limb(g, -bw * 0.36, hipY - bob, f.x, f.y, legW, S.legs); F(g, ell(f.x + 1.2, f.y, 3.2, 2.1), S.boots, { s: 0.8, h: 0.4, lw: 1.5 }); }
     g.save(); g.translate(0, -bob); g.rotate(lean);
 
     // ---- tóc dài / áo choàng phía sau ----
@@ -164,8 +179,8 @@
       const rest = { x: 7, y: shY + 6 }, up = { x: 1.5, y: shY - 7 }, down = { x: 8.5, y: shY + 7.5 };
       if (sw < 0) { const k = -sw; handF = { x: lerp(rest.x, up.x, k), y: lerp(rest.y, up.y, k) }; wRot = lerp(0.45, -1.5, k); }
       else { const k = sw; handF = { x: lerp(rest.x, down.x, k), y: lerp(rest.y, down.y, k) }; wRot = lerp(0.45, 2.2, k); }
-      if (walk) { handF.x += swing * 1.2; wRot += swing * 0.12; }
-      handB = { x: shB.x + 3 - swing * 1.4, y: shB.y + 7 };
+      if (walk) { handF.x += swing * 2.6; handF.y -= Math.max(0, swing) * 1.5; wRot += swing * 0.25; }
+      handB = { x: shB.x + 3 - swing * 3.2, y: shB.y + 7 - Math.abs(swing) * 1.2 };
     } else if (S.kind === 'bow') {
       pull = a >= 0 ? (a < 0.5 ? a / 0.5 : Math.max(0, 1 - (a - 0.5) * 5)) : 0.0;
       handF = { x: shF.x + 7.5, y: shY + 1 }; handB = { x: shF.x + 6.5 - pull * 7.5, y: shY + 1 };
@@ -181,22 +196,25 @@
 
     // ---- chân trước ----
     g.restore();
-    { const k = 1, ang = legA, hxp = bw * 0.36, fx = hxp + Math.sin(ang) * 4.6, fy = -1.2 - Math.max(0, Math.sin(ang)) * 1.4;
-      limb(g, hxp, hipY - bob, fx, fy, legW, S.legs); F(g, ell(fx + 1.2, fy, 3.2, 2.1), S.boots, { s: 0.8, h: 0.4, lw: 1.5 }); }
+    { const f = foot(1); limb(g, bw * 0.36, hipY - bob, f.x, f.y, legW, S.legs); F(g, ell(f.x + 1.2, f.y, 3.2, 2.1), S.boots, { s: 0.8, h: 0.4, lw: 1.5 }); }
     g.save(); g.translate(0, -bob); g.rotate(lean);
 
     // ---- thân ----
     S.torsoDraw(g, bw, hipY, torsoH, back);
     if (back && S.cape) cape(g, S.cape, swing, S.capeLen || 0, S.capeWide || 0, true);
 
-    // ---- đầu ----
+    // ---- đầu (lắc trễ nhịp so với thân) ----
+    g.save(); g.translate(hx, hy + R * 0.8 + headDy); g.rotate(headRot); g.translate(-hx, -hy - R * 0.8);
     if (back) { S.headBack(g, hx, hy, R, swing, tt); }
     else {
       headBase(g, hx, hy, R, S.skin);
       if (S.face) S.face(g, hx, hy, R, blink, tt, a);
-      else { eyes(g, hx, hy, R, S.iris, blink, S.eyeMode); brows(g, hx, hy, R, S.browCol || INK, S.angry); line(g, hx + R * 0.36, hy + R * 0.6, hx + R * 0.56, hy + R * 0.58, INK, 1.1); }
+      else { eyes(g, hx, hy, R, S.iris, blink, S.eyeMode); brows(g, hx, hy, R, S.browCol || INK, S.angry || (a >= 0 && S.kind === 'melee'));
+        if (a >= 0 && S.kind === 'melee') F(g, ell(hx + R * 0.48, hy + R * 0.6, R * 0.17, R * 0.13), '#5a1a1a', { s: 0, h: 0, lw: 1 }); // hét khi chém
+        else line(g, hx + R * 0.36, hy + R * 0.6, hx + R * 0.56, hy + R * 0.58, INK, 1.1); }
       S.hair(g, hx, hy, R, swing, tt);
     }
+    g.restore();
 
     // ---- tay trước + vũ khí ----
     if (!back) {
@@ -219,6 +237,7 @@
         }
       }
     }
+    g.restore();
     g.restore();
   }
 
@@ -373,6 +392,8 @@
     };
   }
 
+  /** Tỉ lệ kiểu Kingdom Rush: đầu nhỏ hơn, chân & thân dài hơn */
+  function krProp(S) { S.R = (S.R || 10) * 0.84; S.leg = (S.leg || 6.5) * 1.3; S.torso = (S.torso || 11) * 1.06; S.bw = (S.bw || 6) * 1.02; return S; }
   /* ================== 4 ANH HÙNG CHIBI ================== */
   const HEROES = {
     aldric: (t, wt) => HUMAN(t, { hair: '#eef2f8', spiky: true, armor: '#3a5ab8', cape: '#1e3488', weapon: 'greatsword', shield: false, iris: '#3a8ad8', wcol: wt >= 3 ? '#ffe680' : '#9ae0ff' }),
@@ -387,7 +408,7 @@
       const key = 'c_' + id + '_' + tiers.join('');
       if (!reg[key] && HEROES[id]) {
         const sum = tiers.reduce((a, b) => a + b, 0), t = Math.min(4, 2 + Math.floor(sum / 4));
-        const S = HEROES[id](t, tiers[0]); S.R = 10.6;
+        const S = HEROES[id](t, tiers[0]); S.R = 10.6; krProp(S);
         const tall = (S.leg || 6.5) + (S.torso || 11) + S.R * 1.9;
         reg[key] = { draw: (g, P) => body(g, P, S, false), box: BOX, dr: 12, head: tall * 0.75, tall, wide: 26, chibi: true };
         reg[key + '_b'] = { draw: (g, P) => body(g, P, S, true), box: BOX, dr: 12, head: tall * 0.75, tall, wide: 26, chibi: true };
@@ -402,7 +423,7 @@
     const reg = window.ArtChars; if (!reg) return;
     Object.keys(MAKERS).forEach(name => {
       for (let t = 1; t <= 4; t++) {
-        const S = MAKERS[name](t), key = name + t, old = reg[key] || {};
+        const S = krProp(MAKERS[name](t)), key = name + t, old = reg[key] || {};
         const tall = (S.leg || 6.5) + (S.torso || 11) + (S.R || 10) * 1.9;
         reg[key] = { draw: (g, P) => body(g, P, S, false), box: BOX, dr: 12, head: tall * 0.75, tall, wide: 26, chibi: true };
         reg[key + '_b'] = { draw: (g, P) => body(g, P, S, true), box: BOX, dr: 12, head: tall * 0.75, tall, wide: 26, chibi: true };

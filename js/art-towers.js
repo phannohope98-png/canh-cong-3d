@@ -8,7 +8,7 @@
  * ========================================================= */
 (function () {
   const K = ArtKit, TAU = Math.PI * 2, INK = '#1b0f16', sh = K.shade, GOLD = '#f5c542', P_ = K.P;
-  const CH = 0.82; // tỉ lệ nhân vật trên trụ
+  const CH = 0.74; // tỉ lệ nhân vật trên trụ
 
   /* ---------------- bút & hình khối ---------------- */
   function F(g, b, col, o) {
