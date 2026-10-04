@@ -22,19 +22,106 @@
     const d = new Uint8Array([88, 88, 88, 255, 168, 168, 168, 255, 255, 255, 255, 255]);
     const t = new T.DataTexture(d, 3, 1, T.RGBAFormat); t.minFilter = t.magFilter = T.NearestFilter; t.needsUpdate = true; return t;
   })();
+  /* ---------- chất liệu nâng cao (vá shader toon) ----------
+   * · vân bề mặt sinh ngay trong shader theo toạ độ riêng của từng khối (thuộc tính tpos/tnrm) → không cần ảnh / UV:
+   *   gạch, đá hộc, đá lát, gỗ, ngói, tán lá, đá tảng, vỏ cây, vữa trát, rơm, xương rồng, vải
+   * · viền sáng ven mép (rim) theo màu đèn vùng, kim loại có vệt bóng, chân vật tối dần (bóng tiếp đất)
+   * tex: 'brick' | 'stone' | 'tile' | 'wood' | 'bark' | 'straw' | 'cactus' (trụ tròn) – thêm '.f' cho mặt phẳng (hộp, mái dốc);
+   *      'flag' | 'leaf' | 'rock' | 'plaster' | 'cloth' */
+  const TEXN = { brick: 1, stone: 2, flag: 3, wood: 4, tile: 5, leaf: 6, rock: 7, bark: 8, plaster: 9, straw: 10, cactus: 11, cloth: 12 };
+  const FXON = { v: true };
+  const FX = { uRim: { value: new T.Color(0xa8c4ff) }, uRimK: { value: 0.5 }, uAO: { value: 0.8 } };
+  const SH_V = 'attribute vec3 tpos;\nattribute vec3 tnrm;\nvarying vec3 vTP;\nvarying vec3 vTN;\nvarying float vWY;\n';
+  const SH_F = `varying vec3 vTP; varying vec3 vTN; varying float vWY;
+uniform vec3 uRim; uniform float uRimK; uniform float uAO;
+float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float vn(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x),mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x),f.y); }
+float fbm(vec2 p){ return vn(p)*.55+vn(p*2.07+3.1)*.3+vn(p*4.3+7.7)*.15; }
+float lodK(vec2 uv, float s){ float px=length(fwidth(uv)); return 1.-smoothstep(s*.22,s*.55,px); }
+float blocks(vec2 uv, vec2 sz, float mort, float vari, float bev){
+  float row=floor(uv.y/sz.y); uv.x+=fract(row*.5)*sz.x+h21(vec2(row,3.))*sz.x*.3;
+  vec2 c=vec2(floor(uv.x/sz.x),row), f=fract(uv/sz), e=min(f,1.-f)*sz;
+  float px=length(fwidth(uv))*.5, m=smoothstep(mort-px,mort+px,min(e.x,e.y));
+  float t=1.+(h21(c)-.5)*vari+(f.y-.5)*bev;
+  return mix(.58,t,m);
+}
+float surf(){
+  vec3 p=vTP, n=normalize(vTN+vec3(1e-5)); bool top=abs(n.y)>.72;
+  vec2 pl=abs(n.x)>abs(n.z)?p.zy:p.xy, cy=vec2(atan(p.x,p.z)*max(.04,length(p.xz)),p.y);
+  vec2 sd=TCYL==1?cy:pl;
+  float k=1.;
+#if TEXK==1
+  vec2 uv=top?p.xz:sd; k=mix(1.,blocks(uv,vec2(.19,.095),.011,.24,.14)*(.93+.14*fbm(uv*11.)),lodK(uv,.095));
+#elif TEXK==2
+  vec2 uv=top?p.xz:sd; k=mix(1.,blocks(uv,vec2(.27,.15),.013,.34,.18)*(.88+.24*fbm(uv*7.)),lodK(uv,.15));
+#elif TEXK==3
+  vec2 uv=top?p.xz:sd; k=mix(1.,blocks(uv,vec2(.24,.2),.012,.3,.0)*(.9+.2*fbm(uv*8.)),lodK(uv,.2));
+#elif TEXK==4
+  if(top){ vec2 uv=p.xz; k=mix(1.,blocks(vec2(uv.x,uv.y),vec2(.7,.085),.008,.2,.0)*(.86+.22*vn(vec2(uv.x*4.,uv.y*60.))),lodK(uv,.085)); }
+  else if(TCYL==0){ vec2 uv=sd; k=mix(1.,blocks(vec2(uv.x,uv.y),vec2(.9,.075),.007,.22,.1)*(.88+.2*vn(vec2(uv.x*5.,uv.y*70.))),lodK(uv,.075)); }
+  else { vec2 uv=sd; k=.84+.24*vn(vec2(uv.x*34.,uv.y*2.5))+.06*sin(uv.x*90.+vn(uv*6.)*6.); k=mix(1.,k,lodK(uv,.04)); }
+#elif TEXK==5
+  vec2 uv=top?p.xz:sd; float row=floor(uv.y/.07), fy=fract(uv.y/.07); float cx=fract(uv.x/.11+fract(row*.5));
+  float sc=smoothstep(0.,.5,fy+.18*(1.-abs(cx*2.-1.)));
+  k=mix(1.,(.7+.36*sc)*(.92+.16*h21(vec2(floor(uv.x/.11+fract(row*.5)),row))),lodK(uv,.07));
+#elif TEXK==6
+  vec2 uv=(p.xz+vec2(p.y*.8,-p.y*.6))*26.; float f=fbm(uv); k=f<.36?.74:f<.5?.9:f<.64?1.:1.13; k*=.88+.24*max(0.,n.y); k=mix(1.,k,lodK(uv/26.,.035));
+#elif TEXK==7
+  vec2 uv=(p.xy+p.zx*.7)*18.; float f=fbm(uv), cr=1.-smoothstep(.0,.045,abs(vn(uv*.45+9.)-.5)); k=(.8+.34*f)*(1.-cr*.4); k*=.9+.18*max(0.,n.y); k=mix(1.,k,lodK(uv/18.,.04));
+#elif TEXK==8
+  vec2 uv=sd; k=.78+.3*vn(vec2(uv.x*26.,uv.y*3.))+.06*vn(uv*40.); k=mix(1.,k,lodK(uv,.04));
+#elif TEXK==9
+  vec2 uv=top?p.xz:pl; k=.94+.1*fbm(uv*10.); k*=mix(.9,1.,smoothstep(-.2,.15,p.y)); k=mix(1.,k,lodK(uv,.06));
+#elif TEXK==10
+  vec2 uv=sd; float row=fract(uv.y/.06); k=(.8+.3*vn(vec2(uv.x*26.,uv.y*5.)))*mix(.82,1.06,smoothstep(0.,.6,row)); k=mix(1.,k,lodK(uv,.06));
+#elif TEXK==11
+  k=.8+.24*abs(sin(atan(p.x,p.z)*5.)); k=mix(1.,k,lodK(p.xy,.03));
+#elif TEXK==12
+  vec2 uv=sd*40.; k=.95+.08*fbm(uv)+.03*sin(uv.x*3.)*sin(uv.y*3.);
+#endif
+  return k;
+}
+`;
+  function enhance(m, tex) {
+    const base = tex ? tex.split('.')[0] : '', id = TEXN[base] || 0, cyl = tex && !/\.f$/.test(tex) ? 1 : 0, metal = m.userData.metal ? 1 : 0;
+    m.extensions = { derivatives: true };
+    m.userData.tex = tex || '';
+    m.customProgramCacheKey = () => 'cc3|' + id + '|' + cyl + '|' + metal;
+    m.onBeforeCompile = sh => {
+      if (!FXON.v) return;
+      Object.assign(sh.uniforms, FX);
+      sh.defines = Object.assign(sh.defines || {}, { TEXK: id, TCYL: cyl, CC_METAL: metal });
+      sh.vertexShader = SH_V + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvTP = tpos; vTN = tnrm; vWY = (modelMatrix * vec4(position, 1.0)).y;');
+      sh.fragmentShader = SH_F + sh.fragmentShader
+        .replace('#include <color_fragment>', '#include <color_fragment>\n#if TEXK>0\ndiffuseColor.rgb *= surf();\n#endif\ndiffuseColor.rgb *= mix(uAO, 1.0, smoothstep(0.0, 0.2, vWY));')
+        .replace('#include <output_fragment>', `{ vec3 nv = normalize(normal); float fr = pow(clamp(1.0 - nv.z, 0.0, 1.0), 2.4) * clamp(dot(nv.xy, vec2(0.62, 0.78)) * 0.9 + 0.35, 0.0, 1.0);
+  outgoingLight += uRim * uRimK * fr * diffuseColor.rgb * 1.5;
+#if CC_METAL==1
+  outgoingLight += vec3(1.0) * smoothstep(0.86, 0.95, dot(nv, normalize(vec3(-0.35, 0.55, 0.76)))) * 0.5;
+#endif
+}
+#include <output_fragment>`);
+    };
+    return m;
+  }
   const mats = {};
   function mat(col, o) {
     o = o || {};
-    const k = col + '|' + (o.glow || 0) + '|' + (o.metal ? 1 : 0) + '|' + (o.op || 1) + '|' + (o.ds ? 1 : 0);
+    const k = col + '|' + (o.glow || 0) + '|' + (o.metal ? 1 : 0) + '|' + (o.op || 1) + '|' + (o.ds ? 1 : 0) + '|' + (o.tex || '');
     if (!mats[k]) {
       const m = new T.MeshToonMaterial({ color: col, gradientMap: GRAD });
       if (o.glow) { m.emissive = new T.Color(col); m.emissiveIntensity = o.glow; }
       if (o.op) { m.transparent = true; m.opacity = o.op; m.depthWrite = false; }
       if (o.ds) m.side = T.DoubleSide;
       m.userData.metal = !!o.metal; m.userData.glow = o.glow || 0;
-      mats[k] = m;
+      mats[k] = enhance(m, o.tex);
     }
     return mats[k];
+  }
+  /** ghi toạ độ riêng của khối (để vân bề mặt bám theo khối kể cả sau khi gộp lưới) */
+  function texCoords(geo) {
+    if (!geo.attributes.tpos) { geo.setAttribute('tpos', geo.attributes.position.clone()); geo.setAttribute('tnrm', geo.attributes.normal.clone()); }
+    return geo;
   }
   const inkMat = new T.MeshBasicMaterial({ color: INK });
   inkMat.userData.ink = true;
@@ -57,6 +144,7 @@
   /** Một khối có màu + viền. o: { ink: độ dày | false, metal, glow, op, ds } */
   function part(geo, col, o) {
     o = o || {};
+    if (o.tex) texCoords(geo);
     const m = new T.Mesh(geo, mat(col, o));
     if (o.ink !== false && !o.op) { const h = new T.Mesh(hullGeo(geo, (o.ink || OUT) * INKK), inkMat); h.userData.hull = true; m.add(h); }
     return m;
@@ -1254,7 +1342,7 @@
     c.traverse(o => {
       if (o.userData.noExport) { drop.push(o); return; }
       if (!o.isMesh) return;
-      if (o.geometry.attributes.uv) o.geometry.deleteAttribute("uv"); // không dùng texture → bỏ UV cho nhẹ
+      for (const a of ["uv", "tpos", "tnrm"]) if (o.geometry.attributes[a]) o.geometry.deleteAttribute(a); // không dùng texture → bỏ UV / toạ độ vân cho nhẹ
       const m = o.material;
       if (m.userData.ink) return;
       if (!cache.has(m)) {
@@ -1270,5 +1358,5 @@
     return c;
   }
 
-  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; }, setDetail: k => { DET = k; }, kit: { part, G, add, node, mat, glow, sh, flipY, freeze, GOLD, INK } };
+  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; }, setDetail: k => { DET = k; }, fx: FX, setFx: on => { FXON.v = !!on; }, kit: { part, G, add, node, mat, glow, sh, flipY, freeze, texCoords, GOLD, INK } };
 })();

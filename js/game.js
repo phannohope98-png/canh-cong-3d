@@ -61,7 +61,7 @@
       this.canvas.width = Math.round(this.viewW * this.dpr); this.canvas.height = Math.round(this.viewH * this.dpr);
       this.canvas.style.width = this.viewW + 'px'; this.canvas.style.height = this.viewH + 'px';
     },
-    renderBg() { this.bg = Level.renderBackground(this.map, Math.min(2, Camera.minZoom * this.dpr * 1.5)); },
+    renderBg() { this.bg = Level.renderBackground(this.map, Math.min(2.2, Math.max(Camera.minZoom * this.dpr * 1.5, Camera.maxZoom * this.dpr * 0.8))); },
     resize() {
       if (!this.map || this.state === 'idle') return;
       const old = Camera.minZoom; this.measure(); Camera.resize(this.viewW, this.viewH);

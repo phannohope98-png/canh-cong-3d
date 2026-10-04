@@ -21,7 +21,7 @@
     desert: [0xfff0d8, 0x8a6a4a, 0.85, 0xfff2d8, 1.05, 0xffd8a0, 0.35], ice: [0xeaf4ff, 0x6a7a9a, 0.9, 0xeef6ff, 0.95, 0x9ad8ff, 0.5],
     lava: [0xffe0c8, 0x5a2a2a, 0.75, 0xffd0a8, 0.95, 0xff6a2a, 0.75], chaos: [0xf0e4ff, 0x4a2a6a, 0.8, 0xf2e8ff, 0.95, 0xc070ff, 0.75]
   };
-  function applyTheme() { const p = LIGHT[theme] || LIGHT.forest; if (!L3.hemi) return; L3.hemi.color.setHex(p[0]); L3.hemi.groundColor.setHex(p[1]); L3.hemi.intensity = p[2]; L3.key.color.setHex(p[3]); L3.key.intensity = p[4]; L3.rim.color.setHex(p[5]); L3.rim.intensity = p[6]; }
+  function applyTheme() { const p = LIGHT[theme] || LIGHT.forest; if (!L3.hemi) return; L3.hemi.color.setHex(p[0]); L3.hemi.groundColor.setHex(p[1]); L3.hemi.intensity = p[2]; L3.key.color.setHex(p[3]); L3.key.intensity = p[4]; L3.rim.color.setHex(p[5]); L3.rim.intensity = p[6]; if (Chars3D.fx) { Chars3D.fx.uRim.value.setHex(p[5]); Chars3D.fx.uRimK.value = 0.35 + p[6] * 0.4; } }
   function gl() {
     if (renderer || failed) return renderer;
     try {
@@ -52,6 +52,7 @@
       if (!inv.has(ow)) inv.set(ow, ow.matrixWorld.clone().invert());
       const g = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(m4.copy(inv.get(ow)).multiply(o.matrixWorld));
       if (g.attributes.uv) g.deleteAttribute('uv');
+      if (o.material.userData.tex) { if (!g.attributes.tpos) Chars3D.kit.texCoords(g); } else if (g.attributes.tpos) { g.deleteAttribute('tpos'); g.deleteAttribute('tnrm'); }
       const k = ow.uuid + '|' + o.material.uuid;
       if (!buckets.has(k)) buckets.set(k, { ow, mat: o.material, geos: [], order: o.material.transparent ? 1 : 0 });
       buckets.get(k).geos.push(g);
@@ -229,6 +230,7 @@
     if (window.Painter) Painter.clear();
   };
   Art3D.available = () => !!gl();
+  Art3D.optimize = root => { optimize(root, { n: {} }); root.updateMatrixWorld(true); return root; };
   Art3D.lightTheme = () => theme;
   Art3D.lights = () => LIGHT[theme] || LIGHT.forest;
   Art3D.renderer = () => gl();

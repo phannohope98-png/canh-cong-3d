@@ -170,7 +170,7 @@
 
   /* ---------------- Đường đi ---------------- */
   function drawRoad(g, map, T, res, rnd) {
-    const PW = CONFIG.pathWidth, W = map.W, H = map.H, tmp = {};
+    const PW = CONFIG.pathWidth, W = map.W, H = map.H, tmp = {}, det = map.det;
     g.save(); g.filter = 'blur(7px)'; g.lineCap = 'round'; g.lineJoin = 'round';
     for (const p of map.paths) { polyPath(g, p.points); g.lineWidth = PW + 30; g.strokeStyle = 'rgba(30,16,6,0.28)'; g.stroke(); }
     g.restore();
@@ -187,7 +187,7 @@
     r.save(); r.filter = 'blur(6px)'; for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW * 0.42; r.strokeStyle = K.alpha(T.roadL, 0.55); r.stroke(); } r.restore();
     // mảng đá lát ngẫu nhiên trên đường đất (kiểu KR)
     if (!T.cobble) for (const p of map.paths) for (let d = 40; d < p.length; d += 70 + rnd() * 90) { p.pointAt(d, tmp); const cx = tmp.x + tmp.nx * (rnd() - 0.5) * PW * 0.4, cy = tmp.y + tmp.ny * (rnd() - 0.5) * PW * 0.4, n = 4 + (rnd() * 6 | 0);
-      for (let i = 0; i < n; i++) { const x = cx + (rnd() - 0.5) * 30, y = cy + (rnd() - 0.5) * 18, w = 5 + rnd() * 5; r.fillStyle = K.alpha(sh(T.roadD, -0.05), 0.85); r.beginPath(); r.ellipse(x, y + 1, w, w * 0.62, 0, 0, TAU); r.fill(); r.fillStyle = sh(T.roadL, -0.02); r.beginPath(); r.ellipse(x, y, w * 0.9, w * 0.55, 0, 0, TAU); r.fill(); } }
+      for (let i = 0; i < n; i++) { const x = cx + (rnd() - 0.5) * 30, y = cy + (rnd() - 0.5) * 18, w = 5 + rnd() * 5; if (det) { det.slab.push([x, y, w]); continue; } r.fillStyle = K.alpha(sh(T.roadD, -0.05), 0.85); r.beginPath(); r.ellipse(x, y + 1, w, w * 0.62, 0, 0, TAU); r.fill(); r.fillStyle = sh(T.roadL, -0.02); r.beginPath(); r.ellipse(x, y, w * 0.9, w * 0.55, 0, 0, TAU); r.fill(); } }
     if (T.cobble) { // đường lát đá
       for (const p of map.paths) for (let d = 0; d < p.length; d += 9) { p.pointAt(d, tmp);
         for (let o = -PW / 2 + 6, k = 0; o <= PW / 2 - 5; o += 9, k++) { const x = tmp.x + tmp.nx * (o + ((d / 9 | 0) % 2) * 4.5), y = tmp.y + tmp.ny * (o + ((d / 9 | 0) % 2) * 4.5), c = rnd();
@@ -208,7 +208,9 @@
       if (x < -20 || x > W + 20 || y < -20 || y > H + 20) continue;
       if (map.feat && wetAt(map.feat, x, y, 2)) continue;
       const v = rnd();
-      if (v < 0.22) F(g, ell(x, y, 3.6 + rnd() * 3, 2.6 + rnd() * 1.6), T.cobble ? '#9a968c' : sh(T.roadD, -0.05), { s: 1, h: 0.6, lw: 1.3 });
+      if (v < 0.22 && det) det.kerb.push([x, y, 3.6 + rnd() * 3, 2.6 + rnd() * 1.6]);
+      else if (v < 0.7 && det) { if (map.def.theme !== "chaos" && map.def.theme !== "lava") det.tuft.push([x, y, 0.9 + rnd() * 0.5, 0, 1]); }
+      else if (v < 0.22) F(g, ell(x, y, 3.6 + rnd() * 3, 2.6 + rnd() * 1.6), T.cobble ? '#9a968c' : sh(T.roadD, -0.05), { s: 1, h: 0.6, lw: 1.3 });
       else if (v < 0.7 && map.def.theme !== 'chaos' && map.def.theme !== 'lava') tuft(g, x, y, map.def.theme === 'ice' ? '#ffffff' : sh(T.g0, -0.05), 0.9 + rnd() * 0.5);
     }
   }
@@ -450,16 +452,17 @@
     }
     // 2) nước / dung nham
     drawWater(g, map.feat, T, rnd);
-    // 3) chi tiết đất: cỏ, hoa, sỏi (tránh đường & nước)
+    // 3) chi tiết đất: cỏ, hoa, sỏi (tránh đường & nước) – có mặt đất 3D thì gom lại để dựng 3D thật
+    const det = map.det = window.Terrain3D && Terrain3D.will(map) ? { tuft: [], flower: [], peb: [], kerb: [], slab: [], tc: theme === "ice" ? "#ffffff" : theme === "desert" ? "#c8a050" : sh(T.g0, 0.08) } : null;
     const PW = CONFIG.pathWidth;
     const free = (x, y, m) => { for (const p of map.paths) if (p.nearest(x, y).perp < PW / 2 + m) return false; return !wetAt(map.feat, x, y, 4); };
     if (theme !== 'chaos' && theme !== 'lava') {
       const tc = theme === 'ice' ? '#ffffff' : theme === 'desert' ? '#c8a050' : sh(T.g0, 0.08);
-      for (let i = 0; i < 1400; i++) { const x = rnd() * W, y = rnd() * H; if (!free(x, y, 8)) continue; tuft(g, x, y, i % 3 ? tc : sh(tc, -0.1), 0.7 + rnd() * 0.6); }
+      for (let i = 0; i < 1400; i++) { const x = rnd() * W, y = rnd() * H; if (!free(x, y, 8)) continue; if (det) det.tuft.push([x, y, 0.7 + rnd() * 0.6, i % 3 ? 0 : 1]); else tuft(g, x, y, i % 3 ? tc : sh(tc, -0.1), 0.7 + rnd() * 0.6); }
       for (let i = 0; i < 90 && T.flowers.length; i++) { const cx = rnd() * W, cy = rnd() * H; if (!free(cx, cy, 14)) continue; const col = T.flowers[(rnd() * T.flowers.length) | 0];
-        for (let j = 0; j < 5; j++) { const x = cx + (rnd() - 0.5) * 30, y = cy + (rnd() - 0.5) * 16; K.dot(g, x, y, 2.2, INK); K.dot(g, x, y, 1.6, col); K.dot(g, x - 0.4, y - 0.4, 0.6, '#ffffff'); } }
+        for (let j = 0; j < 5; j++) { const x = cx + (rnd() - 0.5) * 30, y = cy + (rnd() - 0.5) * 16; if (det) { det.flower.push([x, y, col]); continue; } K.dot(g, x, y, 2.2, INK); K.dot(g, x, y, 1.6, col); K.dot(g, x - 0.4, y - 0.4, 0.6, '#ffffff'); } }
     }
-    for (let i = 0; i < 160; i++) { const x = rnd() * W, y = rnd() * H; if (!free(x, y, 8)) continue; if (map.feat.void) { let d = Infinity; for (const p of map.paths) d = Math.min(d, p.nearest(x, y).perp); if (d > 130) continue; } F(g, ell(x, y, 2 + rnd() * 2.5, 1.4 + rnd() * 1.2), theme === 'lava' ? '#2a2022' : theme === 'chaos' ? '#3a2a6a' : '#9a968e', { s: 0.6, h: 0.3, lw: 1 }); }
+    for (let i = 0; i < 160; i++) { const x = rnd() * W, y = rnd() * H; if (!free(x, y, 8)) continue; if (map.feat.void) { let d = Infinity; for (const p of map.paths) d = Math.min(d, p.nearest(x, y).perp); if (d > 130) continue; } if (det) { det.peb.push([x, y, 2 + rnd() * 2.5, 1.4 + rnd() * 1.2]); continue; } F(g, ell(x, y, 2 + rnd() * 2.5, 1.4 + rnd() * 1.2), theme === 'lava' ? '#2a2022' : theme === 'chaos' ? '#3a2a6a' : '#9a968e', { s: 0.6, h: 0.3, lw: 1 }); }
     // 4) đường đi + cầu
     drawRoad(g, map, T, res, rnd);
     const t3 = window.Terrain3D && Terrain3D.render(map, res, c, T); // mặt đất 3D: bờ sông dốc, đường trũng, cầu 3D
@@ -467,6 +470,7 @@
     else drawBridges(g, map, T);
     // 5) cây cối & công trình (theo chiều sâu)
     for (const d of map.decor) {
+      if (t3 && d._in3d) continue; // đã dựng 3D cùng mặt đất (có bóng đổ thật)
       if (window.Map3D && Map3D.draw(g, d, T, theme, res)) continue;
       g.save(); g.translate(d.x, d.y);
       if (d.prop) { if (PROPS[d.k]) PROPS[d.k](g, d, T); }

@@ -6,7 +6,7 @@
 (function () {
   if (!window.THREE || !window.Chars3D || !window.Art3D) return;
   const T = THREE, { part, G, add, node, mat, glow, sh } = Chars3D.kit, GOLD = '#f5c542', TAU = Math.PI * 2, S = Math.sin, C = Math.cos;
-  const VER = 'icons3d-v1', SIZE = 96;
+  const VER = 'icons3d-v2', SIZE = 96;
   const shape = pts => { const s = new T.Shape(); s.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) s.lineTo(pts[i], pts[i + 1]); return s; };
   const star = (r1, r2) => { const p = []; for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? r2 : r1; p.push(C(a) * r, S(a) * r); } return shape(p); };
   const heart = () => { const s = new T.Shape(); s.moveTo(0, -0.42); s.bezierCurveTo(-0.15, -0.28, -0.5, -0.05, -0.5, 0.18); s.bezierCurveTo(-0.5, 0.42, -0.2, 0.5, 0, 0.3); s.bezierCurveTo(0.2, 0.5, 0.5, 0.42, 0.5, 0.18); s.bezierCurveTo(0.5, -0.05, 0.15, -0.28, 0, -0.42); return s; };
