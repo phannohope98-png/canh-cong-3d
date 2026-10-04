@@ -76,7 +76,7 @@
     showScreen(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
       this.current = id;
-      if (id !== 'screen-game') AudioSys.playMusic('menu');
+      if (id !== 'screen-game') { AudioSys.playMusic('menu'); if (AudioSys.stopAmbient) AudioSys.stopAmbient(); }
       document.querySelectorAll('.star-count').forEach(e => { e.textContent = Progress.totalStars(); });
       this.refreshCoins();
       ({ 'screen-menu': () => this.paintMenu(), 'screen-map': () => this.renderMap(), 'screen-upgrades': () => this.renderUpgrades(), 'screen-heroes': () => { this.viewHero = Progress.selectedHero(); this.renderHeroes(); },

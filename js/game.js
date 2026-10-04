@@ -37,7 +37,7 @@
       Units.addHero(this.map);
       this.state = 'playing';
       UI.setupBattle();
-      AudioSys.playMusic('battle');
+      AudioSys.playMusic('battle_' + L.theme); if (AudioSys.playAmbient) AudioSys.playAmbient(L.theme);
       UI.story(L.name, L.story);
       if (window.Art3D && Art3D.warm) setTimeout(() => { // dựng sẵn khung 3D của quái trong màn + anh hùng
         const keys = new Set(); L.waves.join(',').split(',').forEach(s => keys.add(s.split(':')[0].trim()));
