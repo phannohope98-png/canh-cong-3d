@@ -4,7 +4,7 @@
  * ========================================================= */
 (function () {
   const K = ArtKit, TAU = Math.PI * 2;
-  const N = { walk: 16, atk: 12, idle: 10 }, IDLE = 2.618;
+  const N = { walk: 16, atk: 12, idle: 10, die: 10 }, IDLE = 2.618;
   const BUCKETS = [0.35, 0.5, 0.7, 1, 1.4, 2, 2.8, 4];
   const bucket = v => { for (const b of BUCKETS) if (v <= b * 1.15) return b; return 4; };
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; };
@@ -17,7 +17,7 @@
     c = mk(w * ppu, h * ppu); const g = c.getContext('2d');
     g.scale(ppu, ppu); g.translate(ox, oy); g.lineJoin = 'round'; g.lineCap = 'round';
     const P = { w: -1, a: -1, t: 0 };
-    if (mode === 'walk') P.w = i / N.walk; else if (mode === 'atk') P.a = (i + 0.5) / N.atk; else P.t = i / N.idle * IDLE;
+    if (mode === 'walk') P.w = i / N.walk; else if (mode === 'atk') P.a = (i + 0.5) / N.atk; else if (mode === 'die') P.d = i / (N.die - 1); else P.t = i / N.idle * IDLE;
     if (!d.chibi) { // quái vẽ bộ cũ: thêm nảy + co giãn kiểu Kingdom Rush
       const tall = d.tall || 30; let sx = 1, sy = 1, by = 0, rot = 0;
       if (P.w >= 0) { const s = Math.abs(Math.sin(P.w * TAU)), land = Math.pow(1 - s, 3); by = -s * tall * 0.06; sy = 1 - land * 0.09 + s * 0.04; sx = 1 + land * 0.07; rot = Math.sin(P.w * TAU) * 0.05; }
@@ -62,6 +62,7 @@
       let i;
       if (mode === 'walk') i = Math.floor((((phase % 1) + 1) % 1) * N.walk);
       else if (mode === 'atk') i = Math.min(N.atk - 1, Math.max(0, Math.floor(phase * N.atk)));
+      else if (mode === 'die') i = Math.min(N.die - 1, Math.max(0, Math.floor(phase * N.die)));
       else { mode = 'idle'; i = Math.floor((((phase / IDLE) % 1) + 1) % 1 * N.idle); }
       const img = charFrame(type, mode, i, ppu), [w, h, ox, oy] = d.box;
       if (face < 0) {

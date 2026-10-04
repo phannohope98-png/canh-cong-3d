@@ -50,12 +50,16 @@ Mọi thông số nằm trong `js/config.js`: `towers`, `heroes`, `equipment`, `
 
 ## Xưởng nhân vật 3D (`design/nhan-vat-3d.html`)
 Mở từ Bách khoa → **Mô hình 3D**, hoặc trực tiếp `design/nhan-vat-3d.html?c=soldier&t=4`.
-14 nhân vật dựng lại bằng 3D theo đúng thiết kế chibi trong game (đầu to, tô toon 3 tông, viền mực dày kiểu Kingdom Rush):
+34 nhân vật + 4 trụ dựng lại bằng 3D theo đúng thiết kế chibi trong game (đầu to, tô toon 3 tông, viền mực dày kiểu Kingdom Rush):
 4 trụ (Kiếm Sĩ, Elf, Phù Thủy, Lùn – mỗi trụ 4 cấp), 4 anh hùng, Goblin, Bóng Tối, Orc (3 biến thể), Orc Cưỡi Sói, Kỵ Sĩ Hắc Ám (2 giai đoạn), Chúa Hắc Ám (3 giai đoạn).
 - Xoay/phóng to, đổi cấp, xem hoạt ảnh: Đứng · Đi · Đánh · Kỹ năng · Ngã; bảng màu, bảng quay 4 góc, tên khớp xương.
 - **Tải .GLB**: mô hình có khung khớp + mọi clip hoạt ảnh + viền mực, mở bằng Blender / Unity / Godot / three.js. Bản dựng sẵn (cấp cao nhất) nằm ở `assets/models/*.glb`.
 - **Sprite sheet 8 hướng**: 8 hàng hướng × 8 khung, nền trong suốt, góc nhìn chéo kiểu KR – dùng làm sprite 2D cho game.
 - Mã: `design/chars3d.js` (dựng hình + hoạt ảnh), `design/viewer3d.js` (giao diện), Three.js r147 để offline trong `design/vendor/`.
 
-### Nhân vật 3D trên chiến trường
-Trận đánh vẽ nhân vật trực tiếp từ mô hình 3D (`js/art3d.js` + `design/chars3d.js`): mỗi khung đi / đánh / đứng và các hướng nhìn (nghiêng, sau lưng, chính diện) được chụp từ mô hình bằng WebGL rồi lưu đệm như sprite, nên vẫn mượt trên điện thoại. Áp dụng cho 4 trụ (mọi cấp), 4 anh hùng (theo trang bị), Goblin, Bóng Tối, Orc, Orc Cưỡi Sói, 2 boss Hắc Ám. Cài đặt → **Nhân vật 3D** để tắt (quay về hình 2D) nếu máy yếu; máy không có WebGL tự dùng 2D.
+### Chiến trường 3D
+Trận đánh vẽ trực tiếp từ mô hình 3D (`js/art3d.js` + `design/chars3d.js` + `design/towers3d.js`): mỗi khung đi / đánh / đứng / ngã và các hướng nhìn được chụp từ mô hình bằng WebGL rồi lưu đệm như sprite, nên vẫn mượt trên điện thoại.
+- **Nhân vật**: 4 loại lính trụ (mọi cấp), 4 anh hùng (theo trang bị), toàn bộ 26 loại quái, kể cả 4 boss (Kỵ Sĩ Hắc Ám, Chúa Hắc Ám, Vua Troll Đá, Chúa Tể Hỗn Mang). Quái chết dùng hoạt ảnh ngã 3D.
+- **Công trình**: 4 trụ × 4 cấp và ô xây trống. Cờ, lửa, khói, cửa mở vẫn là lớp hiệu ứng động vẽ chồng lên.
+- Bản đồ giữ kiểu tranh vẽ tay như Kingdom Rush.
+- Cài đặt → **Nhân vật 3D** để tắt (quay về hình 2D) nếu máy yếu; máy không có WebGL tự dùng 2D.

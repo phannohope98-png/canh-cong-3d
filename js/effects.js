@@ -83,6 +83,13 @@
         const f = Math.min(1, c.t / 0.3), e = 1 - (1 - f) * (1 - f), a = c.t < 0.75 ? 1 : Math.max(0, 1 - (c.t - 0.75) / 0.65);
         if (a <= 0) continue;
         ctx.save(); ctx.globalAlpha = a;
+        const d3 = window.Art3D && Art3D.enabled && ArtChars[c.type] && ArtChars[c.type].__3d;
+        if (d3) { // mô hình 3D: dùng luôn hoạt ảnh ngã của nhân vật
+          const ph = Math.min(1, c.t / 0.8);
+          Painter.char(ctx, c.type, c.x, c.y, c.scale, c.face, 'die', ph);
+          if (c.t < 0.18) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (0.18 - c.t) / 0.18 * 0.7; Painter.char(ctx, c.type, c.x, c.y, c.scale, c.face, 'die', ph); }
+          ctx.restore(); continue;
+        }
         if (c.roll) { // goblin ngã lăn vài vòng
           const k = Math.min(1, c.t / 0.55), h = 10 * c.scale;
           ctx.translate(c.x - c.face * k * 34, c.y - Math.sin(k * Math.PI) * 8 - h * (1 - k) * 0.5); ctx.rotate(-c.face * (k * Math.PI * 4 + (k >= 1 ? 0 : 0)) - c.face * k * 1.42 * 0); ctx.translate(0, h * (1 - k) * 0.5);
