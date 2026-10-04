@@ -34,6 +34,7 @@
       if (window.Art3D && Art3D.setTheme) Art3D.setTheme(L.theme);
       this.renderBg();
       if (window.WaterFx) WaterFx.setup(this.map);
+      if (window.Lights) Lights.setup(this.map);
       Units.addHero(this.map);
       this.state = 'playing';
       UI.setupBattle();
@@ -119,6 +120,7 @@
       L.sort((a, b) => a.drawY - b.drawY);
       for (const o of L) o.draw(c, t);
       Combat.draw(c); Spells.draw(c); Effects.draw(c);
+      if (window.Lights) Lights.draw(c, now);
       this.drawAtmosphere(c, now);
       for (const e of Enemies.list) e.drawBar(c);
       for (const u of Units.list) u.drawBar(c);

@@ -63,5 +63,10 @@ Trận đánh vẽ trực tiếp từ mô hình 3D (`js/art3d.js` + `design/char
 - **Công trình**: 4 trụ × 4 cấp và ô xây trống. Cờ, lửa, khói, cửa mở vẫn là lớp hiệu ứng động vẽ chồng lên.
 - **Bản đồ**: mặt đất, đường, sông vẽ tay; toàn bộ cây, đá, xương rồng, pha lê, đèn, nhà, lều, lâu đài cổng, pháo đài, tượng đài, cổng hư vô là mô hình 3D (`design/props3d.js`, `js/map3d.js`). Bản đồ chiến dịch cũng dựng lại bằng vật 3D theo 6 vùng.
 - **Hiệu ứng**: mũi tên, tinh thể phép, bom, thiên thạch và cờ vải bay là 3D (`js/fx3d.js`); vệt sáng, lửa, khói giữ dạng hiệu ứng.
-- **Ánh sáng theo vùng**: núi lửa ánh cam, băng giá ánh lạnh, hỗn mang ánh tím…
+- **Ánh sáng theo vùng**: núi lửa ánh cam, băng giá ánh lạnh, hỗn mang ánh tím…; Núi Lửa và Hỗn Mang có lớp tối + nguồn sáng thật (đèn, đuốc, pha lê, dòng dung nham, chớp nổ, phép, thiên thạch – `js/lights.js`).
+- **Mặt đất 3D** (`js/terrain3d.js`): lòng sông / hồ / dung nham khoét sâu có bờ dốc, đường trũng, cầu gỗ / đá 3D; **nước động** (`js/water.js`).
+- **8 hướng nhìn**: lính trụ quay về phía quái, lính và quái đi chéo quay đúng hướng.
+- **Biểu tượng 3D** cho xu, sao, tim, vương miện, rương, vũ khí… (`js/icons3d.js`).
+- **Âm thanh theo vùng**: nhạc trận riêng và tiếng môi trường (chim, chuông, gió cát, gió tuyết, dung nham, hư không).
+- **Tối ưu**: dùng chung bộ đệm WebGL, giảm đa giác trong trận, dựng sẵn khung hình lúc rảnh, tự hạ độ phân giải khi máy chậm (nhớ cho lần sau).
 - Cài đặt → **Nhân vật 3D** để tắt (quay về hình 2D) nếu máy yếu; máy không có WebGL tự dùng 2D.
