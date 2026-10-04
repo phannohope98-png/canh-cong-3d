@@ -28,7 +28,7 @@
    * · viền sáng ven mép (rim) theo màu đèn vùng, kim loại có vệt bóng, chân vật tối dần (bóng tiếp đất)
    * tex: 'brick' | 'stone' | 'tile' | 'wood' | 'bark' | 'straw' | 'cactus' (trụ tròn) – thêm '.f' cho mặt phẳng (hộp, mái dốc);
    *      'flag' | 'leaf' | 'rock' | 'plaster' | 'cloth' */
-  const TEXN = { brick: 1, stone: 2, flag: 3, wood: 4, tile: 5, leaf: 6, rock: 7, bark: 8, plaster: 9, straw: 10, cactus: 11, cloth: 12 };
+  const TEXN = { brick: 1, stone: 2, flag: 3, wood: 4, tile: 5, leaf: 6, rock: 7, bark: 8, plaster: 9, straw: 10, cactus: 11, cloth: 12, hair: 13, fur: 14 };
   const FXON = { v: true };
   const FX = { uRim: { value: new T.Color(0xa8c4ff) }, uRimK: { value: 0.5 }, uAO: { value: 0.8 } };
   const SH_V = 'attribute vec3 tpos;\nattribute vec3 tnrm;\nvarying vec3 vTP;\nvarying vec3 vTN;\nvarying float vWY;\n';
@@ -78,6 +78,12 @@ float surf(){
   k=.8+.24*abs(sin(atan(p.x,p.z)*5.)); k=mix(1.,k,lodK(p.xy,.03));
 #elif TEXK==12
   vec2 uv=sd*40.; k=.95+.08*fbm(uv)+.03*sin(uv.x*3.)*sin(uv.y*3.);
+#elif TEXK==13
+  float a=atan(p.x,p.z), st=vn(vec2(a*22.,p.y*2.))*.6+vn(vec2(a*47.,p.y*5.))*.4;
+  float ring=smoothstep(.26,.38,n.y)*(1.-smoothstep(.5,.62,n.y))*smoothstep(-.3,.25,n.z);
+  k=.84+.26*st+ring*(.26+.3*st); k=mix(1.,k,lodK(vec2(a*length(p.xz),p.y),.05));
+#elif TEXK==14
+  float a=atan(p.x,p.z); k=.8+.3*vn(vec2(a*20.,p.y*6.)); k=mix(1.,k,lodK(vec2(a*length(p.xz),p.y),.05));
 #endif
   return k;
 }
@@ -253,11 +259,11 @@ float surf(){
     for (const [s, k] of [[-1, 'R'], [1, 'L']]) {
       const arm = n['arm' + k] = node('arm' + k, n.torso, s * sx, sy, 0);
       arm.rotation.z = s * 0.14;
-      add(arm, part(G.cap(o.armR, len - o.armR), o.sleeve), 0, -len / 2 + o.armR * 0.3, 0);
+      add(arm, part(G.cap(o.armR, len - o.armR), o.sleeve, { tex: 'cloth' }), 0, -len / 2 + o.armR * 0.3, 0);
       add(arm, part(G.ball(o.armR * 1.28), o.glove || o.skin), 0, -len, 0);
       n['hand' + k] = node('hand' + k, arm, 0, -len, 0);
       const leg = n['leg' + k] = node('leg' + k, n.hips, s * o.torsoW * 0.22, 0.02, 0);
-      add(leg, part(G.cap(o.legR, o.legL - o.legR), o.legs), 0, -o.legL / 2, 0);
+      add(leg, part(G.cap(o.legR, o.legL - o.legR), o.legs, { tex: 'cloth' }), 0, -o.legL / 2, 0);
       add(leg, part(G.sbox(o.legR * 2.3, o.bootH, o.legR * 3.3, 0.4), o.boots), 0, -o.legL - o.bootH / 2 + 0.01, o.legR * 0.55);
     }
     return { root, n, o };
@@ -367,10 +373,10 @@ float surf(){
     add(n.cape, part(G.cape(d.torsoW * 0.9, 0.42 + t * 0.07, 0.5), CAPE, { ds: true }), 0, 0, 0);
     // đầu
     face(n.head, R, { iris: o.iris || '#3a2a22', eye: 'fierce', brow: HC === '#1e1a22' ? INK : '#8a8ea0', mouth: 'line' });
-    add(n.head, part(G.ball(R * 1.07, 1.04, 0.9, 1.04), HC), 0, R * 0.22, -R * 0.13);
+    add(n.head, part(G.ball(R * 1.07, 1.04, 0.9, 1.04), HC, { tex: 'hair' }), 0, R * 0.22, -R * 0.13);
     for (const [x, z, rx, rz, h] of [[-0.55, -0.1, -0.2, 0.55, 0.42], [-0.05, 0.05, -0.35, 0.05, 0.46], [0.45, -0.05, -0.2, -0.5, 0.4], [0.05, -0.6, -0.9, 0.1, 0.42]])
-      add(n.head, part(G.cone(R * 0.25, R * h), HC), R * x, R * 0.95, R * z, rx, 0, rz);
-    for (const [x, rz] of [[-0.4, 0.35], [0.05, 0], [0.42, -0.3]]) onHead(n.head, R, part(flipY(G.cone(R * 0.19, R * 0.34)), HC), x * 0.9, 0.5, 0.97, rz);
+      add(n.head, part(G.cone(R * 0.25, R * h), HC, { tex: 'hair' }), R * x, R * 0.95, R * z, rx, 0, rz);
+    for (const [x, rz] of [[-0.4, 0.35], [0.05, 0], [0.42, -0.3]]) onHead(n.head, R, part(flipY(G.cone(R * 0.19, R * 0.34)), HC, { tex: 'hair' }), x * 0.9, 0.5, 0.97, rz);
     if (t >= 4 && !o.noCrown) {
       add(n.head, part(G.cyl(R * 0.5, R * 0.55, R * 0.16, 16), GOLD, { metal: 1 }), 0, R * 1.02, -R * 0.05);
       for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; add(n.head, part(G.cone(R * 0.09, R * 0.28), GOLD, { metal: 1, ink: 0.014 }), S(a) * R * 0.5, R * 1.22, C(a) * R * 0.5 - R * 0.05); }
@@ -401,9 +407,9 @@ float surf(){
     for (const x of [-0.025, 0.0, 0.025]) add(q, part(G.cone(0.025, 0.1), t >= 4 ? '#9affc8' : '#f4f0e0', { ink: 0.01 }), x, 0.22, 0);
     if (cape) { n.cape = node('cape', n.torso, 0, d.torsoH - 0.04, -d.torsoD / 2 + 0.02); add(n.cape, part(G.cape(d.torsoW * 0.85, 0.34, 0.4), cape, { ds: true }), 0, 0, 0); }
     face(n.head, R, { iris: '#2aa86a', eye: 'cute', brow: '#c8a040', mouth: 'smile', blush: true });
-    add(n.head, part(G.ball(R * 1.07, 1.03, 0.9, 1.04), hairC), 0, R * 0.21, -R * 0.13);
-    add(n.head, part(G.ball(R * 0.75, 1.05, 1.55, 0.55), hairC), 0, -R * 0.6, -R * 0.6, 0.15);
-    for (const [x, rz] of [[-0.5, 0.5], [-0.15, 0.25], [0.3, -0.35]]) onHead(n.head, R, part(flipY(G.cone(R * 0.22, R * 0.5)), hairC), x, 0.48, 0.96, rz);
+    add(n.head, part(G.ball(R * 1.07, 1.03, 0.9, 1.04), hairC, { tex: 'hair' }), 0, R * 0.21, -R * 0.13);
+    add(n.head, part(G.ball(R * 0.75, 1.05, 1.55, 0.55), hairC, { tex: 'hair' }), 0, -R * 0.6, -R * 0.6, 0.15);
+    for (const [x, rz] of [[-0.5, 0.5], [-0.15, 0.25], [0.3, -0.35]]) onHead(n.head, R, part(flipY(G.cone(R * 0.22, R * 0.5)), hairC, { tex: 'hair' }), x, 0.48, 0.96, rz);
     for (const s of [-1, 1]) add(n.head, part(G.cone(R * 0.15, R * 0.75).scale(1, 1, 0.5), SKIN), s * R * 1.08, R * 0.12, -R * 0.08, 0, 0, -s * (Math.PI / 2 - 0.45));
     if (t >= 3) {
       add(n.head, part(G.torus(R * 1.02, 0.018).rotateX(Math.PI / 2), GOLD, { metal: 1, ink: 0.012 }), 0, R * 0.42, 0, -0.12);
@@ -430,9 +436,9 @@ float surf(){
     n.cape = node('cape', n.torso, 0, d.torsoH - 0.04, -d.torsoD / 2 + 0.03);
     add(n.cape, part(G.cape(d.torsoW * 1.0, 0.62, 0.9), capeC, { ds: true }), 0, 0, 0);
     face(n.head, R, { iris: o.iris || '#7a5ae0', eye: 'cute', brow: '#9a90c8', mouth: 'smile', blush: true });
-    add(n.head, part(G.ball(R * 1.07, 1.03, 0.92, 1.04), hairC), 0, R * 0.17, -R * 0.13);
-    add(n.head, part(G.ball(R * 0.78, 1.15, 1.5, 0.55), hairC), 0, -R * 0.55, -R * 0.55, 0.12);
-    for (const [x, rz] of [[-0.45, 0.4], [0.35, -0.4]]) onHead(n.head, R, part(flipY(G.cone(R * 0.24, R * 0.55)), hairC), x, 0.38, 0.95, rz);
+    add(n.head, part(G.ball(R * 1.07, 1.03, 0.92, 1.04), hairC, { tex: 'hair' }), 0, R * 0.17, -R * 0.13);
+    add(n.head, part(G.ball(R * 0.78, 1.15, 1.5, 0.55), hairC, { tex: 'hair' }), 0, -R * 0.55, -R * 0.55, 0.12);
+    for (const [x, rz] of [[-0.45, 0.4], [0.35, -0.4]]) onHead(n.head, R, part(flipY(G.cone(R * 0.24, R * 0.55)), hairC, { tex: 'hair' }), x, 0.38, 0.95, rz);
     // mũ phù thuỷ
     const hat = node('hat', n.head, 0, R * 0.62, -R * 0.04); hat.rotation.set(-0.08, 0, 0.06);
     add(hat, part(G.cyl(R * 1.72, R * 1.72, R * 0.09, 28), hatC), 0, 0, 0);
@@ -463,9 +469,9 @@ float surf(){
     for (const s of [-1, 1]) onHead(n.head, R, part(G.sbox(R * 0.42, R * 0.13, R * 0.14, 0.5), beard, { ink: 0.012 }), s * 0.38, 0.2, 1.08, s * 0.22);
     onHead(n.head, R, part(G.ball(R * 0.2), '#f0a080', { ink: 0.014 }), 0, -0.2, 1.0);
     // râu khổng lồ
-    add(n.head, part(G.ball(R * 0.78, 1.1, 1.1, 0.62), beard), 0, -R * 0.95, R * 0.52);
+    add(n.head, part(G.ball(R * 0.78, 1.1, 1.1, 0.62), beard, { tex: 'fur' }), 0, -R * 0.95, R * 0.52);
     for (const s of [-1, 1]) {
-      add(n.head, part(G.ball(R * 0.42, 0.8, 1.1, 0.8), beard), s * R * 0.7, -R * 0.5, R * 0.3);
+      add(n.head, part(G.ball(R * 0.42, 0.8, 1.1, 0.8), beard, { tex: 'fur' }), s * R * 0.7, -R * 0.5, R * 0.3);
       add(n.head, part(G.cap(R * 0.1, R * 0.4).rotateZ(Math.PI / 2 - s * 0.35), sh(beard, 0.15)), s * R * 0.25, -R * 0.4, R * 0.96);
     }
     if (t >= 3) for (const s of [-1, 1]) add(n.head, part(G.cyl(R * 0.1, R * 0.1, R * 0.14), GOLD, { metal: 1, ink: 0.012 }), s * R * 0.3, -R * 1.6, R * 0.62);
@@ -717,7 +723,7 @@ float surf(){
       onHead(n.head, R, part(G.cone(R * 0.11, R * 0.5), '#fff8e0', { ink: 0.012 }), s * 0.32, -0.48, 1.0, -s * 0.2);
       add(n.head, part(G.cone(R * 0.17, R * 0.55).scale(1, 1, 0.5), skin), s * R * 1.0, R * 0.1, -R * 0.05, 0, 0, -s * (Math.PI / 2 - 0.3));
     }
-    if (o.hair) for (const [x, rz] of [[-0.3, 0.4], [0, 0], [0.3, -0.4]]) add(n.head, part(G.cone(R * 0.16, R * 0.5), o.hair), R * x, R * 0.95, -R * 0.1, -0.2, 0, rz);
+    if (o.hair) for (const [x, rz] of [[-0.3, 0.4], [0, 0], [0.3, -0.4]]) add(n.head, part(G.cone(R * 0.16, R * 0.5), o.hair, { tex: 'hair' }), R * x, R * 0.95, -R * 0.1, -0.2, 0, rz);
     if (o.crown) {
       add(n.head, part(G.cyl(R * 0.62, R * 0.7, R * 0.22, 16), GOLD, { metal: 1 }), 0, R * 0.85, -R * 0.05);
       for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(n.head, part(G.cone(R * 0.1, R * 0.32), GOLD, { metal: 1, ink: 0.014 }), S(a) * R * 0.62, R * 1.1, C(a) * R * 0.62 - R * 0.05); }

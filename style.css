@@ -378,3 +378,5 @@ button { font-family: inherit; color: inherit; border: 0; padding: 0; background
   box-shadow: inset 0 0 0 3px #ffe08a, inset 0 0 0 5px #8a5418, 0 4px 0 var(--ink), 0 8px 14px rgba(0,0,0,.45); }
 .hero-face canvas { inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px); }
 .hud-tr .rbtn { box-shadow: inset 0 0 0 2px rgba(255,236,170,.75), inset 0 3px 0 rgba(255,255,255,.35), inset 0 -4px 0 rgba(0,0,0,.25), 0 3px 0 var(--ink), 0 6px 10px rgba(0,0,0,.4); }
+.gitem .gico { width: 40px; height: 40px; margin: -4px 0 -2px; filter: drop-shadow(0 2px 0 rgba(25,10,25,.6)); }
+.gitem.lock .gico { filter: grayscale(.6) drop-shadow(0 2px 0 rgba(25,10,25,.6)); }

@@ -157,9 +157,10 @@
       const tiers = Progress.wornTiers(hid), E = CONFIG.equipment;
       const slots = Progress.SLOTS.map((s, si) => {
         const own2 = Save.data.gear[s], eq = Save.data.equip[hid][s];
+        const GI = { weapon: "sword", gloves: "glove", armor: "armor", boots: "boot" }, GEARICO = (s, it) => { const u = window.Icons3D && Icons3D.url(GI[s], it.col, it.glow); return u ? `<img class="gico" src="${u}" alt="">` : `<span class="sw" style="background:${it.col}"></span>`; };
         return `<div class="slot"><h4>${I(E[s].icon)}${E[s].name}</h4><div class="items">${E[s].items.map((it, k) => {
           const t = k + 1, owned = t <= own2, isEq = eq === t, canBuy = t === own2 + 1;
-          return `<button class="gitem ${isEq ? 'eq' : ''} ${canBuy ? 'buy' : ''} ${!owned && !canBuy ? 'lock' : ''}" data-action="gear" data-slot="${s}" data-tier="${t}"><span class="sw" style="background:${it.col}"></span><span>${it.name}</span><span>${GEARTXT(it)}</span>${owned ? (isEq ? '<span>Đang mặc</span>' : '<span>Đã có</span>') : `<span>${I('coin')} ${it.cost}</span>`}</button>`;
+          return `<button class="gitem ${isEq ? 'eq' : ''} ${canBuy ? 'buy' : ''} ${!owned && !canBuy ? 'lock' : ''}" data-action="gear" data-slot="${s}" data-tier="${t}">${GEARICO(s, it)}<span>${it.name}</span><span>${GEARTXT(it)}</span>${owned ? (isEq ? '<span>Đang mặc</span>' : '<span>Đã có</span>') : `<span>${I('coin')} ${it.cost}</span>`}</button>`;
         }).join('')}</div></div>`;
       }).join('');
       $('hero-detail').innerHTML = `<div class="card"><div class="hd-top"><div class="big"><canvas data-hero="${hid}" data-full="1" width="300" height="360"></canvas></div>
