@@ -181,8 +181,8 @@
       $('free-stars').textContent = Progress.freeStars();
       $('upgrades-list').innerHTML = Object.keys(CONFIG.upgrades).map(k => {
         const U = CONFIG.upgrades[k], T = CONFIG.towers[k], own = Progress.upLevel(k), free = Progress.freeStars();
-        return `<div class="card"><div class="card-head"><canvas class="portrait" data-char="${CHAR[k]}${Math.min(4, own + 1)}" data-head="1" data-zoom="1.5" width="152" height="152"></canvas>
-          <div style="flex:1"><h3>${T.name}</h3><div class="sub">${T.role}</div><div class="sub">Mỗi cấp: ${U.text}</div></div></div>
+        return `<div class="card up-card"><div class="up-stage"><canvas class="up-art" data-tower="${k}" data-tier="${Math.min(4, own + 1)}" data-fit="0.92" width="300" height="300"></canvas><span class="up-lv">${own}/${U.cost.length}</span></div>
+          <h3>${T.name}</h3><div class="sub">${T.role}</div><div class="sub up-txt">Mỗi cấp: ${U.text}</div>
           <div class="up-nodes">${U.cost.map((c, i) => i < own ? `<div class="up-node own">${I('check')}</div>`
             : i === own ? `<button class="up-node ${free >= c ? 'buy' : ''}" data-action="buy-up" data-type="${k}"><span>Cấp ${i + 1}</span><span>${I('star')} ${c}</span></button>`
             : `<div class="up-node">${I('star')} ${c}</div>`).join('')}</div></div>`;

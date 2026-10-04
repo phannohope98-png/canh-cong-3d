@@ -70,3 +70,9 @@ Trận đánh vẽ trực tiếp từ mô hình 3D (`js/art3d.js` + `design/char
 - **Âm thanh theo vùng**: nhạc trận riêng và tiếng môi trường (chim, chuông, gió cát, gió tuyết, dung nham, hư không).
 - **Tối ưu**: dùng chung bộ đệm WebGL, giảm đa giác trong trận, dựng sẵn khung hình lúc rảnh, tự hạ độ phân giải khi máy chậm (nhớ cho lần sau).
 - Cài đặt → **Nhân vật 3D** để tắt (quay về hình 2D) nếu máy yếu; máy không có WebGL tự dùng 2D.
+
+### Nâng cấp đồ hoạ (chất liệu, bóng đổ, giao diện)
+- **Chất liệu sinh trong shader** (`design/chars3d.js`, tham số `tex` của `part()`): gạch, đá hộc, đá lát, ván gỗ, ngói, rơm, tán lá, đá tảng, vỏ cây, vữa, xương rồng, vải, tóc (sợi + vòng bóng), râu. Không dùng ảnh hay UV; vân bám theo toạ độ riêng của khối nên vẫn đúng sau khi gộp lưới. Mọi vật 3D còn có viền sáng theo màu đèn vùng, vệt bóng trên kim loại và chân tối dần.
+- **Bóng đổ thật**: cây, đá, nhà, lâu đài… được dựng chung cảnh với mặt đất và đổ bóng bằng shadow map theo một hướng nắng (sau-trái → trước-phải). Trụ đổ bóng chiếu theo cùng hướng (`js/art3d.js`).
+- **Chi tiết mặt đất 3D**: bụi cỏ, hoa, sỏi, đá viền đường, phiến đá lát (vẽ theo lô), gò đất thoai thoải có sáng tối mềm; nền trận dựng nét hơn khi phóng to.
+- **Giao diện**: thanh thông số bằng gỗ viền vàng, nút phép vành kim loại, biểu tượng 3D cho kỹ năng và trang bị (màu theo bậc), màn Nâng Cấp Trụ có trụ 3D lớn.
