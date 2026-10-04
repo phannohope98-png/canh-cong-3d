@@ -51,7 +51,7 @@
           else if (tier === own + 1) { if (Progress.buyGear(slot)) { AudioSys.play('build'); this.toast('Đã mua & trang bị!'); } else { AudioSys.play('error'); this.toast('Không đủ Xu'); } }
           this.renderHeroes(); break;
         }
-        case 'toggle': { const s = Save.data.settings; s[d.key] = !s[d.key]; Save.save(); if (d.key === 'music') AudioSys.setMusic(s.music); if (d.key === 'sound') AudioSys.setSound(s.sound); this.renderSettings(); if (this.pauseOpen) this.openPause(); break; }
+        case 'toggle': { const s = Save.data.settings; s[d.key] = !s[d.key]; Save.save(); if (d.key === 'music') AudioSys.setMusic(s.music); if (d.key === 'sound') AudioSys.setSound(s.sound); if (d.key === 'art3d' && window.Art3D) Art3D.setEnabled(s.art3d); this.renderSettings(); if (this.pauseOpen) this.openPause(); break; }
         case 'reset': this.confirm('Xoá toàn bộ tiến trình? Sao, Xu, anh hùng và trang bị sẽ mất hết.', () => { Save.reset(); this.toast('Đã xoá dữ liệu'); this.showScreen('screen-menu'); }); break;
         case 'overlay-ok': { const cb = this.overlayCb; this.overlayCb = null; this.closeOverlay(); if (cb) cb(); break; }
         // trong trận
@@ -222,7 +222,7 @@
 
     renderSettings() {
       const s = Save.data.settings, row = (k, label) => `<div class="setting"><span>${label}</span><button class="switch ${s[k] ? 'on' : ''}" data-action="toggle" data-key="${k}"><i></i></button></div>`;
-      $('settings-list').innerHTML = `<div class="card">${row('music', 'Nhạc nền')}${row('sound', 'Âm thanh')}${row('shake', 'Rung màn hình')}</div>
+      $('settings-list').innerHTML = `<div class="card">${row('music', 'Nhạc nền')}${row('sound', 'Âm thanh')}${row('shake', 'Rung màn hình')}${window.Art3D ? row('art3d', 'Nhân vật 3D (tắt nếu máy yếu)') : ''}</div>
         <div class="card"><h3>Cách chơi</h3><p class="sub" style="line-height:1.55;font-size:14px">• Chạm ô đất có cọc gỗ để chọn 1 trong 4 trụ: Người (2 kiếm sĩ), Elf (bắn nhanh), Phù thủy (tầm xa, sát thương lan), Người Lùn (1 chiến binh trâu bò).<br>• Chạm trụ để nâng cấp (4 cấp đổi hình) hoặc bán.<br>• Kéo để di chuyển bản đồ, chụm 2 ngón để phóng to.<br>• Chạm anh hùng rồi chạm bản đồ để di chuyển; nút kỹ năng ở bên cạnh.<br>• Chạm đầu lâu đỏ để gọi đợt quái, gọi sớm được thưởng vàng.<br>• Xu kiếm được dùng mua anh hùng & trang bị.</p></div>
         <div class="row"><button class="gbtn red sm" data-action="reset">${I('trash')}<span>Xoá dữ liệu</span></button></div>`;
     },

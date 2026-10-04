@@ -8,7 +8,7 @@
   function defaults() {
     const upgrades = {}; Object.keys(CONFIG.upgrades).forEach(k => { upgrades[k] = 0; });
     const heroXp = {}, equip = {}; Object.keys(CONFIG.heroes).forEach(k => { heroXp[k] = 0; equip[k] = { weapon: 0, gloves: 0, armor: 0, boots: 0 }; });
-    return { stars: {}, unlocked: 1, upgrades, heroXp, seen: {}, settings: { music: true, sound: true, shake: true },
+    return { stars: {}, unlocked: 1, upgrades, heroXp, seen: {}, settings: { music: true, sound: true, shake: true, art3d: true },
       coins: CONFIG.startCoins, heroes: { aldric: true }, hero: 'aldric', gear: { weapon: 0, gloves: 0, armor: 0, boots: 0 }, equip };
   }
   const Save = {

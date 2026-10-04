@@ -13,6 +13,7 @@
   T.ColorManagement.legacyMode = false; // màu hex = sRGB, xuất glTF đúng màu
 
   const INK = '#1b0f16', GOLD = '#f5c542', SKIN = '#ffd9b8', OUT = 0.026;
+  let INKK = 1; // hệ số độ dày viền (trong trận dùng dày hơn cho rõ ở cỡ nhỏ)
 
   /* ---------- vật liệu toon ---------- */
   const GRAD = (() => {
@@ -55,7 +56,7 @@
   function part(geo, col, o) {
     o = o || {};
     const m = new T.Mesh(geo, mat(col, o));
-    if (o.ink !== false && !o.op) { const h = new T.Mesh(hullGeo(geo, o.ink || OUT), inkMat); h.userData.hull = true; m.add(h); }
+    if (o.ink !== false && !o.op) { const h = new T.Mesh(hullGeo(geo, (o.ink || OUT) * INKK), inkMat); h.userData.hull = true; m.add(h); }
     return m;
   }
   function node(name, parent, x, y, z) { const g = new T.Group(); g.name = name; g.position.set(x || 0, y || 0, z || 0); if (parent) parent.add(g); return g; }
@@ -582,7 +583,7 @@
     // ĐỨNG: thở, lắc đầu nhẹ (goblin nhìn trái phải)
     out.push(bake(rig, 'idle', 2.4, t => {
       const p = t * TAU, b = S(p);
-      const o = { torso: { y: b * 0.012 * k, rx: b * 0.02 * k }, head: { rx: -b * 0.035 * k, rz: S(p + 1) * 0.035 * k, ry: A.look ? S(p) * 0.55 : 0 }, armR: { rx: b * 0.06 * k }, armL: { rx: -b * 0.06 * k } };
+      const o = { torso: { y: b * 0.012 * k, rx: b * 0.02 * k }, head: { rx: -b * 0.035 * k, rz: S(p + 1) * 0.035 * k, ry: A.look ? S(p) * 0.4 : 0 }, armR: { rx: b * 0.06 * k }, armL: { rx: -b * 0.06 * k } };
       armsRest(o, b * 0.04 * k); capeFx(o, 0.08, 0.035, p * 2);
       if (gem) o.gem = { y: S(p * 2) * 0.035, ry: t * TAU };
       return o;
@@ -797,5 +798,5 @@
     return c;
   }
 
-  window.Chars3D = { list: LIST, build, toExportable, INK };
+  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; } };
 })();

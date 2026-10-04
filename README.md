@@ -56,3 +56,6 @@ Mở từ Bách khoa → **Mô hình 3D**, hoặc trực tiếp `design/nhan-vat
 - **Tải .GLB**: mô hình có khung khớp + mọi clip hoạt ảnh + viền mực, mở bằng Blender / Unity / Godot / three.js. Bản dựng sẵn (cấp cao nhất) nằm ở `assets/models/*.glb`.
 - **Sprite sheet 8 hướng**: 8 hàng hướng × 8 khung, nền trong suốt, góc nhìn chéo kiểu KR – dùng làm sprite 2D cho game.
 - Mã: `design/chars3d.js` (dựng hình + hoạt ảnh), `design/viewer3d.js` (giao diện), Three.js r147 để offline trong `design/vendor/`.
+
+### Nhân vật 3D trên chiến trường
+Trận đánh vẽ nhân vật trực tiếp từ mô hình 3D (`js/art3d.js` + `design/chars3d.js`): mỗi khung đi / đánh / đứng và các hướng nhìn (nghiêng, sau lưng, chính diện) được chụp từ mô hình bằng WebGL rồi lưu đệm như sprite, nên vẫn mượt trên điện thoại. Áp dụng cho 4 trụ (mọi cấp), 4 anh hùng (theo trang bị), Goblin, Bóng Tối, Orc, Orc Cưỡi Sói, 2 boss Hắc Ám. Cài đặt → **Nhân vật 3D** để tắt (quay về hình 2D) nếu máy yếu; máy không có WebGL tự dùng 2D.

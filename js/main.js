@@ -7,6 +7,7 @@
     const s = Save.data.settings;
     AudioSys.musicOn = s.music;
     AudioSys.soundOn = s.sound;
+    if (window.Art3D) Art3D.setEnabled(s.art3d !== false);
     Game.init();
     UI.init();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (UI.current === 'screen-menu') UI.paintMenu(); });
