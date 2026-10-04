@@ -217,10 +217,10 @@
       add(g, new T.Mesh(G.ball(0.035), mat('#ff7a2a', { glow: 1.5 })), 0.115, 0.62, 0);
       return g;
     },
-    knife() {
+    knife(col) {
       const g = node('weapon');
       add(g, part(G.cyl(0.022, 0.022, 0.09), '#4a2e1a'), 0, -0.02, 0);
-      add(g, part(G.ext([-0.035, 0, 0.035, 0, 0.02, 0.16, -0.01, 0.24, -0.04, 0.12], 0.02, 0.004).rotateY(Math.PI / 2), '#c8ccd4', { metal: 1 }), 0, 0.03, 0);
+      add(g, part(G.ext([-0.035, 0, 0.035, 0, 0.02, 0.16, -0.01, 0.24, -0.04, 0.12], 0.02, 0.004).rotateY(Math.PI / 2), col || '#c8ccd4', { metal: 1, glow: col ? 0.5 : 0 }), 0, 0.03, 0);
       return g;
     },
     spear() {
@@ -240,8 +240,8 @@
       glow(n.gem, 0, 0, 0, 0.5 + t * 0.08, gem, 0.75);
       return g;
     },
-    bow(t, n) {
-      const g = node('bow'), wood = t >= 3 ? GOLD : '#c89a3a';
+    bow(t, n, o) {
+      const g = node('bow'), wood = (o && o.wood) || (t >= 3 ? GOLD : '#c89a3a');
       add(g, part(G.tube([[0, 0.14, -0.46], [0, 0.03, -0.27], [0, -0.04, 0], [0, 0.03, 0.27], [0, 0.14, 0.46]], 0.022), wood, { metal: t >= 3 }), 0, 0, 0);
       if (t >= 2) for (const s of [-1, 1]) add(g, new T.Mesh(G.tube([[0.02, 0.0, s * 0.08], [0.022, 0.035, s * 0.3]], 0.008, 6), mat('#3fae5a')), 0, 0, 0);
       add(g, part(G.cyl(0.032, 0.032, 0.12).rotateX(Math.PI / 2), '#5a3420'), 0, -0.04, 0);
@@ -401,17 +401,20 @@
     add(n.torso, part(G.lathe([[0, 0.31], [0.13, 0.31], [0.16, 0.18], [0.2, 0.0], [0.17, -0.06], [0, -0.06]], 9, 0.85), cloth), 0, 0, 0);
     add(n.torso, part(G.torus(0.15, 0.02).rotateX(Math.PI / 2).scale(1, 1, 0.85), '#3a2416', { ink: 0.01 }), 0, 0.08, 0);
     if (o.glow) {
-      face(n.head, R, { iris: eye, eye: 'glow', es: 1.2 });
-      glow(n.torso, 0, 0.2, 0, 1.6, '#7a3aff', 0.35);
+      face(n.head, R, { iris: eye, eye: 'glow', es: 1.2, mouth: o.horns ? 'grin' : 'none' });
+      glow(n.torso, 0, 0.2, 0, 1.6, o.aura || '#7a3aff', 0.35);
     } else face(n.head, R, { iris: eye, eye: 'round', es: 1.15, brow: sh(skin, -0.4), mouth: 'grin', eu: 0.4 });
-    if (!o.glow) onHead(n.head, R, new T.Mesh(flipY(G.cone(R * 0.06, R * 0.12)), mat('#fffbe8')), 0.08, -0.36, 1.0);
+    if (!o.glow || o.horns) onHead(n.head, R, new T.Mesh(flipY(G.cone(R * 0.06, R * 0.12)), mat('#fffbe8')), 0.08, -0.36, 1.0);
     onHead(n.head, R, part(G.cone(R * 0.11, R * 0.36).rotateX(Math.PI / 2), skin), 0, -0.12, 0.98);
     for (const s of [-1, 1]) add(n.head, part(G.cone(R * 0.22, R * 1.3).scale(1, 1, 0.42), skin), s * R * 1.35, R * 0.18, -R * 0.05, 0, 0, -s * (Math.PI / 2 - 0.28));
+    if (o.horns) for (const s of [-1, 1]) add(n.head, part(G.tube([[s * R * 0.35, R * 0.75, 0], [s * R * 0.6, R * 1.15, -R * 0.1], [s * R * 0.5, R * 1.5, -R * 0.35]], R * 0.1, 10), o.horns), 0, 0, 0);
+    if (o.cracks) for (const [u, v] of [[-0.6, 0.3], [0.5, 0.45], [0.2, -0.55]]) onHead(n.head, R, new T.Mesh(G.sbox(R * 0.05, R * 0.3, R * 0.04), mat(o.cracks, { glow: 1.4 })), u, v, 1.0, 0.5);
     if (!o.glow) {
       add(n.head, part(G.ball(R * 1.05, 1.02, 0.62, 1.04), '#c8302a'), 0, R * 0.42, -R * 0.08);
       for (const s of [-1, 1]) add(n.head, part(G.cone(R * 0.12, R * 0.4), '#c8302a'), s * R * 0.12, R * 0.2, -R * 1.05, -2.0, 0, s * 0.4);
     }
-    add(n.handR, WEAP.knife(), 0, 0, 0, 1.2);
+    const kn = WEAP.knife(o.blade);
+    add(n.handR, kn, 0, 0, 0, 1.2);
     return { rig, anim: { kind: 'stab', look: true, skill: null } };
   }
 
@@ -451,8 +454,9 @@
   }
 
   /** Kỵ Sĩ Hắc Ám (boss giữa màn) – p2: áo choàng bay lên, kiếm rực đỏ */
-  function DARKKNIGHT(p2, lord, p3) {
-    const armor = p3 ? '#4a1e22' : '#2c2a36', trim = p3 ? '#ff4a2a' : lord ? '#8a2a3a' : '#5a2a3a', light = '#4a4658';
+  function DARKKNIGHT(p2, lord, p3, pal) {
+    pal = pal || {};
+    const armor = pal.armor || (p3 ? '#4a1e22' : '#2c2a36'), trim = pal.trim || (p3 ? '#ff4a2a' : lord ? '#8a2a3a' : '#5a2a3a'), light = pal.light || '#4a4658';
     const rig = humanoid({ R: 0.42, torsoH: 0.62, torsoW: 0.62, torsoD: 0.42, legL: 0.38, legR: 0.12, bootH: 0.14, armL: 0.44, armR: 0.12,
       skin: armor, legs: '#22202a', boots: '#16141c', sleeve: armor, glove: '#1a1820', neck: 0.85 });
     const { n } = rig, d = rig.o, R = d.R, gl = p3 ? 0.35 : 0;
@@ -466,10 +470,12 @@
     }
     n.cape = node('cape', n.torso, 0, d.torsoH - 0.03, -d.torsoD / 2 + 0.02);
     if (p2 && !lord) n.cape.rotation.x = 0.85;
-    add(n.cape, part(G.cape(d.torsoW * 1.0, lord ? 1.15 : 0.95, lord ? 1.1 : 0.8), '#141018', { ds: true }), 0, 0, 0);
+    add(n.cape, part(G.cape(d.torsoW * 1.0, lord ? 1.15 : 0.95, lord ? 1.1 : 0.8), pal.cape || '#141018', { ds: true }), 0, 0, 0);
+    if (pal.tabard) add(n.torso, part(G.ext([-0.16, 0, 0.16, 0, 0.12, -0.3, 0, -0.36, -0.12, -0.3], 0.04, 0.01), pal.tabard), 0, 0.06, d.torsoD / 2 - 0.01);
+    if (pal.plume) { add(n.head, part(G.ball(R * 0.3, 0.5, 1, 1.6), pal.plume), 0, R * 1.35, -R * 0.35, -0.5); }
     // mũ trụ kín
     onHead(n.head, R, new T.Mesh(G.sbox(R * 1.15, R * 0.3, R * 0.3, 0.4), mat('#0a080e')), 0, 0.02, 0.92);
-    face(n.head, R, { iris: p3 ? '#ffb04a' : '#ff2a1a', eye: 'glow', ev: 0.02, eu: 0.3 });
+    face(n.head, R, { iris: pal.eye || (p3 ? '#ffb04a' : '#ff2a1a'), eye: 'glow', ev: 0.02, eu: 0.3 });
     for (let i = 0; i < 3; i++) onHead(n.head, R, new T.Mesh(G.sbox(R * 0.05, R * 0.3, R * 0.06), mat('#0a080e')), (i - 1) * 0.2, -0.45, 0.98);
     add(n.head, part(G.cone(R * 0.22, R * 0.75), light, { metal: 1 }), 0, R * 1.1, -R * 0.1, -0.2);
     for (const s of [-1, 1]) add(n.head, part(G.cone(R * 0.16, R * 0.75), light, { metal: 1 }), s * R * 1.0, R * 0.6, -R * 0.05, 0, 0, -s * 0.8);
@@ -479,7 +485,7 @@
       for (const a of [-0.9, 0, 0.9]) add(n.head, new T.Mesh(G.ball(R * 0.08), mat(p3 ? '#ffd040' : '#c8202a', { glow: 1.4 })), S(a) * R * 0.88, R * 0.82, C(a) * R * 0.88);
     }
     const red = p2 || lord;
-    const sw = WEAP.sword(lord ? 1.25 : 1.05, 0.21, '#26222e', '#2a2430', { spikes: true, grip: '#1a1418', pommel: '#5a1a22', core: red ? '#ff4a2a' : '#6a3a7a', halo: red ? '#ff2a1a' : null });
+    const sw = WEAP.sword(lord ? 1.25 : 1.05, 0.21, pal.blade || '#26222e', pal.guard || '#2a2430', { spikes: true, grip: '#1a1418', pommel: '#5a1a22', core: pal.core || (red ? '#ff4a2a' : '#6a3a7a'), halo: pal.core || (red ? '#ff2a1a' : null) });
     add(n.handR, sw, 0, 0, 0, 1.15);
     if (lord) { // khói bóng tối sau lưng (chỉ để xem)
       const aura = node('aura', n.torso, 0, 0.3, -0.35); aura.userData.noExport = true; const puffs = [];
@@ -491,11 +497,12 @@
   }
 
   /** Orc cưỡi sói (quái) – khung riêng 4 chân */
-  function WOLFRIDER() {
-    const root = node('root'), n = {}, fur = '#7a7680', furD = '#4a4652', skin = '#7a9a62';
+  function WOLF(o) {
+    o = o || {};
+    const root = node('root'), n = {}, fur = o.fur || '#7a7680', furD = o.furD || '#4a4652', skin = '#7a9a62', W = o.big || 1;
     n.wolf = node('wolf', root, 0, 0.72, 0);
     add(n.wolf, part(G.cap(0.3, 0.62).rotateX(Math.PI / 2), fur), 0, 0, 0);
-    add(n.wolf, new T.Mesh(G.ball(0.24, 1, 0.6, 1.4), mat('#c8c0c8')), 0, -0.14, 0.05);
+    add(n.wolf, new T.Mesh(G.ball(0.24, 1, 0.6, 1.4), mat(o.belly || '#c8c0c8')), 0, -0.14, 0.05);
     for (let i = 0; i < 4; i++) add(n.wolf, part(G.cone(0.07, 0.2), furD, { ink: 0.014 }), 0, 0.3, 0.3 - i * 0.16, -0.5);
     for (const [k, x, z] of [['wFL', 0.17, 0.36], ['wFR', -0.17, 0.36], ['wBL', 0.17, -0.38], ['wBR', -0.17, -0.38]]) {
       const lg = n[k] = node(k, n.wolf, x, -0.1, z);
@@ -510,11 +517,12 @@
     add(n.wHead, part(G.ball(0.045), '#1a1418'), 0, 0.01, 0.43);
     for (const s of [-1, 1]) {
       add(n.wHead, part(G.cone(0.08, 0.22).scale(1, 1, 0.5), furD), s * 0.13, 0.25, -0.04, -0.2, 0, -s * 0.25);
-      add(n.wHead, new T.Mesh(G.ball(0.035, 1.2, 0.8, 0.5), mat('#ffd23a', { glow: 1.6 })), s * 0.11, 0.07, 0.21, 0, s * 0.5, 0);
+      add(n.wHead, new T.Mesh(G.ball(0.035, 1.2, 0.8, 0.5), mat(o.eye || '#ffd23a', { glow: 1.6 })), s * 0.11, 0.07, 0.21, 0, s * 0.5, 0);
     }
     n.jaw = node('jaw', n.wHead, 0, -0.1, 0.1);
     add(n.jaw, part(G.sbox(0.17, 0.07, 0.3, 0.45), furD), 0, 0, 0.17);
     for (const s of [-1, 1]) add(n.jaw, new T.Mesh(G.cone(0.016, 0.06), mat('#ffffff')), s * 0.06, 0.05, 0.28);
+    if (o.noRider) { for (let i = 0; i < 5; i++) add(n.wolf, part(G.cone(0.06, 0.18), furD, { ink: 0.012 }), 0, 0.28, -0.05 - i * 0.12, -0.6); if (o.frost) for (let i = 0; i < 4; i++) add(n.wolf, part(G.oct(0.05, 1.8), '#bff0ff', { glow: 0.4, ink: 0.01 }), (i % 2 ? 0.1 : -0.1), 0.3, 0.2 - i * 0.15, -0.3); return { rig: { root, n, o: { hipY: 0.72, bodyH: 1.22 } }, anim: { kind: 'wolf', skill: null } }; }
     // orc trên lưng sói
     n.rider = node('rider', n.wolf, 0, 0.28, -0.08);
     for (const s of [-1, 1]) add(n.rider, part(G.cap(0.08, 0.26), '#4a2e20'), s * 0.26, -0.08, 0.04, 0.5, 0, s * 0.3);
@@ -539,6 +547,394 @@
     return { rig: { root, n, o: { hipY: 0.72 } }, anim: { kind: 'wolf', skill: 'charge' } };
   }
 
+  /* =================== QUÁI THEO VÙNG =================== */
+  function orcFace(n, R, skin, o) {
+    o = o || {}; const k = o.tusk || 1;
+    face(n.head, R, { iris: o.iris || '#ff5a2a', eye: o.eye || 'fierce', brow: INK, mouth: 'grin' });
+    for (const s of [-1, 1]) {
+      onHead(n.head, R, part(G.cone(R * 0.075 * k, R * 0.3 * k), '#fff8e0', { ink: 0.012 }), s * 0.28, -0.4, 1.0);
+      add(n.head, part(G.cone(R * 0.16, R * 0.5).scale(1, 1, 0.5), skin), s * R * 1.02, R * 0.08, -R * 0.05, 0, 0, -s * (Math.PI / 2 - 0.35));
+    }
+  }
+  function hornHelm(n, R, col, horn) {
+    add(n.head, part(G.ball(R * 1.08, 1.03, 0.8, 1.04), col, { metal: 1 }), 0, R * 0.3, -R * 0.04);
+    add(n.head, part(G.torus(R * 1.04, R * 0.07).rotateX(Math.PI / 2), sh(col, -0.15), { metal: 1 }), 0, R * 0.4, -R * 0.03, -0.05);
+    for (const s of [-1, 1]) add(n.head, part(G.tube([[s * R * 0.8, R * 0.55, 0], [s * R * 1.5, R * 0.8, 0], [s * R * 1.55, R * 1.45, -R * 0.1], [s * R * 1.3, R * 1.85, -R * 0.2]], R * 0.12, 14), horn), 0, 0, 0);
+  }
+  function skullShield(col, rim) {
+    const s = WEAP.shield(col, 1, rim);
+    add(s, part(G.ball(0.085, 1, 0.95, 0.5), '#e8e2d0', { ink: 0.01 }), 0, 0.03, 0.05);
+    for (const x of [-0.03, 0.03]) add(s, new T.Mesh(G.ball(0.022, 1, 1, 0.4), mat(INK)), x, 0.04, 0.088);
+    return s;
+  }
+  function quiver(n, d, tip) {
+    const q = node('quiver', n.torso, -0.08, d.torsoH * 0.65, -d.torsoD / 2 - 0.02); q.rotation.set(0.15, 0, -0.45);
+    add(q, part(G.cyl(0.06, 0.055, 0.34), '#7a4a26'), 0, 0, 0);
+    for (const x of [-0.025, 0.0, 0.025]) add(q, part(G.cone(0.025, 0.1), tip || '#f4f0e0', { ink: 0.01 }), x, 0.22, 0);
+  }
+  function wingGeo(pts, sgn, depth) { const p = []; for (let i = 0; i < pts.length; i += 2) p.push(pts[i] * sgn, pts[i + 1]); return G.ext(p, depth || 0.025, 0.006); }
+
+  /** Cung Thủ Hắc Ám: orc trùm mũ trùm tím đen, cung gỗ sẫm */
+  function ORCARCHER() {
+    const skin = '#6a8a4a', hood = '#3a2a3a';
+    const rig = humanoid({ R: 0.46, torsoH: 0.46, torsoW: 0.52, torsoD: 0.38, legL: 0.28, legR: 0.1, bootH: 0.12, armL: 0.38, armR: 0.1, skin, legs: '#3a3036', boots: '#2a1e14', sleeve: skin, glove: '#2a1a1a' });
+    const { n } = rig, d = rig.o, R = d.R;
+    add(n.torso, part(G.sbox(d.torsoW, d.torsoH, d.torsoD, 0.4), '#4a3a3a'), 0, d.torsoH / 2, 0);
+    add(n.torso, part(G.sbox(d.torsoW * 1.06, 0.09, d.torsoD * 1.06, 0.4), '#2a1a1a'), 0, 0.05, 0);
+    add(n.torso, part(G.ext([-0.12, 0, 0.12, 0, 0.09, -0.2, -0.09, -0.2], 0.04, 0.01), hood), 0, 0.02, d.torsoD / 2 - 0.02);
+    add(n.torso, part(G.cyl(0.2, 0.36, 0.16, 16).scale(1, 1, 0.8), hood), 0, d.torsoH - 0.02, 0);
+    quiver(n, d, '#ff8a5a');
+    orcFace(n, R, skin);
+    add(n.head, part(G.ball(R * 1.12, 1.05, 1.0, 1.0), hood), 0, R * 0.15, -R * 0.32);
+    add(n.head, part(G.cone(R * 0.35, R * 0.7), hood), 0, R * 0.6, -R * 1.1, -1.9);
+    add(n.handL, WEAP.bow(1, n, { wood: '#4a2a1a' }), 0, 0, 0.02);
+    return { rig, anim: { kind: 'bow', skill: null } };
+  }
+  /** Hắc Orc: giáp đen cực dày, mũ sừng, mắt đỏ rực, rìu hai lưỡi + khiên đầu lâu */
+  function BLACKORC() {
+    const skin = '#4a6040', armor = '#3a3a48', plate = '#454556';
+    const rig = humanoid({ R: 0.46, torsoH: 0.56, torsoW: 0.72, torsoD: 0.5, legL: 0.3, legR: 0.13, bootH: 0.14, armL: 0.44, armR: 0.13, skin, legs: '#26222a', boots: armor, sleeve: armor, glove: '#1a1418' });
+    const { n } = rig, d = rig.o, R = d.R;
+    add(n.torso, part(G.sbox(d.torsoW, d.torsoH, d.torsoD, 0.3), plate, { metal: 1 }), 0, d.torsoH / 2, 0);
+    add(n.torso, part(G.ext([-0.15, 0, 0.15, 0, 0.12, -0.3, 0, -0.36, -0.12, -0.3], 0.04, 0.01), '#8a1a1a'), 0, 0.06, d.torsoD / 2 - 0.01);
+    add(n.torso, part(G.sbox(d.torsoW * 1.06, 0.1, d.torsoD * 1.06, 0.4), '#1a1418'), 0, 0.05, 0);
+    for (const k of ['R', 'L']) { add(n['arm' + k], part(G.ball(0.21, 1.15, 0.85, 1.05), armor, { metal: 1 }), 0, 0.03, 0); for (const z of [-0.08, 0.08]) add(n['arm' + k], part(G.cone(0.045, 0.16), '#a8a8b0', { metal: 1, ink: 0.012 }), 0, 0.23, z); }
+    orcFace(n, R, skin, { eye: 'glow', iris: '#ff2a1a', tusk: 1.3 });
+    hornHelm(n, R, armor, '#d8d0c0');
+    onHead(n.head, R, part(G.sbox(R * 0.16, R * 0.5, R * 0.12, 0.5), sh(armor, -0.1), { metal: 1, ink: 0.014 }), 0, 0.3, 1.07);
+    add(n.handR, WEAP.axe('#8a909c', true), 0, 0, 0, 1.1);
+    n.shield = skullShield(armor, '#a02020'); add(n.handL, n.shield, 0.08, 0.14, 0.05, 0, 0.45, 0);
+    return { rig, anim: { kind: 'melee', shield: true, heavy: true, skill: null } };
+  }
+  /** Troll / Vua Troll / Chúa Tể Hỗn Mang: khổng lồ khom lưng, đầu nhỏ, mũi to, nanh lớn */
+  function TROLL(o) {
+    const skin = o.skin;
+    const rig = humanoid({ R: 0.42, torsoH: 0.74, torsoW: 0.86, torsoD: 0.62, legL: 0.38, legR: 0.17, bootH: 0.14, armL: 0.64, armR: 0.17, hunch: 0.25, headZ: 0.14, neck: 0.62,
+      skin, legs: sh(skin, -0.12), boots: o.boots || sh(skin, -0.3), sleeve: skin, glove: skin });
+    const { n } = rig, d = rig.o, R = d.R;
+    add(n.torso, part(G.ball(0.5, 0.92, 0.82, 0.68), skin), 0, 0.38, 0);
+    add(n.torso, part(G.ball(0.34, 1, 0.9, 0.5), sh(skin, 0.15), { ink: 0.012 }), 0, 0.3, 0.2);
+    add(n.torso, part(G.lathe([[0, 0.12], [0.42, 0.12], [0.47, -0.05], [0.44, -0.2], [0, -0.2]], 16, 0.8), o.cloth), 0, 0, 0);
+    add(n.torso, part(G.torus(0.43, 0.035).rotateX(Math.PI / 2).scale(1, 1, 0.8), '#5a3a22'), 0, 0.1, 0);
+    if (o.chest) add(n.torso, part(G.ball(0.38, 1, 0.75, 0.42), o.chest, { metal: 1 }), 0, 0.5, 0.2);
+    if (o.pauldron) for (const k of ['R', 'L']) { add(n['arm' + k], part(G.ball(0.26, 1.15, 0.8, 1.05), o.pauldron, { metal: 1 }), 0, 0.04, 0); for (const z of [-0.1, 0.1]) add(n['arm' + k], part(G.cone(0.05, 0.2), sh(o.pauldron, -0.2), { metal: 1, ink: 0.012 }), 0, 0.3, z); }
+    if (o.cape) { n.cape = node('cape', n.torso, 0, d.torsoH - 0.05, -d.torsoD / 2 + 0.06); add(n.cape, part(G.cape(d.torsoW * 1.0, 0.9, 0.8), o.cape, { ds: true }), 0, 0, 0); }
+    if (o.emblem) { add(n.torso, part(G.oct(0.07, 1.3).scale(1, 1, 0.5), o.emblem, { glow: 1.4, ink: 0.012 }), 0, 0.5, 0.33); glow(n.torso, 0, 0.5, 0.36, 0.5, o.emblem, 0.6); }
+    if (o.cracks) for (const [x, y, r] of [[-0.2, 0.45, 0.6], [0.18, 0.3, -0.5], [0.05, 0.6, 0.2]]) add(n.torso, new T.Mesh(G.sbox(0.03, 0.2, 0.02), mat(o.cracks, { glow: 1.4 })), x, y, 0.36, 0, 0, r);
+    face(n.head, R, { iris: o.iris, eye: o.glowEye ? 'glow' : 'fierce', brow: INK, mouth: 'grin', es: 0.85, ev: 0.05 });
+    onHead(n.head, R, part(G.ball(R * 0.28, 1, 0.85, 1), sh(skin, -0.08), { ink: 0.014 }), 0, -0.18, 1.0);
+    for (const s of [-1, 1]) {
+      onHead(n.head, R, part(G.cone(R * 0.11, R * 0.5), '#fff8e0', { ink: 0.012 }), s * 0.32, -0.48, 1.0, -s * 0.2);
+      add(n.head, part(G.cone(R * 0.17, R * 0.55).scale(1, 1, 0.5), skin), s * R * 1.0, R * 0.1, -R * 0.05, 0, 0, -s * (Math.PI / 2 - 0.3));
+    }
+    if (o.hair) for (const [x, rz] of [[-0.3, 0.4], [0, 0], [0.3, -0.4]]) add(n.head, part(G.cone(R * 0.16, R * 0.5), o.hair), R * x, R * 0.95, -R * 0.1, -0.2, 0, rz);
+    if (o.crown) {
+      add(n.head, part(G.cyl(R * 0.62, R * 0.7, R * 0.22, 16), GOLD, { metal: 1 }), 0, R * 0.85, -R * 0.05);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(n.head, part(G.cone(R * 0.1, R * 0.32), GOLD, { metal: 1, ink: 0.014 }), S(a) * R * 0.62, R * 1.1, C(a) * R * 0.62 - R * 0.05); }
+      add(n.head, new T.Mesh(G.ball(R * 0.1), mat('#ff3a2a', { glow: 1.4 })), 0, R * 0.86, R * 0.62);
+    }
+    if (o.horns) for (const s of [-1, 1]) add(n.head, part(G.tube([[s * R * 0.6, R * 0.6, 0], [s * R * 1.3, R * 0.9, 0], [s * R * 1.5, R * 1.6, -R * 0.2], [s * R * 1.25, R * 2.1, -R * 0.35]], R * 0.14, 14), o.horns), 0, 0, 0);
+    let w;
+    if (o.pillar) {
+      w = node('weapon');
+      add(w, part(G.cyl(0.04, 0.04, 0.3), '#3a2a1a'), 0, -0.02, 0);
+      add(w, part(G.sbox(0.24, 0.95, 0.24, 0.25), o.pillar), 0, 0.6, 0);
+      for (const y of [0.25, 0.95]) add(w, part(G.sbox(0.28, 0.07, 0.28, 0.3), o.crown ? GOLD : '#b070ff', { metal: 1 }), 0, y, 0);
+    } else {
+      w = node('weapon');
+      add(w, part(G.lathe([[0, -0.15], [0.045, -0.15], [0.05, 0.2], [0.12, 0.6], [0.14, 0.82], [0, 0.9]], 12), '#8a5a32'), 0, 0, 0);
+      for (const [a, y] of [[0, 0.62], [2.1, 0.7], [4.2, 0.56], [1, 0.8]]) add(w, part(G.cone(0.03, 0.1), '#d8d0c0', { ink: 0.012 }), S(a) * 0.13, y, C(a) * 0.13, C(a) * 1.3, 0, -S(a) * 1.3);
+    }
+    add(n.handR, w, 0, 0, 0, 1.1);
+    return { rig, anim: { kind: 'melee', heavy: true, skill: o.crown || o.horns ? 'slam' : null } };
+  }
+  /** Cây Ma: thân gỗ sần, tán lá trên đầu, mắt xanh phát sáng, tay cành */
+  function TREANT() {
+    const bark = '#7a5a38', dark = '#4a3420', leaf = '#4f9a3a', leaf2 = '#6ab84a';
+    const rig = humanoid({ R: 0.4, torsoH: 0.8, torsoW: 0.66, torsoD: 0.56, legL: 0.36, legR: 0.16, bootH: 0.12, armL: 0.62, armR: 0.14, hunch: 0.14, headZ: 0.06, neck: 0.55,
+      skin: bark, legs: '#6a4a2c', boots: dark, sleeve: bark, glove: dark });
+    const { n } = rig, R = rig.o.R;
+    add(n.torso, part(G.lathe([[0, 0.84], [0.26, 0.84], [0.3, 0.6], [0.34, 0.3], [0.4, 0.05], [0.46, -0.06], [0, -0.06]], 14, 0.85), bark), 0, 0, 0);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + 0.3; add(n.torso, new T.Mesh(G.sbox(0.03, 0.55, 0.03), mat(dark)), S(a) * 0.33, 0.38, C(a) * 0.29, 0, a, 0.08); }
+    add(n.torso, part(G.torus(0.39, 0.05).rotateX(Math.PI / 2).scale(1, 1, 0.85), leaf), 0, 0.1, 0);
+    for (const k of ['R', 'L']) {
+      add(n['arm' + k], part(G.ball(0.17, 1.2, 0.9, 1.1), leaf), 0, 0.06, 0);
+      for (let i = 0; i < 3; i++) add(n['hand' + k], part(G.cone(0.03, 0.16), dark, { ink: 0.012 }), (i - 1) * 0.05, -0.08, 0.04, 0.3, 0, (i - 1) * 0.4 + Math.PI);
+    }
+    face(n.head, R, { iris: '#9aff6a', eye: 'glow', mouth: 'grin', ev: 0.05 });
+    for (const s of [-1, 1]) onHead(n.head, R, part(G.sbox(R * 0.4, R * 0.12, R * 0.15, 0.5), dark, { ink: 0.012 }), s * 0.33, 0.25, 1.0, s * 0.3);
+    for (const [x, y, z, r, c] of [[0, 1.05, -0.1, 0.62, leaf], [-0.55, 0.85, 0.05, 0.42, leaf2], [0.55, 0.85, 0.05, 0.42, leaf2], [0, 0.95, -0.6, 0.45, leaf2], [-0.3, 1.4, -0.2, 0.36, leaf2], [0.35, 1.35, -0.3, 0.34, leaf]])
+      add(n.head, part(G.ball(R * r), c), R * x, R * y, R * z);
+    for (const s of [-1, 1]) add(n.head, part(G.cone(R * 0.1, R * 0.8), bark), s * R * 0.95, R * 0.9, 0, 0, 0, -s * 0.7);
+    const w = node('weapon');
+    add(w, part(G.cyl(0.07, 0.1, 0.85), '#6a4a2c'), 0, 0.3, 0);
+    add(w, part(G.ball(0.1), leaf2), 0.06, 0.62, 0.04);
+    add(n.handR, w, 0, 0, 0, 1.1);
+    return { rig, anim: { kind: 'melee', heavy: true, skill: null } };
+  }
+  /** Hiệp Sĩ Xương: bộ xương mắt xanh ma quái, mũ sắt, chuỳ xương + khiên đầu lâu */
+  function SKELETON() {
+    const bone = '#e8e2d0';
+    const rig = humanoid({ R: 0.42, torsoH: 0.44, torsoW: 0.38, torsoD: 0.26, legL: 0.32, legR: 0.05, bootH: 0.1, armL: 0.38, armR: 0.05, skin: bone, legs: bone, boots: '#8a8478', sleeve: bone, glove: bone });
+    const { n } = rig, R = rig.o.R;
+    add(n.torso, part(G.cyl(0.035, 0.035, 0.44), bone, { ink: 0.012 }), 0, 0.22, -0.06);
+    for (let i = 0; i < 4; i++) add(n.torso, part(G.torus(0.15 - i * 0.015, 0.022).rotateX(Math.PI / 2).scale(1, 1, 0.75), bone, { ink: 0.012 }), 0, 0.38 - i * 0.075, 0);
+    add(n.torso, part(G.sbox(0.3, 0.1, 0.18, 0.4), bone), 0, 0.03, 0);
+    add(n.torso, part(G.ext([-0.1, 0, 0.1, 0, 0.08, -0.24, -0.08, -0.24], 0.03, 0.008), '#3a2a4a'), 0, 0.02, 0.1);
+    add(n.armL, part(G.ball(0.13, 1.15, 0.85, 1.05), '#5a5a6a', { metal: 1 }), 0, 0.02, 0);
+    for (const s of [-1, 1]) {
+      onHead(n.head, R, new T.Mesh(G.ball(R * 0.17, 0.9, 1.05, 0.4), mat('#1a1418')), s * 0.34, 0.0, 0.95);
+      onHead(n.head, R, new T.Mesh(G.ball(R * 0.06), mat('#6af0d0', { glow: 2 })), s * 0.34, 0.0, 1.0);
+    }
+    glow(n.head, 0, 0, R * 1.0, R * 1.6, '#6af0d0', 0.5);
+    onHead(n.head, R, new T.Mesh(flipY(G.cone(R * 0.07, R * 0.14)), mat('#1a1418')), 0, -0.2, 0.99);
+    onHead(n.head, R, part(G.sbox(R * 0.5, R * 0.14, R * 0.08, 0.5), '#f4eed8', { ink: 0.01 }), 0, -0.45, 0.95);
+    for (let i = -1; i <= 1; i++) onHead(n.head, R, new T.Mesh(G.sbox(R * 0.02, R * 0.14, R * 0.02), mat('#5a5048')), i * 0.1, -0.45, 1.0);
+    add(n.head, part(G.ball(R * 1.08, 1.03, 0.7, 1.04), '#6a6a78', { metal: 1 }), 0, R * 0.5, -R * 0.04);
+    add(n.head, part(G.torus(R * 0.98, R * 0.06).rotateX(Math.PI / 2), '#4a4a58', { metal: 1 }), 0, R * 0.5, -R * 0.03);
+    const w = node('weapon');
+    add(w, part(G.cyl(0.03, 0.03, 0.55), bone), 0, 0.18, 0);
+    for (const x of [-0.04, 0.04]) add(w, part(G.ball(0.055), bone), x, 0.48, 0);
+    add(n.handR, w, 0, 0, 0, 1.1);
+    n.shield = skullShield('#4a4a58', '#8a8478'); add(n.handL, n.shield, 0.07, 0.14, 0.05, 0, 0.45, 0);
+    return { rig, anim: { kind: 'melee', shield: true, skill: null } };
+  }
+  /** Cướp Sa Mạc: tóc gai đen, khăn trắng, áo gile nâu, đai đỏ, đao cong */
+  function BANDIT() {
+    const skin = '#e0b48a';
+    const rig = humanoid({ R: 0.45, torsoH: 0.46, torsoW: 0.44, torsoD: 0.32, legL: 0.32, legR: 0.085, bootH: 0.12, armL: 0.36, armR: 0.08, skin, legs: '#c8b080', boots: '#6a4a2a', sleeve: '#e8d8b0', glove: skin });
+    const { n } = rig, d = rig.o, R = d.R;
+    add(n.torso, part(G.sbox(d.torsoW, d.torsoH, d.torsoD, 0.4), '#e8d8b0'), 0, d.torsoH / 2, 0);
+    for (const s of [-1, 1]) add(n.torso, part(G.sbox(0.16, d.torsoH * 0.95, d.torsoD * 1.06, 0.4), '#8a5a34'), s * 0.15, d.torsoH / 2 + 0.01, 0);
+    add(n.torso, part(G.torus(0.21, 0.04).rotateX(Math.PI / 2).scale(1.05, 1, 0.78), '#a83a2a'), 0, 0.07, 0);
+    add(n.torso, part(G.ext([0, 0, 0.06, 0, 0.09, -0.22, 0.02, -0.2], 0.025, 0.006), '#a83a2a'), 0.14, 0.06, 0.12);
+    face(n.head, R, { iris: '#3a2a1a', eye: 'fierce', brow: INK, mouth: 'grin' });
+    onHead(n.head, R, new T.Mesh(G.sbox(R * 0.04, R * 0.32, R * 0.03), mat('#c8705a')), 0.55, -0.1, 1.0, 0.5);
+    add(n.head, part(G.ball(R * 1.07, 1.03, 0.9, 1.04), '#2a1a10'), 0, R * 0.2, -R * 0.13);
+    for (const [x, z, rx, rz] of [[-0.5, -0.1, -0.2, 0.6], [0, 0, -0.3, 0], [0.5, -0.1, -0.2, -0.6], [0, -0.6, -0.9, 0]]) add(n.head, part(G.cone(R * 0.22, R * 0.42), '#2a1a10'), R * x, R * 0.95, R * z, rx, 0, rz);
+    add(n.head, part(G.torus(R * 1.04, R * 0.1).rotateX(Math.PI / 2), '#e8e0c8'), 0, R * 0.4, -R * 0.04, -0.15);
+    for (const s of [-1, 1]) add(n.head, part(G.cone(R * 0.12, R * 0.45), '#e8e0c8'), s * R * 0.12, R * 0.25, -R * 1.05, -2.0, 0, s * 0.4);
+    const w = node('weapon'), sh2 = new T.Shape();
+    sh2.moveTo(-0.035, 0); sh2.lineTo(0.035, 0); sh2.quadraticCurveTo(0.1, 0.36, -0.02, 0.64); sh2.quadraticCurveTo(0.02, 0.32, -0.035, 0);
+    add(w, part(G.cyl(0.028, 0.028, 0.15), '#4a2a1a'), 0, -0.07, 0);
+    add(w, part(G.sbox(0.06, 0.05, 0.2, 0.5), GOLD, { metal: 1 }), 0, 0.02, 0);
+    add(w, part(G.ext(sh2, 0.028, 0.006).rotateY(Math.PI / 2), '#e0e4ec', { metal: 1 }), 0, 0.04, 0);
+    add(n.handR, w, 0, 0, 0, 1.15);
+    return { rig, anim: { kind: 'melee', skill: null } };
+  }
+  /** Xác Ướp: quấn băng cổ, một mắt xanh phát sáng, tay chìa ra trước */
+  function MUMMY() {
+    const wrap = '#ece0c0', band = '#cdbf98';
+    const rig = humanoid({ R: 0.44, torsoH: 0.5, torsoW: 0.46, torsoD: 0.34, legL: 0.36, legR: 0.09, bootH: 0.1, armL: 0.42, armR: 0.09, hunch: 0.18, skin: wrap, legs: wrap, boots: '#c8b890', sleeve: wrap, glove: wrap });
+    const { n } = rig, d = rig.o, R = d.R;
+    add(n.torso, part(G.sbox(d.torsoW, d.torsoH, d.torsoD, 0.45), wrap), 0, d.torsoH / 2, 0);
+    for (const [y, r] of [[0.1, 0.1], [0.22, -0.15], [0.34, 0.12], [0.44, -0.08]]) add(n.torso, new T.Mesh(G.torus(0.25, 0.018).rotateX(Math.PI / 2).scale(1, 1, 0.75), mat(band)), 0, y, 0, 0, 0, r);
+    add(n.torso, part(G.torus(0.24, 0.03).rotateX(Math.PI / 2).scale(1.02, 1, 0.76), '#8a6a3a'), 0, 0.04, 0);
+    for (const k of ['R', 'L']) {
+      for (const y of [-0.1, -0.24]) add(n['arm' + k], new T.Mesh(G.torus(0.1, 0.014).rotateX(Math.PI / 2), mat(band)), 0, y, 0, 0.2, 0, 0.15);
+      add(n['arm' + k], part(G.sbox(0.05, 0.22, 0.015), wrap, { ink: 0.01 }), 0.05, -0.32, -0.04, 0.3);
+      add(n['leg' + k], new T.Mesh(G.torus(0.1, 0.014).rotateX(Math.PI / 2), mat(band)), 0, -0.15, 0, 0.15);
+    }
+    n.armR.rotation.x = -1.2; n.armL.rotation.x = -1.1;
+    n.cape = node('cape', n.torso, 0, d.torsoH - 0.03, -d.torsoD / 2 + 0.02); add(n.cape, part(G.cape(d.torsoW * 0.8, 0.4, 0.5), band, { ds: true }), 0, 0, 0);
+    for (const [v, r] of [[0.45, 0.2], [0.15, -0.15], [-0.25, 0.1], [-0.55, -0.1]]) add(n.head, new T.Mesh(G.torus(R * Math.cos(v) * 1.01, R * 0.05).rotateX(Math.PI / 2), mat(band)), 0, R * Math.sin(v), 0, 0, 0, r);
+    onHead(n.head, R, new T.Mesh(G.sbox(R * 0.5, R * 0.18, R * 0.1, 0.5), mat('#2a1e14')), 0.22, 0.0, 0.96, -0.15);
+    onHead(n.head, R, new T.Mesh(G.ball(R * 0.08), mat('#5aff9a', { glow: 2 })), 0.32, 0.0, 1.0);
+    glow(n.head, R * 0.3, 0, R * 1.0, R * 1.2, '#5aff9a', 0.6);
+    return { rig, anim: { kind: 'fist', zombie: true, skill: null } };
+  }
+  /** Người Băng / Quái Magma: khối đá to, nắm đấm lớn, mắt phát sáng */
+  function GOLEM(o) {
+    const rig = humanoid({ R: 0.34, torsoH: 0.66, torsoW: 0.86, torsoD: 0.62, legL: 0.32, legR: 0.18, bootH: 0.16, armL: 0.58, armR: 0.2, hunch: 0.2, headZ: 0.2, neck: 0.4,
+      skin: o.body, legs: o.dark, boots: o.dark, sleeve: o.body, glove: o.light });
+    const { n } = rig, R = rig.o.R;
+    add(n.torso, part(G.sbox(0.86, 0.66, 0.62, 0.25), o.body), 0, 0.33, 0);
+    add(n.torso, part(G.sbox(0.56, 0.38, 0.12, 0.3), o.light), 0, 0.42, 0.3);
+    for (const k of ['R', 'L']) {
+      add(n['arm' + k], part(G.sbox(0.36, 0.3, 0.36, 0.3), o.light), 0, 0.04, 0, 0.2, 0.4, 0);
+      add(n['arm' + k], part(G.sbox(0.3, 0.28, 0.3, 0.3), o.light), 0, -0.6, 0.02);
+    }
+    if (o.crystal) {
+      for (const [x, y, z, rx, rz, s] of [[-0.3, 0.7, -0.15, -0.3, 0.4, 1], [0.32, 0.72, -0.1, -0.2, -0.5, 1.1], [0, 0.66, -0.3, -0.8, 0, 1.2], [-0.1, 0.5, -0.33, -1.2, 0.2, 0.8]])
+        add(n.torso, part(G.oct(0.08 * s, 2.4), o.crystal, { glow: 0.35, ink: 0.014 }), x, y, z, rx, 0, rz);
+      for (const s of [-1, 1]) add(n.head, part(G.oct(0.06, 2.4), o.crystal, { glow: 0.35, ink: 0.012 }), s * R * 0.6, R * 0.9, -R * 0.1, 0, 0, -s * 0.5);
+    }
+    if (o.cracks) {
+      for (const [x, y, r] of [[-0.25, 0.35, 0.5], [0.2, 0.25, -0.4], [0.05, 0.5, 0.15], [0.28, 0.5, 0.9]]) add(n.torso, new T.Mesh(G.sbox(0.035, 0.24, 0.02), mat(o.cracks, { glow: 1.6 })), x, y, 0.37, 0, 0, r);
+      for (const k of ['R', 'L']) add(n['arm' + k], new T.Mesh(G.sbox(0.03, 0.2, 0.02), mat(o.cracks, { glow: 1.6 })), 0, -0.6, 0.17, 0, 0, 0.4);
+      glow(n.torso, 0, 0.4, 0.4, 0.8, o.cracks, 0.5);
+      for (const s of [-1, 1]) add(n.head, part(G.tube([[s * R * 0.6, R * 0.5, 0], [s * R * 1.2, R * 0.8, 0], [s * R * 1.3, R * 1.4, -R * 0.2]], R * 0.14, 10), o.horn), 0, 0, 0);
+    }
+    face(n.head, R, { iris: o.iris, eye: 'glow', mouth: 'none', ev: 0.05 });
+    onHead(n.head, R, part(G.sbox(R * 1.3, R * 0.25, R * 0.3, 0.4), o.light, { ink: 0.014 }), 0, 0.35, 0.92);
+    onHead(n.head, R, part(G.sbox(R * 1.0, R * 0.4, R * 0.5, 0.4), o.dark, { ink: 0.014 }), 0, -0.55, 0.8);
+    return { rig, anim: { kind: 'two', heavy: true, skill: null } };
+  }
+  /** Quỷ Lửa: quỷ đỏ tí hon bay bằng cánh dơi, tóc lửa, đuôi nhọn, dao lửa */
+  function IMP() {
+    const skin = '#d83a2a';
+    const rig = humanoid({ R: 0.42, torsoH: 0.28, torsoW: 0.3, torsoD: 0.24, legL: 0.16, legR: 0.06, bootH: 0.07, armL: 0.26, armR: 0.06, skin, legs: skin, boots: '#4a1a14', sleeve: skin });
+    const { n } = rig, d = rig.o, R = d.R;
+    n.hips.position.y += 0.6; d.hipY += 0.6; d.float = 0.6;
+    add(n.torso, part(G.lathe([[0, 0.3], [0.13, 0.3], [0.16, 0.16], [0.18, 0.0], [0, 0.0]], 12, 0.85), '#7a1a1a'), 0, 0, 0);
+    n.tail = node('tail', n.hips, 0, 0.02, -0.1);
+    add(n.tail, part(G.tube([[0, 0, 0], [0, -0.12, -0.15], [0, -0.1, -0.32], [0, 0.04, -0.42]], 0.025, 10), skin), 0, 0, 0);
+    add(n.tail, part(G.cone(0.05, 0.1), '#7a1a1a', { ink: 0.012 }), 0, 0.08, -0.43);
+    const W = [0, 0, 0.5, 0.28, 0.62, 0.06, 0.5, -0.04, 0.44, -0.2, 0.3, -0.1, 0.2, -0.24, 0.08, -0.1];
+    for (const [k, s] of [['wingL', 1], ['wingR', -1]]) { n[k] = node(k, n.torso, s * 0.06, 0.24, -0.12); n[k].rotation.y = -s * 0.5; add(n[k], part(wingGeo(W, s), '#a82020', { ds: true }), 0, 0, 0); }
+    face(n.head, R, { iris: '#ffd23a', eye: 'round', brow: '#7a1a1a', mouth: 'grin', es: 1.05 });
+    for (const s of [-1, 1]) {
+      add(n.head, part(G.cone(R * 0.18, R * 0.9).scale(1, 1, 0.42), skin), s * R * 1.2, R * 0.15, -R * 0.05, 0, 0, -s * (Math.PI / 2 - 0.3));
+      add(n.head, part(G.cone(R * 0.1, R * 0.35), '#3a1010'), s * R * 0.45, R * 0.95, 0, 0, 0, -s * 0.35);
+    }
+    for (const [x, h, c] of [[-0.25, 0.5, '#ff7a2a'], [0, 0.7, '#ffb04a'], [0.25, 0.5, '#ff7a2a'], [0, 0.45, '#ffe06a']]) add(n.head, part(G.cone(R * 0.18, R * h), c, { glow: 0.8, ink: 0.012 }), R * x, R * 0.95, -R * 0.15, -0.2);
+    glow(n.head, 0, R * 1.2, 0, R * 2, '#ff8a2a', 0.45);
+    add(n.handR, WEAP.knife('#ffb04a'), 0, 0, 0, 1.2);
+    rig.extra = (t, dur, name) => { const p = t * TAU * Math.max(1, Math.round(dur / 0.28)), f = name === 'die' ? t : 0, a = 0.6 * (1 - f); return { wingL: { rz: S(p) * a, ry: C(p) * 0.25 * (1 - f) }, wingR: { rz: -S(p) * a, ry: -C(p) * 0.25 * (1 - f) }, tail: { ry: S(p * 0.5) * 0.3 } }; };
+    return { rig, anim: { kind: 'stab', fly: true, skill: null } };
+  }
+  /** Kẻ Dẫn Lối Hư Vô: pháp sư hư vô áo dài tím, mũ sừng, gậy cầu tím */
+  function VOIDWALKER() {
+    const skin = '#8a6ad8', robe = '#241640', plate = '#3a2a68', trim = '#5a3aa0', crack = '#c880ff';
+    const rig = humanoid({ R: 0.44, torsoH: 0.5, torsoW: 0.4, torsoD: 0.32, legL: 0.3, legR: 0.08, bootH: 0.1, armL: 0.38, armR: 0.08, skin, legs: robe, boots: '#1a1230', sleeve: '#2c1e54' });
+    const { n } = rig, d = rig.o, R = d.R;
+    add(n.torso, part(G.lathe([[0, 0.5], [0.18, 0.5], [0.2, 0.3], [0.27, 0.05], [0.36, -0.25], [0.42, -0.38], [0, -0.38]], 20, 0.85), robe), 0, 0, 0);
+    add(n.torso, part(G.torus(0.415, 0.022).rotateX(Math.PI / 2).scale(1, 1, 0.85), crack, { glow: 0.6, ink: 0.012 }), 0, -0.37, 0);
+    add(n.torso, part(G.sbox(0.34, 0.3, 0.12, 0.4), plate, { metal: 1 }), 0, 0.35, 0.12);
+    for (const [x, y, r] of [[-0.1, -0.05, 0.3], [0.12, -0.2, -0.4], [0.02, 0.12, 0.1]]) add(n.torso, new T.Mesh(G.sbox(0.025, 0.18, 0.02), mat(crack, { glow: 1.4 })), x, y, 0.26 + y * -0.2, -0.35, 0, r);
+    for (const k of ['R', 'L']) { add(n['arm' + k], part(G.ball(0.13, 1.15, 0.85, 1.05), trim, { metal: 1 }), 0, 0.02, 0); add(n['arm' + k], part(G.cone(0.035, 0.14), trim, { ink: 0.012 }), 0, 0.15, 0); }
+    n.cape = node('cape', n.torso, 0, d.torsoH - 0.04, -d.torsoD / 2 + 0.02); add(n.cape, part(G.cape(d.torsoW * 0.95, 0.72, 0.8), '#2a1a4a', { ds: true }), 0, 0, 0);
+    face(n.head, R, { iris: '#ff8aff', eye: 'glow', mouth: 'none' });
+    add(n.head, part(G.ball(R * 0.78, 1.15, 1.5, 0.55), '#1a1030'), 0, -R * 0.55, -R * 0.55, 0.12);
+    hornHelm(n, R, plate, trim);
+    const st = WEAP.staff('#d890ff', 3, n); n.staff = st; add(n.handR, st, 0, 0, 0.02, 0.12);
+    return { rig, anim: { kind: 'staff', skill: null } };
+  }
+  /** Linh Ma: áo choàng ma bay lơ lửng, đuôi khói, mắt tím, tay xương */
+  function WRAITH() {
+    const root = node('root'), n = {}, cloak = '#5a4a7a', dark = '#2a1e40', eye = '#8a5aff', bone = '#e8e2d0';
+    n.hips = node('hips', root, 0, 0.62, 0); n.torso = node('torso', n.hips, 0, 0, 0);
+    add(n.torso, part(G.lathe([[0, 0.66], [0.2, 0.66], [0.27, 0.42], [0.31, 0.12], [0.25, -0.18], [0.12, -0.42], [0.01, -0.58], [0, -0.58]], 16, 0.85), cloak), 0, 0, 0);
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(n.torso, part(flipY(G.cone(0.06, 0.24)), dark, { ink: 0.012 }), S(a) * 0.24, -0.12, C(a) * 0.2); }
+    add(n.torso, part(G.cyl(0.24, 0.3, 0.12, 16).scale(1, 1, 0.85), dark), 0, 0.64, 0);
+    n.head = node('head', n.torso, 0, 0.9, 0.03); const R = 0.32;
+    add(n.head, part(G.ball(R, 1.05, 1.0, 1.05), cloak), 0, 0, 0);
+    add(n.head, part(G.cone(R * 0.4, R * 0.9), cloak), 0, R * 0.5, -R * 0.75, -1.8);
+    onHead(n.head, R, new T.Mesh(G.ball(R * 0.6, 1.05, 1.05, 0.5), mat('#0a0610')), 0, -0.05, 0.75);
+    for (const s of [-1, 1]) onHead(n.head, R, new T.Mesh(G.ball(R * 0.1, 1.3, 0.7, 0.5), mat(eye, { glow: 2.2 })), s * 0.3, 0.0, 1.02);
+    glow(n.head, 0, 0, R, R * 2.2, eye, 0.6);
+    for (const [s, k] of [[-1, 'R'], [1, 'L']]) {
+      const arm = n['arm' + k] = node('arm' + k, n.torso, s * 0.27, 0.6, 0); arm.rotation.z = s * 0.2;
+      add(arm, part(G.cyl(0.06, 0.12, 0.36), cloak), 0, -0.18, 0);
+      add(arm, part(G.ball(0.055), bone), 0, -0.4, 0);
+      for (let i = 0; i < 3; i++) add(arm, part(flipY(G.cone(0.014, 0.12)), bone, { ink: 0.008 }), (i - 1) * 0.03, -0.48, 0.02, 0, 0, (i - 1) * 0.3);
+      n['hand' + k] = node('hand' + k, arm, 0, -0.4, 0);
+    }
+    glow(n.torso, 0, 0.1, 0, 1.6, eye, 0.3);
+    return { rig: { root, n, o: { hipY: 0.62, torsoD: 0.3, bodyH: 1.45 } }, anim: { kind: 'fist', fly: true, skill: null } };
+  }
+  /** Bọ Cạp Cát: vỏ cứng cam cát, 6 chân, 2 càng, đuôi cong có ngòi */
+  function SCORPION() {
+    const root = node('root'), n = {}, shell = '#c8782a', dark = '#8a4a1a';
+    n.body = node('body', root, 0, 0.3, 0);
+    add(n.body, part(G.sbox(0.62, 0.26, 0.72, 0.35), shell), 0, 0, 0);
+    for (let i = 0; i < 3; i++) add(n.body, new T.Mesh(G.sbox(0.6, 0.05, 0.08, 0.5), mat(dark)), 0, 0.12, 0.2 - i * 0.22);
+    add(n.body, part(G.sbox(0.4, 0.2, 0.24, 0.4), shell), 0, -0.02, 0.42);
+    for (const s of [-1, 1]) {
+      add(n.body, new T.Mesh(G.ball(0.04), mat('#1a0e08')), s * 0.08, 0.08, 0.53);
+      add(n.body, new T.Mesh(G.ball(0.02), mat('#ff5a2a', { glow: 1.5 })), s * 0.08, 0.1, 0.57);
+      add(n.body, part(G.cone(0.025, 0.1).rotateX(Math.PI / 2), dark, { ink: 0.01 }), s * 0.06, -0.08, 0.58, 0, -s * 0.4, 0);
+      for (let i = 0; i < 3; i++) {
+        const k = 'l' + (s > 0 ? 'L' : 'R') + i, L = n[k] = node(k, n.body, s * 0.3, -0.02, 0.2 - i * 0.2); L.rotation.z = s * 1.0; L.rotation.y = s * (i - 1) * 0.35;
+        add(L, part(G.cap(0.035, 0.22), shell), 0, -0.13, 0);
+        const kn = node(k + 'k', L, 0, -0.26, 0); kn.rotation.z = -s * 1.4;
+        add(kn, part(G.cap(0.03, 0.2), dark), 0, -0.12, 0);
+      }
+      const c = n['claw' + (s > 0 ? 'L' : 'R')] = node('claw' + (s > 0 ? 'L' : 'R'), n.body, s * 0.26, 0.0, 0.45); c.rotation.y = s * 0.35;
+      add(c, part(G.cap(0.05, 0.26).rotateX(Math.PI / 2), shell), 0, 0, 0.16);
+      add(c, part(G.sbox(0.17, 0.12, 0.22, 0.4), shell), 0, 0, 0.38);
+      for (const x of [-0.04, 0.05]) add(c, part(G.cone(0.035, 0.18).rotateX(Math.PI / 2), dark, { ink: 0.012 }), x, 0, 0.55, 0, x * 3, 0);
+    }
+    let prev = n.body;
+    for (let i = 1; i <= 5; i++) {
+      const t = n['t' + i] = node('t' + i, prev, 0, i === 1 ? 0.08 : 0, i === 1 ? -0.36 : -0.17); t.rotation.x = i === 1 ? 0.5 : 0.55;
+      add(t, part(G.ball(0.11 - i * 0.008, 1, 0.9, 1.25), i % 2 ? shell : sh(shell, -0.1)), 0, 0, -0.08);
+      prev = t;
+    }
+    const st = node('sting', prev, 0, 0, -0.17);
+    add(st, part(G.ball(0.08, 1, 1, 1.2), '#7a2a1a'), 0, 0, -0.03);
+    add(st, part(G.cone(0.035, 0.16).rotateX(-Math.PI / 2), '#2a1010', { ink: 0.012 }), 0, -0.04, -0.12, 0.6);
+    return { rig: { root, n, o: { hipY: 0.3, bodyH: 0.9 } }, anim: { kind: 'scorpion', skill: null } };
+  }
+  /** Rồng Lửa: rồng đỏ bay, cánh dơi lớn, sừng ngà, bụng vàng */
+  function DRAKE() {
+    const root = node('root'), n = {}, red = '#c8381e', dark = '#7a1a10', belly = '#f2c068', horn = '#f2ead6';
+    n.body = node('body', root, 0, 1.25, 0);
+    add(n.body, part(G.cap(0.3, 0.5).rotateX(Math.PI / 2), red), 0, 0, 0);
+    add(n.body, part(G.ball(0.26, 1, 0.7, 1.4), belly, { ink: 0.012 }), 0, -0.1, 0.02);
+    for (let i = 0; i < 5; i++) add(n.body, part(G.cone(0.05, 0.16), dark, { ink: 0.012 }), 0, 0.3, 0.3 - i * 0.16, -0.4);
+    for (const [z, s] of [[0.2, 1], [0.2, -1], [-0.25, 1], [-0.25, -1]]) { add(n.body, part(G.cap(0.06, 0.18), red), s * 0.17, -0.28, z, 0.6); add(n.body, part(G.ball(0.06, 1.2, 0.6, 1.3), dark), s * 0.17, -0.4, z + 0.1); }
+    n.neck = node('neck', n.body, 0, 0.1, 0.38); n.neck.rotation.x = 0.9;
+    add(n.neck, part(G.cap(0.13, 0.28), red), 0, 0.17, 0);
+    n.dHead = node('dHead', n.neck, 0, 0.38, 0); n.dHead.rotation.x = -0.9;
+    add(n.dHead, part(G.sbox(0.32, 0.26, 0.32, 0.4), red), 0, 0, 0);
+    add(n.dHead, part(G.sbox(0.22, 0.13, 0.28, 0.4), red), 0, -0.02, 0.24);
+    for (const s of [-1, 1]) {
+      add(n.dHead, part(G.tube([[s * 0.1, 0.1, -0.08], [s * 0.18, 0.22, -0.22], [s * 0.16, 0.3, -0.38]], 0.035, 10), horn), 0, 0, 0);
+      add(n.dHead, new T.Mesh(G.ball(0.04, 1.3, 0.8, 0.5), mat('#ffd23a', { glow: 1.8 })), s * 0.12, 0.06, 0.15, 0, s * 0.5, 0);
+      add(n.dHead, new T.Mesh(G.ball(0.015), mat('#1a0e08')), s * 0.05, 0.03, 0.38);
+    }
+    n.jaw = node('jaw', n.dHead, 0, -0.1, 0.05);
+    add(n.jaw, part(G.sbox(0.18, 0.07, 0.3, 0.4), dark), 0, 0, 0.17);
+    for (const s of [-1, 1]) add(n.jaw, new T.Mesh(G.cone(0.014, 0.05), mat('#ffffff')), s * 0.06, 0.05, 0.27);
+    const W = [0, 0, 0.45, 0.32, 1.0, 0.22, 0.86, 0.0, 0.96, -0.22, 0.66, -0.16, 0.56, -0.36, 0.3, -0.22, 0.1, -0.26];
+    for (const [k, s] of [['wingL', 1], ['wingR', -1]]) {
+      n[k] = node(k, n.body, s * 0.22, 0.2, 0.05);
+      add(n[k], part(wingGeo(W, s, 0.02).rotateX(Math.PI / 2), '#a83a20', { ds: true }), 0, 0, 0);
+      add(n[k], part(G.tube([[0, 0, 0], [s * 0.45, 0.02, 0.32], [s * 1.0, 0, 0.22]], 0.03, 10), dark), 0, 0, 0);
+    }
+    n.dTail = node('dTail', n.body, 0, 0.02, -0.5);
+    add(n.dTail, part(G.cone(0.15, 0.9, 12).rotateX(-Math.PI / 2), red), 0, 0, -0.42);
+    add(n.dTail, part(G.ext([0, 0, 0.14, -0.1, 0, -0.28, -0.14, -0.1], 0.03, 0.006).rotateX(Math.PI / 2), dark), 0, 0, -0.86);
+    glow(n.dHead, 0, 0, 0.3, 0.8, '#ff6a2a', 0.3);
+    return { rig: { root, n, o: { hipY: 1.25, bodyH: 2.0 } }, anim: { kind: 'drake', skill: null } };
+  }
+
+  function scorpClips(rig) {
+    const out = [], legs = ['lL0', 'lL1', 'lL2', 'lR0', 'lR1', 'lR2'], tail = [1, 2, 3, 4, 5];
+    out.push(bake(rig, 'idle', 2.0, t => {
+      const p = t * TAU, o = { body: { y: S(p) * 0.01 }, clawL: { ry: S(p) * 0.12 }, clawR: { ry: -S(p + 1) * 0.12 } };
+      tail.forEach(i => { o['t' + i] = { rx: S(p + i * 0.5) * 0.05, ry: S(p) * 0.04 }; }); return o;
+    }));
+    out.push(bake(rig, 'walk', 0.5, t => {
+      const p = t * TAU, o = { body: { y: Math.abs(S(p * 2)) * 0.015 }, t1: { ry: S(p) * 0.12 }, clawL: { ry: S(p) * 0.1 }, clawR: { ry: S(p) * 0.1 } };
+      legs.forEach((k, i) => { const s = k[1] === 'L' ? 1 : -1, ph = p + (i % 3) * 2.1 + (s > 0 ? 0 : Math.PI); o[k] = { ry: S(ph) * 0.4, rz: s * Math.max(0, C(ph)) * 0.25 }; }); return o;
+    }));
+    out.push(bake(rig, 'attack', 0.8, t => {
+      const o = { body: { z: kf(t, [[0, 0], [0.35, -0.05], [0.5, 0.1], [1, 0]]) }, clawL: { ry: kf(t, [[0, 0], [0.4, 0.4], [0.5, -0.2], [1, 0]]) }, clawR: { ry: kf(t, [[0, 0], [0.4, -0.4], [0.5, 0.2], [1, 0]]) } };
+      tail.forEach(i => { o['t' + i] = { rx: kf(t, [[0, 0], [0.35, -0.18], [0.5, 0.3], [0.7, 0.25], [1, 0]]) }; }); return o;
+    }));
+    out.push(bake(rig, 'die', 1.0, t => {
+      const o = { body: { rz: kf(t, [[0, 0], [0.6, 3.0], [1, 3.1]]), y: kf(t, [[0, 0], [0.3, 0.3], [0.7, 0.08], [1, 0.08]]) } };
+      legs.forEach(k => { o[k] = { rz: (k[1] === 'L' ? -1 : 1) * kf(t, [[0, 0], [1, 0.6]]) }; }); return o;
+    }, false));
+    return out;
+  }
+  function drakeClips(rig) {
+    const out = [], flap = (p, a) => ({ wingL: { rz: S(p) * a }, wingR: { rz: -S(p) * a } });
+    out.push(bake(rig, 'idle', 1.2, t => { const p = t * TAU; return Object.assign(flap(p, 0.6), { body: { y: S(p + 1.6) * 0.06 }, dTail: { ry: S(p) * 0.2 }, neck: { rx: S(p) * 0.05 }, jaw: { rx: 0.05 } }); }));
+    out.push(bake(rig, 'walk', 0.6, t => { const p = t * TAU; return Object.assign(flap(p, 0.8), { body: { y: S(p + 1.6) * 0.08, rx: 0.1 }, dTail: { ry: S(p) * 0.25, rx: 0.1 }, neck: { rx: -0.1 } }); }));
+    out.push(bake(rig, 'attack', 0.9, t => Object.assign(flap(t * TAU * 2, 0.5), {
+      neck: { rx: kf(t, [[0, 0], [0.35, -0.35], [0.5, 0.35], [0.7, 0.3], [1, 0]]) }, dHead: { rx: kf(t, [[0, 0], [0.35, -0.2], [0.5, 0.15], [1, 0]]) },
+      jaw: { rx: kf(t, [[0, 0], [0.35, 0.1], [0.5, 0.65], [0.75, 0.55], [1, 0]]) }, body: { z: kf(t, [[0, 0], [0.35, -0.08], [0.5, 0.1], [1, 0]]) }
+    })));
+    out.push(bake(rig, 'die', 1.1, t => ({
+      body: { y: kf(t, [[0, 0], [0.2, 0.1], [0.8, -0.98], [1, -0.98]]), rz: kf(t, [[0, 0], [0.8, 1.1], [1, 1.2]]) },
+      wingL: { rz: kf(t, [[0, 0], [0.5, 0.8], [1, -0.4]]) }, wingR: { rz: kf(t, [[0, 0], [0.5, -0.8], [1, 0.4]]) }, neck: { rx: kf(t, [[0, 0], [1, 0.6]]) }, jaw: { rx: kf(t, [[0, 0], [0.4, 0.5], [1, 0.3]]) }
+    }), false));
+    return out;
+  }
+
   /* =================== HOẠT ẢNH =================== */
   /** khoá hình mượt: pts = [[t, giá trị], …] */
   function kf(t, pts) {
@@ -549,7 +945,7 @@
   /** nướng hàm tư thế fn(t∈[0,1]) → { tênKhớp: { rx, ry, rz, x, y, z, s } } thành AnimationClip (cộng vào tư thế nghỉ) */
   function bake(rig, name, dur, fn, loop) {
     const N = Math.max(2, Math.round(dur * 30) + 1), frames = [], keys = new Set();
-    for (let f = 0; f < N; f++) { const p = fn(f / (N - 1)); frames.push(p); Object.keys(p).forEach(k => keys.add(k)); }
+    for (let f = 0; f < N; f++) { const p = fn(f / (N - 1)); if (rig.extra) Object.assign(p, rig.extra(f / (N - 1), dur, name)); frames.push(p); Object.keys(p).forEach(k => keys.add(k)); }
     const times = frames.map((_, f) => f / (N - 1) * dur), tracks = [], e = new T.Euler(), q = new T.Quaternion();
     keys.forEach(k => {
       const nd = rig.n[k]; if (!nd) return;
@@ -594,6 +990,8 @@
       const o = { hips: { y: Math.abs(s) * (A.heavy ? 0.04 : 0.07), ry: s * 0.08, rz: s * 0.03 }, torso: { rx: 0.1 }, head: { rx: -0.08 + Math.abs(C(p)) * 0.04 },
         legR: { rx: s * 0.75 }, legL: { rx: -s * 0.75 }, armR: { rx: -s * 0.6 }, armL: { rx: s * 0.6 } };
       armsRest(o, s * 0.12); if (!two && !bow && !A.shield && !staff) { o.armR = { rx: -s * 0.6 }; o.armL = { rx: s * 0.6 }; }
+      if (A.zombie) { o.armR = { rx: -s * 0.15 }; o.armL = { rx: s * 0.15 }; o.hips.y *= 0.4; }
+      if (A.fly) { o.legR = { rx: 0.3 + s * 0.2 }; o.legL = { rx: 0.2 - s * 0.2 }; o.hips = { y: S(p) * 0.05 }; o.torso = { rx: 0.25 }; }
       if (staff) o.armR = { rx: -0.2 - s * 0.3 };
       capeFx(o, 0.4, 0.1, p * 2);
       if (gem) o.gem = { y: S(p * 2) * 0.03, ry: t * TAU };
@@ -617,6 +1015,11 @@
       armR: { rx: kf(t, [[0, 0], [0.35, 0.7], [0.5, -1.7], [0.7, -1.6], [1, 0]]) }, armL: { rx: kf(t, [[0, 0], [0.35, -0.6], [0.5, 0.6], [1, 0]]) },
       hips: { z: kf(t, [[0, 0], [0.35, -0.06], [0.5, 0.18], [1, 0]]), y: kf(t, [[0, 0], [0.42, 0.06], [0.55, 0], [1, 0]]) },
       torso: { rx: kf(t, [[0, 0], [0.35, -0.15], [0.5, 0.25], [1, 0]]) }, legR: { rx: kf(t, [[0, 0], [0.5, -0.6], [1, 0]]) }, legL: { rx: kf(t, [[0, 0], [0.5, 0.5], [1, 0]]) }
+    })));
+    if (A.kind === 'fist') out.push(bake(rig, 'attack', A.heavy ? 1.0 : 0.7, t => ({ // đấm / cào thẳng tới
+      armR: { rx: kf(t, [[0, 0], [0.35, 0.7], [0.5, -1.0], [0.7, -0.9], [1, 0]]) }, armL: { rx: kf(t, [[0, 0], [0.35, -0.4], [0.5, 0.4], [1, 0]]) },
+      torso: { ry: kf(t, [[0, 0], [0.35, -0.35], [0.5, 0.4], [1, 0]]), rx: kf(t, [[0, 0], [0.35, -0.08], [0.5, 0.22], [1, 0]]) },
+      hips: { z: kf(t, [[0, 0], [0.35, -0.04], [0.5, 0.1], [1, 0]]) }, legR: { rx: kf(t, [[0, 0], [0.5, -0.35], [1, 0]]) }, legL: { rx: kf(t, [[0, 0], [0.5, 0.25], [1, 0]]) }
     })));
     const shoot = (t, o) => {
       o.armL = { rx: kf(t, [[0, -0.85], [0.15, -1.55], [0.85, -1.55], [1, -0.85]]), rz: -0.05 };
@@ -752,7 +1155,74 @@
     { id: 'wolfRider', name: 'Orc Cưỡi Sói', group: 'Quái', role: 'Quái nhanh · sói húc lính', tiers: 1,
       desc: 'Orc đội mũ sắt chóp đỏ cưỡi sói xám lớn, cầm giáo. Đứng: sói gầm. Đánh: lao tới đâm giáo. Kỹ năng: sói cúi đầu tăng tốc húc.',
       palette: pal(['#7a7680', 'Lông sói'], ['#4a4652', 'Bờm'], ['#7a9a62', 'Da orc'], ['#ffd23a', 'Mắt sói']),
-      make: () => WOLFRIDER() },
+      make: () => WOLF() },
+    { id: 'orcArcher', name: 'Cung Thủ Hắc Ám', group: 'Quái', role: 'Rừng Xanh · bắn lính từ xa', tiers: 1,
+      desc: 'Orc da xanh rêu trùm mũ trùm tím đen, áo choàng vai, cung gỗ sẫm, ống tên đầu lửa. Đánh: giương cung bắn.',
+      palette: pal(['#6a8a4a', 'Da'], ['#3a2a3a', 'Mũ trùm'], ['#4a3a3a', 'Áo'], ['#4a2a1a', 'Cung']), make: () => ORCARCHER() },
+    { id: 'warg', name: 'Sói Warg', group: 'Quái', role: 'Quái cực nhanh', tiers: 1,
+      desc: 'Sói xám tím lông bờm dựng, mắt vàng. Phi nước đại, gầm và vồ cắn.',
+      palette: pal(['#6a5a6a', 'Lông'], ['#4a3c4c', 'Bờm'], ['#b8a8b0', 'Bụng'], ['#ffd23a', 'Mắt']), make: () => WOLF({ noRider: true, fur: '#6a5a6a', furD: '#4a3c4c', belly: '#b8a8b0' }) },
+    { id: 'treant', name: 'Cây Ma', group: 'Quái', role: 'Rừng Xanh · cực trâu, hồi máu', tiers: 1, scale: 1.3,
+      desc: 'Cây cổ thụ hoá quỷ: thân gỗ sần có rãnh, tán lá trên đầu, mắt xanh lục phát sáng, tay cành, chuỳ khúc gỗ.',
+      palette: pal(['#7a5a38', 'Vỏ cây'], ['#4f9a3a', 'Lá'], ['#9aff6a', 'Mắt sáng']), make: () => TREANT() },
+    { id: 'skeleton', name: 'Hiệp Sĩ Xương', group: 'Quái', role: 'Thành Cổ · giáp dày', tiers: 1,
+      desc: 'Bộ xương đội mũ sắt, hốc mắt xanh ngọc ma quái, sườn lộ, chuỳ xương và khiên đầu lâu.',
+      palette: pal(['#e8e2d0', 'Xương'], ['#6a6a78', 'Mũ sắt'], ['#3a2a4a', 'Vạt áo'], ['#6af0d0', 'Mắt ma']), make: () => SKELETON() },
+    { id: 'wraith', name: 'Linh Ma', group: 'Quái', role: 'Bay · kháng phép', tiers: 1,
+      desc: 'Áo choàng ma tím xám bay lơ lửng, thân tan thành khói nhọn, mặt tối với 2 mắt tím rực, tay xương.',
+      palette: pal(['#5a4a7a', 'Áo choàng'], ['#2a1e40', 'Bóng tối'], ['#8a5aff', 'Mắt']), make: () => WRAITH() },
+    { id: 'deathKnight', name: 'Kỵ Sĩ Tử Thần', group: 'Quái', role: 'Thành Cổ · giáp rất dày', tiers: 1, scale: 1.2,
+      desc: 'Hiệp sĩ chết hồi sinh: giáp đen ánh tím, chùm lông tím trên mũ, áo choàng tím, mắt xanh băng, kiếm lam.',
+      palette: pal(['#2a2a3a', 'Giáp'], ['#6a4ae0', 'Lông mũ'], ['#3a1a5a', 'Áo choàng'], ['#6ae0ff', 'Mắt / kiếm']),
+      make: () => DARKKNIGHT(false, false, false, { armor: '#2a2a3a', trim: '#6a4ae0', light: '#3a3a52', eye: '#6ae0ff', cape: '#3a1a5a', tabard: '#4a2a7a', plume: '#6a4ae0', blade: '#8a9ac8', guard: '#34344a', core: '#6ae0ff' }) },
+    { id: 'bandit', name: 'Cướp Sa Mạc', group: 'Quái', role: 'Sa Mạc · nhanh nhẹn', tiers: 1,
+      desc: 'Tóc gai đen, khăn trắng buộc đầu, vết sẹo, áo gile nâu, đai đỏ, đao cong sáng loáng.',
+      palette: pal(['#e0b48a', 'Da'], ['#e8e0c8', 'Khăn'], ['#8a5a34', 'Gile'], ['#a83a2a', 'Đai']), make: () => BANDIT() },
+    { id: 'mummy', name: 'Xác Ướp', group: 'Quái', role: 'Sa Mạc · tự hồi máu', tiers: 1,
+      desc: 'Quấn băng cổ ngả vàng, băng lỏng phất phơ, một mắt xanh lục phát sáng, khom người tay chìa ra trước.',
+      palette: pal(['#ece0c0', 'Băng'], ['#cdbf98', 'Băng cũ'], ['#5aff9a', 'Mắt']), make: () => MUMMY() },
+    { id: 'scorpion', name: 'Bọ Cạp Cát', group: 'Quái', role: 'Sa Mạc · vỏ cứng như đá', tiers: 1,
+      desc: 'Vỏ cam cát có đốt, 6 chân, 2 càng lớn, đuôi 5 đốt cong qua lưng với ngòi đỏ sẫm. Đánh: quất đuôi chích.',
+      palette: pal(['#c8782a', 'Vỏ'], ['#8a4a1a', 'Đốt sẫm'], ['#7a2a1a', 'Ngòi']), make: () => SCORPION() },
+    { id: 'frostWolf', name: 'Sói Tuyết', group: 'Quái', role: 'Băng Giá · lao như bão', tiers: 1,
+      desc: 'Sói trắng xanh, lưng mọc tinh thể băng, mắt xanh băng phát sáng.',
+      palette: pal(['#d4e4f2', 'Lông'], ['#8aa8c8', 'Bờm'], ['#bff0ff', 'Băng'], ['#6ae0ff', 'Mắt']), make: () => WOLF({ noRider: true, fur: '#d4e4f2', furD: '#8aa8c8', belly: '#f4faff', eye: '#6ae0ff', frost: true }) },
+    { id: 'iceGolem', name: 'Người Băng', group: 'Quái', role: 'Băng Giá · khối băng sống', tiers: 1, scale: 1.35,
+      desc: 'Khối băng xanh khổng lồ, nắm đấm tảng băng, tinh thể nhọn mọc trên vai và đầu, mắt trắng phát sáng. Đánh: nện hai tay.',
+      palette: pal(['#9ad8f0', 'Băng'], ['#bfe8fa', 'Băng sáng'], ['#5aa0c8', 'Băng sẫm'], ['#d8f4ff', 'Tinh thể']),
+      make: () => GOLEM({ body: '#9ad8f0', light: '#bfe8fa', dark: '#5aa0c8', crystal: '#d8f4ff', iris: '#e8ffff' }) },
+    { id: 'imp', name: 'Quỷ Lửa', group: 'Quái', role: 'Núi Lửa · bay thành bầy', tiers: 1,
+      desc: 'Quỷ đỏ tí hon tai dài, sừng nhỏ, tóc lửa, cánh dơi vỗ liên tục, đuôi nhọn, dao lửa.',
+      palette: pal(['#d83a2a', 'Da'], ['#a82020', 'Cánh'], ['#ffb04a', 'Lửa'], ['#ffd23a', 'Mắt']), make: () => IMP() },
+    { id: 'drake', name: 'Rồng Lửa', group: 'Quái', role: 'Núi Lửa · rồng bay', tiers: 1,
+      desc: 'Rồng đỏ bay, bụng vàng, gai lưng sẫm, sừng ngà, cánh dơi lớn, đuôi mũi giáo. Đánh: vươn cổ há miệng phun lửa.',
+      palette: pal(['#c8381e', 'Vảy'], ['#7a1a10', 'Gai / cánh'], ['#f2c068', 'Bụng'], ['#ffd23a', 'Mắt']), make: () => DRAKE() },
+    { id: 'magmaGolem', name: 'Quái Magma', group: 'Quái', role: 'Núi Lửa · dung nham sống', tiers: 1, scale: 1.4,
+      desc: 'Đá núi lửa đen nứt toác lộ dung nham cam phát sáng, sừng đá, nắm đấm khổng lồ.',
+      palette: pal(['#4a3a3a', 'Đá'], ['#5a4a48', 'Đá sáng'], ['#ff7a2a', 'Dung nham'], ['#ffd23a', 'Mắt']),
+      make: () => GOLEM({ body: '#4a3a3a', light: '#5a4a48', dark: '#2a2020', cracks: '#ff7a2a', horn: '#2a2020', iris: '#ffd23a' }) },
+    { id: 'voidling', name: 'Quái Hỗn Mang', group: 'Quái', role: 'Cổng Hỗn Mang · kháng phép nhẹ', tiers: 1,
+      desc: 'Sinh vật hư vô tím: tai dài, sừng nhỏ, vết nứt tím phát sáng, mắt hồng rực, dao tím.',
+      palette: pal(['#6a4aa8', 'Da'], ['#2a1e4a', 'Áo'], ['#c880ff', 'Vết nứt'], ['#ff6aff', 'Mắt']),
+      make: () => GOBLIN({ skin: '#6a4aa8', cloth: '#2a1e4a', eye: '#ff6aff', glow: true, horns: '#3a2a5a', aura: '#c880ff', cracks: '#c880ff', blade: '#c8a0ff' }) },
+    { id: 'voidWalker', name: 'Kẻ Dẫn Lối Hư Vô', group: 'Quái', role: 'Cổng Hỗn Mang · giáp + kháng phép', tiers: 1,
+      desc: 'Pháp sư hư vô: áo dài tím than nứt sáng, giáp ngực, mũ sừng, tóc đen dài, gậy cầu tím lơ lửng.',
+      palette: pal(['#8a6ad8', 'Da'], ['#241640', 'Áo dài'], ['#5a3aa0', 'Viền'], ['#d890ff', 'Cầu phép']), make: () => VOIDWALKER() },
+    { id: 'blackOrc', name: 'Hắc Orc', group: 'Quái', role: 'Giáp cực dày', tiers: 1, scale: 1.15,
+      desc: 'Orc da xanh sẫm trong giáp đen gai, mũ sừng ngà, mắt đỏ rực, nanh dài, rìu hai lưỡi và khiên đầu lâu viền đỏ.',
+      palette: pal(['#4a6040', 'Da'], ['#3a3a48', 'Giáp'], ['#8a1a1a', 'Vạt đỏ'], ['#ff2a1a', 'Mắt']), make: () => BLACKORC() },
+    { id: 'troll', name: 'Troll Hang', group: 'Quái', role: 'Khổng lồ · tự hồi máu', tiers: 1, scale: 1.4,
+      desc: 'Khổng lồ da xám xanh khom lưng, đầu nhỏ, mũi to, nanh lớn, chỏm tóc rêu, khố da, chuỳ gỗ đóng gai.',
+      palette: pal(['#8aa0a8', 'Da'], ['#4a5a3a', 'Tóc'], ['#7a5a3a', 'Khố'], ['#8a5a32', 'Chuỳ']),
+      make: () => TROLL({ skin: '#8aa0a8', cloth: '#7a5a3a', hair: '#4a5a3a', iris: '#ffc43a', boots: '#5a6a70' }) },
+    { id: 'trollKing', name: 'Vua Troll Đá', group: 'Boss', role: 'Boss Núi Lửa · đập đất', tiers: 1, scale: 1.8,
+      desc: 'Chúa tể vùng núi: troll xanh đá đội vương miện vàng, vai vàng gai, giáp ngực, áo choàng đỏ, ngọc lửa trên ngực, cột đá đai vàng. Kỹ năng: nện đất làm choáng.',
+      palette: pal(['#7890a8', 'Da'], [GOLD, 'Vàng'], ['#5a1020', 'Áo choàng'], ['#ff6a2a', 'Ngọc lửa']),
+      make: () => TROLL({ skin: '#7890a8', cloth: '#7a1a2a', chest: '#6a7e96', pauldron: GOLD, cape: '#5a1020', crown: true, glowEye: true, iris: '#ff5a2a', pillar: '#7a7480', emblem: '#ff6a2a', boots: '#4a5a6a' }) },
+    { id: 'voidLord', name: 'Chúa Tể Hỗn Mang', group: 'Boss', role: 'Boss hư vô · choáng cả đội hình', tiers: 1, scale: 1.8,
+      desc: 'Gã khổng lồ hư vô tím: sừng cong lớn, vai tím gai, vết nứt sáng khắp người, ngọc tím trên ngực, cột hư vô.',
+      palette: pal(['#5a3a98', 'Da'], ['#b070ff', 'Vai'], ['#4a1a6a', 'Áo choàng'], ['#d890ff', 'Vết nứt']),
+      make: () => TROLL({ skin: '#5a3a98', cloth: '#4a1a6a', chest: '#3a2268', pauldron: '#b070ff', cape: '#4a1a6a', horns: '#2a1a4a', glowEye: true, iris: '#ff5aff', pillar: '#6a4ab0', emblem: '#d070ff', cracks: '#d890ff', boots: '#2a1a4a' }) },
     { id: 'darkKnight', name: 'Kỵ Sĩ Hắc Ám', group: 'Boss', role: 'Boss giữa màn · 2 giai đoạn', tiers: 2, tierName: 'Giai đoạn', scale: 1.35,
       desc: 'Giáp đen kín người, không thấy mặt, mắt đỏ phát sáng sau khe mũ, áo choàng đen dài, kiếm đen khổng lồ có gai. Giai đoạn 2: áo choàng bay lên, kiếm rực đỏ. Kỹ năng: giơ kiếm triệu hồi bóng tối.',
       palette: pal(['#2c2a36', 'Giáp đen'], ['#5a2a3a', 'Viền'], ['#141018', 'Áo choàng'], ['#ff2a1a', 'Mắt / kiếm đỏ']),
@@ -763,7 +1233,7 @@
       make: t => DARKKNIGHT(true, true, t >= 3) }
   ];
 
-  const SKILL_NAME = { soldier: 'Giơ khiên', elf: '3 mũi tên', mage: 'Mưa thiên thạch', dwarf: 'Đập đất', aldric: 'Thánh Quang', lyra: 'Mưa Tên', selene: 'Bão Băng', borin: 'Địa Chấn', wolfRider: 'Sói húc', darkKnight: 'Triệu hồi bóng tối', darkLord: 'Cắm kiếm' };
+  const SKILL_NAME = { trollKing: 'Nện đất', voidLord: 'Xé không gian', soldier: 'Giơ khiên', elf: '3 mũi tên', mage: 'Mưa thiên thạch', dwarf: 'Đập đất', aldric: 'Thánh Quang', lyra: 'Mưa Tên', selene: 'Bão Băng', borin: 'Địa Chấn', wolfRider: 'Sói húc', darkKnight: 'Triệu hồi bóng tối', darkLord: 'Cắm kiếm' };
   function build(id, tier) {
     const def = LIST.find(c => c.id === id) || LIST[0];
     const t = Math.max(1, Math.min(def.tiers, tier || def.tiers));
@@ -771,7 +1241,7 @@
     rig.root.name = 'root';
     if (def.scale) rig.root.scale.setScalar(def.scale);
     freeze(rig);
-    const clips = made.anim.kind === 'wolf' ? wolfClips(rig) : humanClips(rig, made.anim);
+    const K = made.anim.kind, clips = K === 'wolf' ? wolfClips(rig) : K === 'scorpion' ? scorpClips(rig) : K === 'drake' ? drakeClips(rig) : humanClips(rig, made.anim);
     rig.root.userData.charId = def.id; rig.root.userData.tier = t;
     return { root: rig.root, clips, rig, def, tier: t, skill: made.anim.skill, skillName: SKILL_NAME[def.id] };
   }
@@ -798,5 +1268,5 @@
     return c;
   }
 
-  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; } };
+  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; }, kit: { part, G, add, node, mat, glow, sh, flipY, freeze, GOLD, INK } };
 })();
