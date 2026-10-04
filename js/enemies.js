@@ -24,6 +24,7 @@
       const p = this.path.pointAt(this.dist, tmp);
       this.x = p.x + p.nx * this.lat; this.y = p.y + p.ny * this.lat;
       if (Math.abs(p.tx) > 0.25) this.face = p.tx > 0 ? 1 : -1;
+      this.tdx = p.tx; this.tdy = p.ty;
     }
     /** Kỹ năng riêng: sói lao tới, boss triệu hồi, đổi giai đoạn */
     abilities(dt) {
@@ -115,9 +116,11 @@
       const mode = this.atk >= 0 ? 'atk' : this.state === 'walk' ? 'walk' : 'idle';
       if (this.alpha !== undefined && this.alpha < 1) { this.alpha = Math.min(1, this.alpha + 0.04); ctx.globalAlpha = this.alpha; }
       if (this.p3 || (this.p2 && this.def.phase2)) K_glow(ctx, this.x, fy - this.height * 0.5, this.radius * 3, '#ff2a1a', 0.35 + Math.sin(this.anim * 8) * 0.15);
-      Painter.char(ctx, this.art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk * (this.chargeT > 0 ? 1 : 1) : this.anim);
+      const aim = mode === 'walk' ? Math.atan2(this.tdy || 0, this.tdx || 1) : (this.face > 0 ? 0.35 : Math.PI - 0.35);
+      let art = this.art, face = this.face; const dk = window.Art3D && Art3D.dirKey && Art3D.dirKey(art, aim); if (dk) { art = dk; face = 1; }
+      Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim);
       ctx.globalAlpha = 1;
-      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.75, this.flash * 7); Painter.char(ctx, this.art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim); ctx.restore(); }
+      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.75, this.flash * 7); Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim); ctx.restore(); }
       if (this.slowT > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.4, this.radius * 2.2, '#8fe0ff', 0.45);
       if (this.stunT > 0) for (let i = 0; i < 3; i++) { const a = this.anim * 6 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * this.radius * 0.7, fy - this.height - 4 + Math.sin(a) * 3, 2.2, '#ffe58a'); }
     }

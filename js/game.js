@@ -43,7 +43,7 @@
         const keys = new Set(); L.waves.join(',').split(',').forEach(s => keys.add(s.split(':')[0].trim()));
         if (keys.has('darkKnight')) { keys.add('darkKnight2'); keys.add('shade'); } if (keys.has('darkLord')) { keys.add('darkLord3'); keys.add('goblin'); keys.add('orc'); }
         const list = [], h = Units.list.find(u => u.isHero); if (h) list.push({ key: h.art, scale: h.scale, modes: ['walk', 'atk', 'idle'] });
-        keys.forEach(k => { const d = CONFIG.enemies[k], a = ArtChars[k]; if (d && a) list.push({ key: k, scale: d.radius / a.dr * (CONFIG.unitScale || 1) }); });
+        keys.forEach(k => { const d = CONFIG.enemies[k], a = ArtChars[k]; if (d && a) list.push({ key: k, scale: d.radius / a.dr * (CONFIG.unitScale || 1), modes: ['idle', 'die'], dirs: true }); });
         Art3D.warmClear(); Art3D.warm(list);
       }, 300);
       this.startLoop();

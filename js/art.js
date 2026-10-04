@@ -56,7 +56,8 @@
   const Painter = {
     res: 1,
     clear() { cache.clear(); },
-    char(ctx, type, x, y, scale, face, mode, phase, ppuOverride) {
+    char(ctx, type, x, y, scale, face, mode, phase, ppuOverride, aim) {
+      if (aim !== undefined && window.Art3D && Art3D.dirKey) { const dk = Art3D.dirKey(type, aim); if (dk) { type = dk; face = 1; } }
       const d = ArtChars[type]; if (!d) return;
       const ppu = bucket(ppuOverride || scale * this.res);
       let i;
@@ -76,7 +77,7 @@
       ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       const self = this;
       const CS = ArtTowers.CH || 1.3;
-      d.fx(ctx, tier, t, st || {}, { char(ct, cx, cy, face, a, tt) { self.char(ctx, ct, cx, cy, CS, face, a >= 0 ? 'atk' : 'idle', a >= 0 ? a : tt, scale * CS * self.res); } });
+      d.fx(ctx, tier, t, st || {}, { char(ct, cx, cy, face, a, tt) { self.char(ctx, ct, cx, cy, CS, face, a >= 0 ? 'atk' : 'idle', a >= 0 ? a : tt, scale * CS * self.res, st && st.aim); } });
       ctx.restore();
     },
     plot(ctx, x, y, hi, t) {

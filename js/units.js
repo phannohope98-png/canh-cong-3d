@@ -111,9 +111,13 @@
       if (hb) { ctx.save(); ctx.translate(-this.face * hb * 5, 0); ctx.translate(this.x, fy); ctx.rotate(-this.face * hb * 0.12); ctx.translate(-this.x, -fy); }
       // ảnh art có 4 góc: đi lên → quay lưng, đi ngang → nghiêng, đi xuống → quay mặt
       let art = this.art;
-      if (mode === 'walk') { const v = this.dvy || 0, s = v < -0.55 ? '_b' : v > 0.6 ? '_f' : Math.abs(this.dvx || 0) > 0.8 ? '_s' : ''; if (s && ArtChars[art + s]) art += s; }
-      Painter.char(ctx, art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT);
-      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.6, this.flash * 6); Painter.char(ctx, art, this.x, fy, this.scale, this.face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT); ctx.restore(); }
+      let face = this.face;
+      const aim = mode === 'walk' ? Math.atan2(this.dvy || 0, this.dvx || 0) : this.target && this.target.alive !== false ? Math.atan2(this.target.y - this.y, this.target.x - this.x) : (this.face > 0 ? 0.35 : Math.PI - 0.35);
+      const dk = window.Art3D && Art3D.dirKey && Art3D.dirKey(art, aim); // 3D: 8 hướng thật
+      if (dk) { art = dk; face = 1; }
+      else if (mode === 'walk') { const v = this.dvy || 0, s = v < -0.55 ? '_b' : v > 0.6 ? '_f' : Math.abs(this.dvx || 0) > 0.8 ? '_s' : ''; if (s && ArtChars[art + s]) art += s; }
+      Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT);
+      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.6, this.flash * 6); Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT); ctx.restore(); }
       if (hb) ctx.restore();
       if (this.shieldT > 0) { // lá chắn khiên vàng
         const k = Math.min(1, this.shieldT * 3), s = (CONFIG.unitScale || 1);

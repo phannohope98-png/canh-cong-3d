@@ -47,7 +47,7 @@
       if (this.cd > 0 || A.a >= 0) return;
       const tg = this.type === 'artillery' ? TARGET.densest(this) : TARGET.first(this, this.def.targetsAir);
       if (!tg) { this.cd = 0.1; return; }
-      this.pending = tg; A.face = tg.x >= this.x ? 1 : -1; A.a = 0; A.k++; this.cd = st.rate;
+      this.pending = tg; A.face = tg.x >= this.x ? 1 : -1; A.aim = Math.atan2(tg.y - this.y, tg.x - this.x); A.a = 0; A.k++; this.cd = st.rate;
     }
     /** Elf bắn 1 mũi tên; 15% chí mạng: mũi tên phát sáng, sát thương gấp đôi */
     shootArrow(t, m) {

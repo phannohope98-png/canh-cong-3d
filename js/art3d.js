@@ -10,6 +10,7 @@
   const T = THREE, K = ArtKit;
   const EL = 0.34;                                       // góc máy nhìn xuống (rad)
   const YAW = { side: 0.78, back: Math.PI - 0.6, front: 0.4 }; // gốc: nhìn sang PHẢI
+  for (let k = 0; k < 8; k++) YAW['a' + k] = (k <= 4 ? k : k - 8) * Math.PI / 4 * 0.85; // 8 hướng (a0 = quay mặt, a2 = phải, a4 = quay lưng)
   const IDLE = 2.618;                                    // chu kỳ idle của Painter (giây)
 
   let renderer = null, scene = null, cam = null, failed = false, theme = 'forest';
@@ -125,7 +126,7 @@
     reg[key] = Object.assign({}, base, reg[key] || {}, { chibi: true, __3d: true, draw: (g, P) => (Art3D.enabled && !failed ? draw3d(spec, g, P) : orig(g, P)) });
     Art3D.keys.push(key);
   }
-  function wrapAll(key, cid, tier) { wrap(key, cid, tier, 'side'); wrap(key + '_b', cid, tier, 'back', key); wrap(key + '_f', cid, tier, 'front', key); }
+  function wrapAll(key, cid, tier) { wrap(key, cid, tier, 'side'); wrap(key + '_b', cid, tier, 'back', key); wrap(key + '_f', cid, tier, 'front', key); for (let k = 0; k < 8; k++) wrap(key + '_a' + k, cid, tier, 'a' + k, key); }
 
   for (let t = 1; t <= 4; t++) { wrapAll('soldier' + t, 'soldier', t); wrapAll('elf' + t, 'elf', t); wrapAll('mage' + t, 'mage', t); wrapAll('dwarf' + t, 'dwarf', t); }
   wrapAll('goblin', 'goblin', 1); wrapAll('shade', 'shade', 1); wrapAll('orc', 'orc', 2); wrapAll('wolfRider', 'wolfRider', 1);
@@ -211,6 +212,7 @@
       if (!reg[it.key] || !reg[it.key].__3d) continue;
       for (const [mode, n] of (it.modes ? MODES.filter(m => it.modes.includes(m[0])) : MODES))
         for (let i = 0; i < n; i++) warmQ.push({ key: it.key, scale: it.scale, mode, ph: mode === 'idle' ? (i + 0.5) / n * IDLE : (i + 0.5) / n });
+      if (it.dirs) for (let k = 0; k < 8; k++) { const dk = it.key + '_a' + k; if (!reg[dk]) continue; for (let i = 0; i < 16; i++) warmQ.push({ key: dk, scale: it.scale, mode: 'walk', ph: (i + 0.5) / 16 }); if (k === 2 || k === 6) for (let i = 0; i < 12; i++) warmQ.push({ key: dk, scale: it.scale, mode: 'atk', ph: (i + 0.5) / 12 }); }
     }
     if (!warmRaf && warmQ.length) warmRaf = requestAnimationFrame(pump);
   };
@@ -230,6 +232,12 @@
   Art3D.lightTheme = () => theme;
   Art3D.lights = () => LIGHT[theme] || LIGHT.forest;
   Art3D.renderer = () => gl();
+  /** khoá hình theo hướng màn hình aim (rad, 0 = sang phải, π/2 = xuống) → 'key_aK' hoặc null */
+  Art3D.dirKey = function (type, aim) {
+    if (!Art3D.enabled || failed || aim === undefined || aim === null) return null;
+    let k = Math.round(Math.atan2(Math.cos(aim), Math.sin(aim) / Math.sin(EL)) / (Math.PI / 4)); k = ((k % 8) + 8) % 8;
+    const key = type + '_a' + k; return reg[key] ? key : null;
+  };
   /** đổi ánh sáng theo vùng của màn chơi (xoá đệm khung hình để vẽ lại) */
   Art3D.setTheme = function (name) {
     if (!LIGHT[name] || name === theme) return; theme = name; applyTheme(); plotCache.clear();
