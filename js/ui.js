@@ -241,7 +241,7 @@
     setupBattle() {
       this.closeRing(); this.closeOverlay(); this.tip(null);
       const H = Units.hero;
-      Painter.charPortrait($('hero-canvas'), H.art, { zoom: 2.1, head: true });
+      Painter.charPortrait($('hero-canvas'), H.art, { zoom: 1.55, head: true });
       $('hero-lvl').textContent = H.level;
       $('hero-skill').innerHTML = I(H.heroDef.skill.icon) + '<i class="cd" id="skill-cd"></i>';
       $('hero-skill').title = H.heroDef.skill.name;

@@ -6,7 +6,7 @@
 (function () {
   if (!window.THREE || !window.Chars3D || !window.Art3D) return;
   const T = THREE, { part, G, add, node, mat, glow, sh } = Chars3D.kit, GOLD = '#f5c542', TAU = Math.PI * 2, S = Math.sin, C = Math.cos;
-  const VER = 'icons3d-v2', SIZE = 96;
+  const VER = 'icons3d-v3', SIZE = 96;
   const shape = pts => { const s = new T.Shape(); s.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) s.lineTo(pts[i], pts[i + 1]); return s; };
   const star = (r1, r2) => { const p = []; for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? r2 : r1; p.push(C(a) * r, S(a) * r); } return shape(p); };
   const heart = () => { const s = new T.Shape(); s.moveTo(0, -0.42); s.bezierCurveTo(-0.15, -0.28, -0.5, -0.05, -0.5, 0.18); s.bezierCurveTo(-0.5, 0.42, -0.2, 0.5, 0, 0.3); s.bezierCurveTo(0.2, 0.5, 0.5, 0.42, 0.5, 0.18); s.bezierCurveTo(0.5, -0.05, 0.15, -0.28, 0, -0.42); return s; };
@@ -23,6 +23,7 @@
     star() { const g = node('i'); add(g, part(G.ext(star(0.55, 0.24), 0.12, 0.05), '#ffd23a', { metal: 1 }), 0, 0, 0); return g; },
     heart() { const g = node('i'); add(g, part(G.ext(heart(), 0.14, 0.06), '#e8384a'), 0, 0, 0); add(g, new T.Mesh(G.ball(0.08, 1.4, 0.8, 0.5), mat('#ffffff', { op: 0.7 })), -0.24, 0.24, 0.12, 0, 0, 0.5); return g; },
     skull() { const g = node('i'); add(g, part(G.ball(0.42, 1, 0.95, 0.95), '#efe6d0'), 0, 0.08, 0); add(g, part(G.sbox(0.42, 0.2, 0.36, 0.5), '#efe6d0'), 0, -0.3, 0.08); for (const x of [-0.16, 0.16]) add(g, new T.Mesh(G.ball(0.11, 0.9, 1.1, 0.5), mat('#1a1014')), x, 0.04, 0.37); add(g, new T.Mesh(G.cone(0.05, 0.1).rotateX(Math.PI), mat('#1a1014')), 0, -0.1, 0.4); return g; },
+    sun() { const g = node('i'); add(g, part(G.cyl(0.3, 0.3, 0.12, 28).rotateX(Math.PI / 2), '#ffd23a', { glow: 0.35, metal: 1 }), 0, 0, 0); add(g, new T.Mesh(G.ball(0.2, 1, 1, 0.4), mat('#fff6c0', { glow: 0.8 })), 0, 0, 0.07); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, L = i % 2 ? 0.2 : 0.28; add(g, part(G.cone(0.085, L, 4), i % 2 ? '#ffb02a' : '#ffd23a', { glow: 0.3, ink: 0.012 }), C(a) * (0.36 + L / 2), S(a) * (0.36 + L / 2), 0, 0, 0, a - Math.PI / 2); } glow(g, 0, 0, 0.1, 1.6, '#ffd060', 0.55); return g; },
     gem() { const g = node('i'); add(g, part(G.oct(0.45, 1.25), '#4ad8ff', { glow: 0.3 }), 0, 0, 0, 0, 0.4, 0); return g; },
     crown() { const g = node('i'); add(g, part(G.cyl(0.42, 0.45, 0.22, 24), GOLD, { metal: 1 }), 0, -0.15, 0); for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; add(g, part(G.cone(0.08, 0.32), GOLD, { metal: 1, ink: 0.012 }), S(a) * 0.4, 0.1, C(a) * 0.4); add(g, new T.Mesh(G.ball(0.045), mat(GOLD, { metal: 1 })), S(a) * 0.4, 0.28, C(a) * 0.4); } add(g, part(G.oct(0.07, 1.2), '#e0303a', { ink: 0.01 }), 0, -0.15, 0.45); return g; },
     lock() { const g = node('i'); add(g, part(G.torus(0.22, 0.06, Math.PI), '#aeb4c0', { metal: 1 }), 0, 0.12, 0); add(g, part(G.sbox(0.62, 0.48, 0.24, 0.3), GOLD, { metal: 1 }), 0, -0.18, 0); add(g, new T.Mesh(G.cyl(0.05, 0.05, 0.1).rotateX(Math.PI / 2), mat('#3a2a1a')), 0, -0.14, 0.12); return g; },

@@ -91,7 +91,7 @@
       const TOP = { archer: [0, 82, 92, 98, 112], mage: [0, 82, 94, 104, 114], barracks: [0, 48, 56, 70, 80], artillery: [0, 48, 54, 62, 72], orc: [0, 56, 62, 66, 92] }[type] || [0, 100, 100, 100, 100];
       g.clearRect(0, 0, canvas.width, canvas.height);
       const f = fit || 0.82, s = Math.min(canvas.width * f / 92, canvas.height * f / (TOP[tier] + 26));
-      this.tower(g, type, tier, canvas.width / 2, canvas.height / 2 + (TOP[tier] - 26) * s / 2, s, 0.5, { a: -1, face: 1 });
+      this.tower(g, type, tier, canvas.width / 2, canvas.height / 2 + (TOP[tier] - 26) * s / 2, s, 0.5, { a: -1, face: 1, portrait: true });
     },
     charPortrait(canvas, type, opts) {
       opts = opts || {};

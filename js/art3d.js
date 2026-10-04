@@ -166,6 +166,33 @@
     d.static = (g, tier) => (Art3D.enabled && !failed && gl() ? drawTower(type, tier, g) : orig(g, tier));
   });
 
+  /* bóng đổ của trụ: chiếu mô hình xuống mặt đất theo cùng hướng nắng với cây cối (terrain3d SDIR) */
+  const SDIR = new T.Vector3(-2.4, 3.2, -1.1).normalize(), shMat = new T.MeshBasicMaterial({ color: 0x000000 });
+  const shM = new T.Matrix4().set(1, -SDIR.x / SDIR.y, 0, 0, 0, 0.001, 0, 0, 0, -SDIR.z / SDIR.y, 1, 0, 0, 0, 0, 1);
+  const shadowCache = new Map(), SH_PAD = [100, 30];
+  function towerShadow(type, tier, ppu) {
+    const k = type + tier + '|' + ppu; let c = shadowCache.get(k); if (c) return c;
+    const [w, h, ox, oy] = ArtTowers[type].box;
+    c = document.createElement('canvas'); c.width = Math.ceil((w + SH_PAD[0]) * ppu); c.height = Math.ceil((h + SH_PAD[1]) * ppu);
+    const g = c.getContext('2d'); g.setTransform(ppu, 0, 0, ppu, ox * ppu, oy * ppu); g.filter = 'blur(' + (ppu * 0.8).toFixed(1) + 'px)';
+    const root = towerRoot(type, tier), grp = new T.Group(), hid = [];
+    grp.matrixAutoUpdate = false; grp.matrix.copy(shM); grp.add(root);
+    root.traverse(o => { if (o.isSprite && o.visible) { o.visible = false; hid.push(o); } });
+    scene.overrideMaterial = shMat; renderInto(grp, g, 40); scene.overrideMaterial = null;
+    hid.forEach(o => { o.visible = true; }); grp.remove(root);
+    shadowCache.set(k, c); return c;
+  }
+  if (window.Painter && window.ArtTowers && window.Towers3D) {
+    const origTower = Painter.tower.bind(Painter);
+    Painter.tower = function (ctx, type, tier, x, y, scale, t, st) {
+      if (Art3D.enabled && !failed && !(st && st.portrait) && Towers3D.build && ArtTowers[type] && type !== 'orc' && gl()) {
+        const ppu = Math.max(0.5, Math.min(4, Math.round(scale * this.res * 2) / 2)), [w, h, ox, oy] = ArtTowers[type].box;
+        ctx.save(); ctx.globalAlpha = 0.3; ctx.drawImage(towerShadow(type, tier, ppu), x - ox * scale, y - oy * scale, (w + SH_PAD[0]) * scale, (h + SH_PAD[1]) * scale); ctx.restore();
+      }
+      return origTower(ctx, type, tier, x, y, scale, t, st);
+    };
+  }
+
   // ô xây trống 3D
   const plotCache = new Map(); let plotRoot = null;
   if (window.Painter && window.Towers3D && Towers3D.plot) {
