@@ -221,7 +221,7 @@ float surf(){
   }
   /** o: { iris, eye: 'cute'|'fierce'|'round'|'glow', brow, mouth: 'line'|'smile'|'grin'|'none', blush, eu, ev } */
   function face(head, R, o) {
-    const eu = o.eu || 0.38, ev = o.ev === undefined ? -0.06 : o.ev, es = (o.es || 1) * 1.3;
+    const eu = o.eu || 0.38, ev = o.ev === undefined ? -0.06 : o.ev, es = (o.es || 1) * (REAL.cur ? 1.1 : 1.3);
     for (const s of [-1, 1]) {
       const u = s * eu;
       if (o.eye === 'glow') {
@@ -246,8 +246,31 @@ float surf(){
 
   /* =================== KHUNG NGƯỜI =================== */
   /** Thân chibi: hông › thân › đầu, 2 tay (vai, cầm), 2 chân + giày. Mặt hướng +Z, cao ~2 đơn vị. */
+  /** Tỉ lệ người thật thay cho chibi đầu to: chân/tay dài hơn (tham số), thân kéo cao, đầu thu nhỏ (hậu kỳ trong build) */
+  const REAL = { v: true, cur: null };
+  const RK = { soldier: {}, elf: {}, mage: {}, aldric: {}, lyra: {}, selene: {}, dwarf: { leg: 1.7, torso: 1.2, head: 0.55, arm: 1.35 }, borin: { leg: 1.7, torso: 1.2, head: 0.55, arm: 1.35 },
+    goblin: { leg: 1.6, torso: 1.2, head: 0.58, arm: 1.35 }, orc: { head: 0.5 }, orcArcher: {}, skeleton: {}, deathKnight: { head: 0.5 }, bandit: {}, mummy: {}, voidWalker: { head: 0.5 },
+    blackOrc: { head: 0.5 }, darkKnight: { head: 0.55, leg: 1.8, torso: 1.25 }, darkLord: { head: 0.55, leg: 1.7, torso: 1.2 } };
+  function realK(id) { if (!REAL.v || !RK[id]) return null; return Object.assign({ leg: 2.2, torso: 1.38, head: 0.5, arm: 1.55 }, RK[id]); }
+  function realBody(o) {
+    const k = REAL.cur; if (!k || o.real) return;
+    o.legL = o.legL * k.leg + 0.04 * (k.leg - 1); o.legR *= 1.12; o.armL *= k.arm; o.armR *= 1.1; o.real = k;
+  }
+  /** kéo cao thân + thu đầu sau khi nhân vật đã gắn đủ đồ */
+  function realize(rig) {
+    const n = rig.n, o = rig.o, k = o && o.real; if (!k || !n.torso || !n.head) return;
+    const ky = k.torso;
+    for (const ch of n.torso.children) {
+      ch.position.y *= ky;
+      if (ch === n.head || /^arm/.test(ch.name)) continue;
+      ch.scale.y *= ky;
+    }
+    n.head.scale.multiplyScalar(k.head);
+    n.head.position.y = o.torsoH * ky + o.R * k.head * (o.neck || 0.8) + 0.04;
+  }
   function humanoid(o) {
     const root = node('root'), n = {};
+    realBody(o);
     o.hipY = o.legL + o.bootH;
     n.hips = node('hips', root, 0, o.hipY, 0);
     n.torso = node('torso', n.hips, 0, 0, 0);
@@ -262,7 +285,7 @@ float surf(){
       add(arm, part(G.cap(o.armR, len - o.armR), o.sleeve, { tex: 'cloth' }), 0, -len / 2 + o.armR * 0.3, 0);
       add(arm, part(G.ball(o.armR * 1.28), o.glove || o.skin), 0, -len, 0);
       n['hand' + k] = node('hand' + k, arm, 0, -len, 0);
-      const leg = n['leg' + k] = node('leg' + k, n.hips, s * o.torsoW * 0.22, 0.02, 0);
+      const leg = n['leg' + k] = node('leg' + k, n.hips, s * o.torsoW * (o.real ? 0.27 : 0.22), 0.02, 0);
       add(leg, part(G.cap(o.legR, o.legL - o.legR), o.legs, { tex: 'cloth' }), 0, -o.legL / 2, 0);
       add(leg, part(G.sbox(o.legR * 2.3, o.bootH, o.legR * 3.3, 0.4), o.boots), 0, -o.legL - o.bootH / 2 + 0.01, o.legR * 0.55);
     }
@@ -1119,7 +1142,8 @@ float surf(){
     })));
     const shoot = (t, o) => {
       o.armL = { rx: kf(t, [[0, -0.85], [0.15, -1.55], [0.85, -1.55], [1, -0.85]]), rz: -0.05 };
-      o.armR = { rx: kf(t, [[0, 0], [0.15, -1.45], [0.55, -1.15], [0.62, -0.7], [1, 0]]), rz: kf(t, [[0, 0], [0.15, 0.45], [0.55, 0.15], [1, 0]]) };
+      // tay phải bắt dây cung trước ngực rồi kéo về sau (tay thẳng nên vắt ngang ngực), buông dây thì bật ra sau
+      o.armR = { rx: kf(t, [[0, 0], [0.15, -0.08], [0.6, -0.08], [1, 0]]), ry: kf(t, [[0, 0], [0.15, -0.76], [0.55, -0.6], [0.62, -0.28], [0.75, -0.3], [1, 0]]), rz: kf(t, [[0, 0], [0.15, 1.7], [0.55, 1.72], [0.62, 1.62], [0.75, 1.5], [1, 0]]) };
       o.torso = { ry: kf(t, [[0, 0], [0.15, -0.45], [0.85, -0.45], [1, 0]]) };
       o.arrow = { y: kf(t, [[0, 0], [0.55, 0.09], [0.6, 0.09], [0.61, 0], [1, 0]]), s: kf(t, [[0, 1], [0.6, 1], [0.61, 0.001], [0.9, 0.001], [1, 1]]) };
       return o;
@@ -1333,7 +1357,9 @@ float surf(){
   function build(id, tier) {
     const def = LIST.find(c => c.id === id) || LIST[0];
     const t = Math.max(1, Math.min(def.tiers, tier || def.tiers));
+    REAL.cur = realK(def.id);
     const made = def.make(t), rig = made.rig;
+    realize(rig); REAL.cur = null;
     rig.root.name = 'root';
     if (def.scale) rig.root.scale.setScalar(def.scale);
     freeze(rig);
@@ -1364,5 +1390,5 @@ float surf(){
     return c;
   }
 
-  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; }, setDetail: k => { DET = k; }, fx: FX, setFx: on => { FXON.v = !!on; }, kit: { part, G, add, node, mat, glow, sh, flipY, freeze, texCoords, GOLD, INK } };
+  window.Chars3D = { list: LIST, build, toExportable, INK, setInk: k => { INKK = k; }, setDetail: k => { DET = k; }, fx: FX, setFx: on => { FXON.v = !!on; }, real: REAL, kit: { part, G, add, node, mat, glow, sh, flipY, freeze, texCoords, GOLD, INK } };
 })();

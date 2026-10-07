@@ -27,10 +27,10 @@ window.CONFIG = {
       cost: [70, 110, 160, 230],
       tierNames: ['Trại Kiếm Sĩ', 'Đồn Bộ Binh', 'Pháo Đài', 'Sảnh Hiệp Sĩ'],
       levels: [
-        { hp: 90, damage: [5, 8], armor: 0.05, art: 'soldier1' },
-        { hp: 150, damage: [9, 13], armor: 0.2, art: 'soldier2' },
-        { hp: 240, damage: [15, 21], armor: 0.35, art: 'soldier3' },
-        { hp: 370, damage: [24, 32], armor: 0.5, art: 'soldier4', special: 'shieldwall' }
+        { hp: 90, damage: [5, 8], armor: 0.05, rate: 1.0, art: 'soldier1' },
+        { hp: 150, damage: [9, 13], armor: 0.2, rate: 0.95, art: 'soldier2' },
+        { hp: 240, damage: [15, 21], armor: 0.35, rate: 0.9, art: 'soldier3' },
+        { hp: 370, damage: [24, 32], armor: 0.5, rate: 0.85, art: 'soldier4', special: 'shieldwall' }
       ],
       gear: ['Kiếm lớn', 'Khiên thép', 'Giáp bạc', 'Áo choàng đỏ sẫm'],
       desc: 'Gọi 2 kiếm sĩ giáp bạc, áo choàng đỏ sẫm ra chặn đường. Đứng chờ thì chống kiếm xuống đất, đánh bằng nhát chém ngang. Cấp 4: khi máu thấp giơ khiên tạo lá chắn, giảm một nửa sát thương trong 3 giây.'
@@ -72,13 +72,13 @@ window.CONFIG = {
       cost: [100, 140, 190, 250],
       tierNames: ['Ụ Pháo Gỗ', 'Pháo Đài Đá', 'Pháo Đài Sắt', 'Pháo Đài Tổ Tiên'],
       levels: [
-        { damage: [14, 24], range: 180, rate: 2.2, aoe: 50 },
-        { damage: [26, 40], range: 192, rate: 2.1, aoe: 56 },
-        { damage: [42, 62], range: 206, rate: 2.0, aoe: 62 },
-        { damage: [62, 90], range: 220, rate: 1.9, aoe: 70, special: 'cluster' }
+        { damage: [17, 29], range: 215, rate: 2.6, aoe: 52 },
+        { damage: [31, 48], range: 228, rate: 2.5, aoe: 58 },
+        { damage: [50, 74], range: 242, rate: 2.4, aoe: 64 },
+        { damage: [74, 108], range: 258, rate: 2.3, aoe: 72, special: 'cluster' }
       ],
       gear: ['Súng cối', 'Mũ sắt', 'Giáp nặng', 'Râu khổng lồ'],
-      desc: 'Pháo thủ Lùn nã đại bác cầu vồng thật xa, đạn nổ tung gây sát thương lan cả nhóm quái đi bộ. Mỗi phát rất mạnh nhưng nạp đạn chậm hơn Elf nhiều và không bắn được quân bay. Luôn nhắm vào chỗ quái đông nhất. Cấp 4: đạn chùm – nổ xong văng thêm 3 quả nhỏ.'
+      desc: 'Pháo thủ Lùn nã đại bác cầu vồng xa nhất trong các trụ, đạn nổ tung gây sát thương lan cả nhóm quái đi bộ. Mỗi phát rất mạnh nhưng nạp đạn lâu và không bắn được quân bay. Luôn nhắm vào chỗ quái đông nhất. Cấp 4: đạn chùm – nổ xong văng thêm 3 quả nhỏ.'
     }
   },
 

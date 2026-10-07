@@ -4,6 +4,7 @@
  * ========================================================= */
 (function () {
   const TS = 1.1; // tỉ lệ vẽ trụ
+  const FALL = 0.42, SQUASH = 0.34, DROP_H = 620; // xây trụ: rơi từ trên trời xuống, đập đất rồi nảy
   const TARGET = {
     first(T, air) { let b = null, bd = -1; for (const e of Enemies.list) if (e.alive && (air || !e.flying) && T.inRange(e) && e.dist > bd) { bd = e.dist; b = e; } return b; },
     densest(T) {
@@ -17,7 +18,7 @@
     constructor(type, spot) {
       this.type = type; this.def = CONFIG.towers[type]; this.spot = spot; this.x = spot.x; this.y = spot.y;
       this.level = 1; this.spent = this.def.cost[0]; this.cd = 0.5; this.shots = 0; this.t = Math.random() * 5;
-      this.anim = { a: -1, face: 1, k: 0, door: 0 }; this.pulse = 0.4; this.pending = null; this.born = 0;
+      this.anim = { a: -1, face: 1, k: 0, door: 0 }; this.pulse = 0.4; this.pending = null; this.born = 1; this.drop = 0; this.landed = false;
       if (this.def.kind === 'barracks') {
         let best = null;
         Game.map.paths.forEach((p, i) => { const n = p.nearest(this.x, this.y); if (!best || n.perp < best.perp) best = { perp: n.perp, dist: n.dist, i }; });
@@ -39,6 +40,7 @@
     }
     update(dt) {
       this.t += dt; this.born += dt; if (this.pulse > 0) this.pulse -= dt; if (this.anim.door > 0) this.anim.door -= dt;
+      if (!this.landed) { this.drop += dt; if (this.drop < FALL) return; this.land(); }
       if (this.def.kind === 'barracks') return;
       const A = this.anim, st = this.stats;
       if (A.a >= 0) { const prev = A.a; A.a += dt / (this.type === 'artillery' ? 0.5 : this.type === 'orc' ? 0.45 : 0.36); if (prev < 0.5 && A.a >= 0.5) this.release(); if (A.a >= 1) A.a = -1; }
@@ -48,6 +50,15 @@
       const tg = this.type === 'artillery' ? TARGET.densest(this) : TARGET.first(this, this.def.targetsAir);
       if (!tg) { this.cd = 0.1; return; }
       this.pending = tg; A.face = tg.x >= this.x ? 1 : -1; A.aim = Math.atan2(tg.y - this.y, tg.x - this.x); A.a = 0; A.k++; this.cd = st.rate;
+    }
+    /** chạm đất sau khi rơi: bụi tung, rung màn hình, lính mới bước ra */
+    land() {
+      this.landed = true; const x = this.x, y = this.y;
+      Effects.burst(x - 30, y + 6, '#d8c8a0', 14, 190, 0.6, 7, 120); Effects.burst(x + 30, y + 6, '#d8c8a0', 14, 190, 0.6, 7, 120);
+      Effects.ring(x, y + 4, 14, 92, 0.45, '#f4e6c0', 6); Effects.ring(x, y + 4, 8, 60, 0.3, '#ffe58a', 4);
+      Effects.decal && Effects.decal(x, y + 8, 46, 'scorch');
+      Effects.shake(7, 0.25); AudioSys.play('explode');
+      if (this.def.kind === 'barracks' && !Units.list.some(u => u.tower === this)) Units.createFor(this);
     }
     /** Elf bắn 1 mũi tên; 15% chí mạng: mũi tên phát sáng, sát thương gấp đôi */
     shootArrow(t, m) {
@@ -85,6 +96,20 @@
     get drawY() { return this.y + 14; }
     draw(ctx) {
       const k = this.pulse > 0 ? 1 + Math.sin(this.pulse / 0.4 * Math.PI) * 0.08 : 1;
+      if (this.drop < FALL + SQUASH) { // rơi từ trời: tăng tốc dần, bóng dưới đất lớn dần; chạm đất thì bẹp xuống rồi nảy lại
+        const gx = this.x, gy = this.y + 14;
+        if (this.drop < FALL) {
+          const u = this.drop / FALL, off = -DROP_H * (1 - u * u);
+          ctx.save(); ctx.globalAlpha = 0.15 + 0.4 * u; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(gx, gy, 20 + 34 * u, 8 + 12 * u, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+          ctx.save(); ctx.translate(gx, gy + off); ctx.scale(0.94, 1.08); ctx.translate(-gx, -gy);
+          Painter.tower(ctx, this.type, this.level, this.x, this.y, TS, this.t, this.anim); ctx.restore();
+          ctx.save(); ctx.globalAlpha = 0.35 * (1 - u); ctx.strokeStyle = '#fff6d8'; ctx.lineWidth = 3; for (const dx of [-26, 0, 26]) { ctx.beginPath(); ctx.moveTo(gx + dx, gy + off - 160); ctx.lineTo(gx + dx, gy + off - 260); ctx.stroke(); } ctx.restore();
+          return;
+        }
+        const v = (this.drop - FALL) / SQUASH, sy = 1 - 0.2 * Math.cos(v * Math.PI * 2.4) * (1 - v) * (1 - v), sx = 1 / Math.sqrt(sy);
+        ctx.save(); ctx.translate(gx, gy); ctx.scale(sx, sy); ctx.translate(-gx, -gy);
+        Painter.tower(ctx, this.type, this.level, this.x, this.y, TS, this.t, this.anim); ctx.restore(); return;
+      }
       if (this.born < 0.5) { // mọc lên từ mặt đất, nảy nhẹ (easeOutBack)
         const u = Math.min(1, this.born / 0.5), c1 = 1.9, ey = 1 + (c1 + 1) * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2);
         ctx.save(); ctx.translate(this.x, this.y + 14); ctx.scale(1 + (1 - u) * 0.15, Math.max(0.05, ey)); ctx.translate(-this.x, -this.y - 14);
@@ -113,9 +138,7 @@
     build(spot, type) {
       const cost = CONFIG.towers[type].cost[0];
       if (spot.tower || !Game.spend(cost)) return null;
-      const T = new Tower(type, spot); spot.tower = T; this.list.push(T);
-      if (T.def.kind === 'barracks') Units.createFor(T);
-      Effects.burst(spot.x, spot.y, '#e8d8b0', 18, 170, 0.5, 6, 260); Effects.ring(spot.x, spot.y, 10, 60, 0.4, '#ffe58a', 4);
+      const T = new Tower(type, spot); spot.tower = T; this.list.push(T); // lính Người bước ra khi trụ chạm đất (Tower.land)
       AudioSys.play('build'); return T;
     },
     upgrade(T) {

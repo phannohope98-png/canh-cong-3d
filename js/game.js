@@ -83,7 +83,7 @@
       else if (avg < 17 && this.q < 1) { this.q = Math.min(1, +(this.q + 0.15).toFixed(2)); Save.data.settings.q = this.q; Save.save(); this.measure(); } // máy chạy mượt lại → nét trở lại
     },
     frame(ts) {
-      const raw = ts - this.last, dt = Math.min(0.05, Math.max(0, raw / 1000)); this.last = ts;
+      const raw = ts - this.last, dt = Math.min(0.1, Math.max(0, raw / 1000)); this.last = ts;
       this.perfWatch(raw);
       Camera.update(dt);
       if (this.state === 'playing' && !this.paused) {

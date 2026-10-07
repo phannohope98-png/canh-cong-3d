@@ -39,9 +39,10 @@
       // đòn đánh
       this.cd -= dt;
       if (this.atk >= 0) {
-        const prev = this.atk; this.atk += dt / 0.4;
+        const prev = this.atk; this.atk += dt / this.atkDur();
         const t = this.target;
-        if (prev < 0.5 && this.atk >= 0.5 && t && t.alive && t.uid === this.tUid) {
+        // chỉ trúng khi mục tiêu còn sống và vẫn trong tầm (tránh chém trúng con ở xa sau khi đổi mục tiêu)
+        if (prev < 0.5 && this.atk >= 0.5 && t && t.alive && t.uid === this.tUid && Math.hypot(t.x - this.x, t.y - this.y) <= this.reachOf(t) + 14) {
           if (this.range) { Combat.fire(this.proj, this.x + this.face * 9, this.y - 26, t, { damage: this.damage, type: this.dtype || 'physical' }); AudioSys.play(this.proj === 'bolt' ? 'magic' : 'arrow'); }
           else {
             Combat.hitEnemy(t, this.damage, 'physical'); Effects.comic(t.x + this.face * 6, t.y - 44, ['POW!', 'BAM!', 'KAPOW!', 'SHUNT!', 'WHAM!'][(Math.random() * 5) | 0], ['#ffe14a', '#ff7a4a', '#7ae0ff'][(Math.random() * 3) | 0]); AudioSys.play(this.tower && this.tower.type === 'orc' ? 'orc' : 'sword'); Effects.hit(t.x - this.face * 4, t.y - t.height * 0.5, '#fff2c0');
@@ -62,13 +63,15 @@
       }
       this.scan -= dt;
       const t = this.target;
-      if (!t || !t.alive || t.uid !== this.tUid || this.scan <= 0) { this.scan = 0.25; this.pick(); }
+      // giữ mục tiêu đang đánh (không đổi giữa nhát chém); quét lại khi mất mục tiêu hoặc định kỳ khi đang rảnh tay
+      const lost = !t || !t.alive || t.uid !== this.tUid || (t.flying && !this.air) || Math.hypot(t.x - this.postX, t.y - this.postY) > this.engage + t.radius + 60;
+      if (lost || (this.scan <= 0 && this.atk < 0)) { this.scan = 0.3; this.pick(lost ? null : t); }
       const e = this.target;
       if (e) {
         this.calm = 0;
-        const dx = e.x - this.x, dy = e.y - this.y, d = Math.hypot(dx, dy), reach = this.range ? this.range - 10 : e.radius + this.radius + 1;
-        if (d > reach) { if (this.atk < 0) this.moveTo(e.x - dx / d * (reach - 1), e.y - dy / d * (reach - 1), dt); }
-        else { this.moving = false; this.face = dx >= 0 ? 1 : -1; if (this.cd <= 0 && this.atk < 0) { this.atk = 0; this.cd = this.rate; } }
+        const dx = e.x - this.x, dy = e.y - this.y, d = Math.hypot(dx, dy) || 0.01, reach = this.reachOf(e);
+        if (d > reach) { if (this.atk < 0) this.moveTo(e.x - dx / d * (reach - 2), e.y - dy / d * (reach - 2), dt); }
+        else { this.moving = false; if (Math.abs(dx) > 2) this.face = dx >= 0 ? 1 : -1; if (this.cd <= 0 && this.atk < 0) { this.atk = 0; this.cd = this.rate; } }
       } else {
         if (this.atk < 0) this.moveTo(this.postX, this.postY, dt);
         this.calm += dt;
@@ -76,15 +79,19 @@
       }
     }
 
-    /** Chọn quái gần vị trí canh: ưu tiên con chưa ai chặn */
-    pick() {
+    reachOf(e) { return this.range ? this.range - 10 : e.radius + this.radius + 4; }
+    /** thời gian 1 nhát đánh: theo tốc đánh (đánh nhanh thì vung nhanh), không dài hơn nhịp đánh */
+    atkDur() { return Math.max(0.22, Math.min(0.45, this.rate * 0.55)); }
+    /** Chọn quái gần vị trí canh: ưu tiên con đang đánh mình, rồi con chưa ai chặn. keep: mục tiêu hiện tại (được cộng điểm để khỏi đổi qua lại) */
+    pick(keep) {
       const R = this.engage, cx = this.postX, cy = this.postY;
       let best = null, bs = Infinity;
       for (const e of Enemies.list) {
         if (!e.alive || (e.flying && !this.air)) continue;
-        if (Math.hypot(e.x - cx, e.y - cy) > R + e.radius) continue;
+        if (e !== keep && Math.hypot(e.x - cx, e.y - cy) > R + e.radius) continue;
         let taken = 0; for (const u of Units.list) if (u !== this && u.active && u.tUid === e.uid) taken++;
-        const sc = Math.hypot(e.x - this.x, e.y - this.y) + taken * 55 - e.dist * 0.02;
+        let sc = Math.hypot(e.x - this.x, e.y - this.y) + taken * 55 - e.dist * 0.02;
+        if (e.blocker === this) sc -= 400; if (e === keep) sc -= 40;
         if (sc < bs) { bs = sc; best = e; }
       }
       this.target = best; this.tUid = best ? best.uid : -1;
@@ -204,7 +211,7 @@
 
     /** Doanh trại vừa xây: tạo lính 1 lần */
     createFor(T) {
-      for (let i = 0; i < T.def.soldiers; i++) this.list.push(new Unit({ tower: T, idx: i, x: T.x, y: T.y + 12, alpha: 0, radius: 12, speed: 80, rate: 1.0, engage: T.def.engage }));
+      for (let i = 0; i < T.def.soldiers; i++) this.list.push(new Unit({ tower: T, idx: i, x: T.x, y: T.y + 12, alpha: 0, radius: 12, speed: 95, rate: 1.0, engage: T.def.engage }));
       this.refresh(T, true); this.placePosts(T);
     },
     refresh(T, full) {
@@ -212,7 +219,7 @@
       for (const u of this.list) if (u.tower === T) {
         const r = full || !u.maxHp ? 1 : u.hp / u.maxHp;
         u.maxHp = Math.round(lv.hp * hb); u.hp = Math.max(1, Math.round(u.maxHp * r)); u.damage = [lv.damage[0] * db, lv.damage[1] * db];
-        u.armor = lv.armor; u.art = lv.art; u.special = lv.special; u.scale = 12 / ArtChars[lv.art].dr * 1.05 * (CONFIG.unitScale || 1); u.regen = u.maxHp * 0.08;
+        u.armor = lv.armor; u.rate = lv.rate || 1; u.art = lv.art; u.special = lv.special; u.scale = 12 / ArtChars[lv.art].dr * 1.05 * (CONFIG.unitScale || 1); u.regen = u.maxHp * 0.08;
       }
     },
     remove(T) { for (let i = this.list.length - 1; i >= 0; i--) if (this.list[i].tower === T) this.list.splice(i, 1); },

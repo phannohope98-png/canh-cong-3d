@@ -75,12 +75,14 @@
 
       // Bị chặn bởi lính?
       if (!this.flying) {
-        let blocker = null;
+        // ưu tiên đứng lại với lính đang nhắm vào mình (để 2 bên đánh nhau thật, không ai đứng nhìn)
+        let blocker = null, bk = -1;
         for (const u of Units.list) {
           if (!u.active || u.alpha < 0.5) continue;
-          const r = this.radius + u.radius + 3;
-          if (Math.abs(u.x - this.x) < r && Math.abs(u.y - this.y) < r && Math.hypot(u.x - this.x, u.y - this.y) < r) { blocker = u; break; }
+          const r = this.radius + u.radius + 6;
+          if (Math.abs(u.x - this.x) < r && Math.abs(u.y - this.y) < r && Math.hypot(u.x - this.x, u.y - this.y) < r) { const k = u.tUid === this.uid ? 2 : 1; if (k > bk) { bk = k; blocker = u; } }
         }
+        this.blocker = blocker;
         if (blocker) {
           this.state = 'fight'; this.face = blocker.x >= this.x ? 1 : -1;
           if (this.cd <= 0) {
