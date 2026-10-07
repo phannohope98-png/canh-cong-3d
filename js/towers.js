@@ -26,8 +26,10 @@
       }
     }
     get stats() {
-      const lv = this.def.levels[this.level - 1], dm = 1 + Progress.bonus(this.type, 'damage'), rm = 1 + Progress.bonus(this.type, 'range'), am = 1 + Progress.bonus(this.type, 'aoe');
-      return { damage: lv.damage ? [lv.damage[0] * dm, lv.damage[1] * dm] : null, range: (lv.range || 0) * rm, rate: lv.rate, aoe: (lv.aoe || 0) * am, special: lv.special };
+      const lv = this.def.levels[this.level - 1], M = Items.mods(this.type);
+      const dm = (1 + Progress.bonus(this.type, 'damage')) * (1 + M.damage), rm = (1 + Progress.bonus(this.type, 'range')) * (1 + M.range), am = (1 + Progress.bonus(this.type, 'aoe')) * (1 + M.aoe);
+      return { damage: lv.damage ? [lv.damage[0] * dm, lv.damage[1] * dm] : null, range: (lv.range || 0) * rm, rate: (lv.rate || 1) / (1 + M.rate), aoe: (lv.aoe || 0) * am, special: lv.special,
+        crit: M.crit, poison: M.poison, root: M.root, slow: M.slow, pen: M.pen, burn: M.burn, stun: M.stun };
     }
     get nextCost() { return this.level >= 4 ? null : this.def.cost[this.level]; }
     get refund() { return Math.floor(this.spent * CONFIG.match.sellRefund); }
@@ -40,7 +42,8 @@
     }
     update(dt) {
       this.t += dt; this.born += dt; if (this.pulse > 0) this.pulse -= dt; if (this.anim.door > 0) this.anim.door -= dt;
-      if (!this.landed) { this.drop += dt; if (this.drop < FALL) return; this.land(); }
+      if (this.drop < FALL + SQUASH) this.drop += dt;
+      if (!this.landed) { if (this.drop < FALL) return; this.land(); }
       if (this.def.kind === 'barracks') return;
       const A = this.anim, st = this.stats;
       if (A.a >= 0) { const prev = A.a; A.a += dt / (this.type === 'artillery' ? 0.5 : this.type === 'orc' ? 0.45 : 0.36); if (prev < 0.5 && A.a >= 0.5) this.release(); if (A.a >= 1) A.a = -1; }
@@ -62,8 +65,8 @@
     }
     /** Elf bắn 1 mũi tên; 15% chí mạng: mũi tên phát sáng, sát thương gấp đôi */
     shootArrow(t, m) {
-      const st = this.stats, crit = Math.random() < 0.15;
-      Combat.fire('arrow', m.x, m.y, t, { damage: crit ? [st.damage[0] * 2, st.damage[1] * 2] : st.damage, type: 'physical', pierce: crit });
+      const st = this.stats, crit = Math.random() < 0.15 + st.crit;
+      Combat.fire('arrow', m.x, m.y, t, { damage: crit ? [st.damage[0] * 2, st.damage[1] * 2] : st.damage, type: 'physical', pierce: crit, poison: st.poison, root: st.root });
       if (crit) Effects.comic(t.x, t.y - 46, 'CHÍ MẠNG!', '#ffe14a');
       AudioSys.play('arrow');
     }
@@ -83,13 +86,13 @@
         Effects.burst(tx, ty, '#c8b890', 6, 90, 0.35, 5, 180); Effects.shake(2.5, 0.12); AudioSys.play('sword');
       } else if (this.type === 'mage') {
         this.shots++;
-        Combat.fire('bolt', m.x, m.y, t, { damage: st.damage, type: 'magic', aoe: st.aoe }); AudioSys.play('magic');
+        Combat.fire('bolt', m.x, m.y, t, { damage: st.damage, type: 'magic', aoe: st.aoe, pen: st.pen, slow: st.slow }); AudioSys.play('magic');
         if (st.special === 'meteor' && this.shots % 5 === 0) { // gọi mưa thiên thạch
           for (let i = 0; i < 3; i++) { const a = Math.random() * 6.28, r = i ? 22 + Math.random() * 30 : 0; Spells.rocks.push({ x: t.x + Math.cos(a) * r, y: t.y + Math.sin(a) * r * 0.7, t: 0, delay: 0.2 + i * 0.2, fall: 0.5, dmg: [st.damage[0] * 1.2, st.damage[1] * 1.2], r: 50 }); }
           Effects.comic(t.x, t.y - 60, 'THIÊN THẠCH!', '#ff9a3a', true);
         }
       } else {
-        Combat.fire('bomb', m.x, m.y, t, { damage: st.damage, aoe: st.aoe, cluster: st.special === 'cluster' }); AudioSys.play('cannon');
+        Combat.fire('bomb', m.x, m.y, t, { damage: st.damage, aoe: st.aoe, cluster: st.special === 'cluster', burn: st.burn, stun: st.stun }); AudioSys.play('cannon');
         Effects.burst(m.x, m.y, '#e8e0d8', 8, 80, 0.5, 7, -30);
       }
     }
@@ -116,13 +119,25 @@
         Painter.tower(ctx, this.type, this.level, this.x, this.y, TS * k, this.t, this.anim); ctx.restore(); return;
       }
       Painter.tower(ctx, this.type, this.level, this.x, this.y, TS * k, this.t, this.anim);
+      this.drawItems(ctx);
+    }
+    /** đồ đang gắn: huy hiệu nhỏ đúng vị trí lắp trên thân trụ (đỉnh, tầng trên, mặt trước, 2 cánh, nền) */
+    topY() { const TP = window.Towers3D && Towers3D.TOPS && Towers3D.TOPS[this.type]; return -(TP ? TP[this.level] : this.type === 'barracks' ? 34 + this.level * 7 : 70) * TS; }
+    drawItems(ctx) {
+      const M = Items.mods(this.type); if (!M.list.some(Boolean)) return;
+      const top = this.topY(), now = performance.now() / 1000;
+      CONFIG.items.slots.forEach((S, i) => {
+        const it = M.list[i]; if (!it) return;
+        const y = S.at === 'top' ? top + S.y : S.at === 'mid' ? top * 0.42 + S.y : S.y;
+        Items.drawBadge(ctx, it, this.x + S.x * (S.at === 'mid' ? 0.95 : 1), this.y + y, 6.5, now);
+      });
     }
     drawOverlay(ctx) {
       if (this.def.kind !== 'barracks') return;
       let i = 0;
       for (const u of Units.list) {
         if (u.tower !== this || u.state !== 'dead') continue;
-        const p = 1 - u.respawnT / this.def.respawn, x = this.x - 22 + i * 22, y = this.y + 22;
+        const p = 1 - u.respawnT / (u.respawnMax || this.def.respawn), x = this.x - 22 + i * 22, y = this.y + 22;
         ctx.fillStyle = 'rgba(29,18,32,0.85)'; ctx.beginPath(); ctx.arc(x, y, 9, 0, 7); ctx.fill();
         ctx.strokeStyle = '#ffe58a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 6.5, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); ctx.stroke();
         i++;

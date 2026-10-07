@@ -215,11 +215,12 @@
       this.refresh(T, true); this.placePosts(T);
     },
     refresh(T, full) {
-      const lv = T.def.levels[T.level - 1], hb = 1 + Progress.bonus(T.type, 'hp'), db = 1 + Progress.bonus(T.type, 'damage');
+      const lv = T.def.levels[T.level - 1], M = Items.mods(T.type), hb = (1 + Progress.bonus(T.type, 'hp')) * (1 + M.hp), db = (1 + Progress.bonus(T.type, 'damage')) * (1 + M.damage);
+      const sh = M.list[1], art = sh && ArtChars[lv.art + 's' + sh.r] ? lv.art + 's' + sh.r : lv.art; // có Khiên gắn trụ → lính cầm khiên (màu theo bậc)
       for (const u of this.list) if (u.tower === T) {
         const r = full || !u.maxHp ? 1 : u.hp / u.maxHp;
         u.maxHp = Math.round(lv.hp * hb); u.hp = Math.max(1, Math.round(u.maxHp * r)); u.damage = [lv.damage[0] * db, lv.damage[1] * db];
-        u.armor = lv.armor; u.rate = lv.rate || 1; u.art = lv.art; u.special = lv.special; u.scale = 12 / ArtChars[lv.art].dr * 1.05 * (CONFIG.unitScale || 1); u.regen = u.maxHp * 0.08;
+        u.armor = Math.min(0.85, lv.armor + M.armor); u.rate = (lv.rate || 1) / (1 + M.rate); u.block = M.block; u.art = art; u.special = lv.special; u.scale = 12 / ArtChars[art].dr * 1.05 * (CONFIG.unitScale || 1); u.regen = u.maxHp * 0.08;
       }
     },
     remove(T) { for (let i = this.list.length - 1; i >= 0; i--) if (this.list[i].tower === T) this.list.splice(i, 1); },
@@ -237,7 +238,7 @@
     kill(u) {
       if (!u.active) return;
       u.state = 'dead'; u.target = null; u.tUid = -1; u.atk = -1;
-      u.respawnT = u.isHero ? u.heroDef.respawn : u.tower ? u.tower.def.respawn : 0;
+      u.respawnT = u.respawnMax = u.isHero ? u.heroDef.respawn : u.tower ? u.tower.def.respawn * (1 - Math.min(0.6, Items.mods(u.tower.type).respawn)) : 0;
       Effects.corpse(u.art, u.x, u.y + u.radius * 0.5, u.scale, u.face);
       Effects.death(u.x, u.y - 14, u.isHero ? '#f2c14e' : '#9aa3b2');
       AudioSys.play('death');

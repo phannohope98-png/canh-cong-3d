@@ -164,6 +164,69 @@ window.CONFIG = {
     voidLord:  { name: 'Chúa Tể Hỗn Mang', hp: 9500, speed: 20, armor: 0.35, mres: 0.35, damage: [90, 130], rate: 2.2, reward: 900, lives: 20, radius: 32, boss: true, slam: { every: 7, radius: 125, damage: 80 }, desc: 'Boss cuối. Xé toạc không gian, choáng cả đội hình.' }
   },
 
+  /* ---------------- VẬT PHẨM GẮN TRỤ ----------------
+     Quái chết có tỉ lệ rơi đồ (boss chắc chắn rơi đồ xịn). Mỗi trụ có 6 VỊ TRÍ LẮP cố định;
+     QUY TẮC: mỗi vị trí của 1 trụ chỉ nhận ĐÚNG 1 loại đồ của ĐÚNG trụ đó (khiên → tầng trên trụ Người…).
+     Đồ gắn vào trụ áp dụng cho MỌI trụ cùng loại trong trận. Chỉ số = base × hệ số bậc (rarities[].k).
+     stat: damage/range/rate/aoe/hp (+%), armor (+giáp), block (giảm sát thương lính nhận), respawn (hồi sinh nhanh),
+           crit (tỉ lệ chí mạng), poison/burn (sát thương theo thời gian, % đòn đánh), slow (làm chậm), pen (xuyên kháng phép), stun/root (tỉ lệ choáng) */
+  items: {
+    rarities: [
+      { name: 'Tệ', suffix: 'Cũ Nát', col: '#9c9c9c', k: 0.5, salvage: 4 },
+      { name: 'Bình thường', suffix: 'Thường', col: '#e8e4d8', k: 1, salvage: 10 },
+      { name: 'Cao', suffix: 'Tinh Xảo', col: '#4aa8ff', k: 1.7, salvage: 26 },
+      { name: 'Cao cấp', suffix: 'Quý Hiếm', col: '#c070ff', k: 2.6, salvage: 64 },
+      { name: 'Huyền thoại', suffix: 'Huyền Thoại', col: '#ffa024', k: 4, salvage: 160 }
+    ],
+    // 6 vị trí lắp trên thân trụ (vẽ đồ đúng chỗ): x lệch tâm, y tính từ đỉnh sàn trụ (top) hoặc từ chân (base)
+    slots: [
+      { name: 'Đỉnh tháp', at: 'top', x: 0, y: -46 },
+      { name: 'Tầng trên', at: 'top', x: 0, y: -4 },
+      { name: 'Mặt trước', at: 'mid', x: 0, y: 0 },
+      { name: 'Cánh trái', at: 'mid', x: -34, y: -10 },
+      { name: 'Cánh phải', at: 'mid', x: 34, y: -10 },
+      { name: 'Nền móng', at: 'base', x: 0, y: 6 }
+    ],
+    gear: {
+      barracks: [
+        { name: 'Cờ Chiến', icon: 'flag', stat: 'respawn', base: 0.07, text: 'lính hồi sinh nhanh hơn' },
+        { name: 'Khiên', icon: 'shield', stat: 'block', base: 0.05, text: 'giảm sát thương lính phải chịu (lính cầm khiên)' },
+        { name: 'Kiếm', icon: 'sword', stat: 'damage', base: 0.07, text: 'sát thương lính' },
+        { name: 'Mũ Giáp', icon: 'helm', stat: 'hp', base: 0.08, text: 'máu lính' },
+        { name: 'Giáp Ngực', icon: 'armor', stat: 'armor', base: 0.03, text: 'giáp lính' },
+        { name: 'Trống Trận', icon: 'drum', stat: 'rate', base: 0.04, text: 'tốc độ đánh của lính' }
+      ],
+      archer: [
+        { name: 'Ngọc Gió', icon: 'gem', stat: 'range', base: 0.03, text: 'tầm bắn' },
+        { name: 'Cung Thần', icon: 'bow', stat: 'damage', base: 0.07, text: 'sát thương' },
+        { name: 'Ống Tên', icon: 'quiver', stat: 'rate', base: 0.04, text: 'tốc độ bắn' },
+        { name: 'Lông Ưng', icon: 'feather', stat: 'crit', base: 0.03, text: 'tỉ lệ chí mạng' },
+        { name: 'Lọ Độc', icon: 'potion', stat: 'poison', base: 0.08, text: 'tên tẩm độc (sát thương 3 giây, % đòn bắn)' },
+        { name: 'Rễ Cổ Thụ', icon: 'tree', stat: 'root', base: 0.025, text: 'tỉ lệ trói chân quái 0,8 giây' }
+      ],
+      mage: [
+        { name: 'Pha Lê', icon: 'crystal', stat: 'damage', base: 0.07, text: 'sát thương phép' },
+        { name: 'Sách Phép', icon: 'book', stat: 'rate', base: 0.04, text: 'tốc độ niệm phép' },
+        { name: 'Gậy Phép', icon: 'staff', stat: 'aoe', base: 0.05, text: 'vùng nổ phép' },
+        { name: 'Bùa Băng', icon: 'frost', stat: 'slow', base: 0.05, text: 'làm chậm quái trúng phép 1,5 giây' },
+        { name: 'Nhẫn Hư Không', icon: 'ring', stat: 'pen', base: 0.04, text: 'xuyên kháng phép' },
+        { name: 'Vòng Rune', icon: 'rune', stat: 'range', base: 0.03, text: 'tầm phép' }
+      ],
+      artillery: [
+        { name: 'Ống Ngắm', icon: 'scope', stat: 'range', base: 0.03, text: 'tầm bắn' },
+        { name: 'Nòng Pháo', icon: 'cannon', stat: 'damage', base: 0.07, text: 'sát thương đạn' },
+        { name: 'Thùng Thuốc Súng', icon: 'bomb', stat: 'aoe', base: 0.05, text: 'vùng nổ' },
+        { name: 'Bánh Răng', icon: 'gear', stat: 'rate', base: 0.04, text: 'tốc độ nạp đạn' },
+        { name: 'Đạn Lửa', icon: 'fire', stat: 'burn', base: 0.08, text: 'đốt cháy quái (sát thương 3 giây, % phát nổ)' },
+        { name: 'Bệ Thép', icon: 'anvil', stat: 'stun', base: 0.025, text: 'tỉ lệ làm choáng quái 0,8 giây' }
+      ]
+    },
+    dropBase: 0.035,     // tỉ lệ rơi đồ của quái thường
+    dropPerLife: 0.03,   // + mỗi mạng quái lấy đi (quái to rơi đồ nhiều hơn)
+    maxPerMatch: 8,      // tối đa đồ rơi / trận (không tính boss)
+    bag: 80              // sức chứa túi đồ (đầy thì tự phân rã đồ tệ nhất lấy Xu)
+  },
+
   /* ---------------- NÂNG CẤP BẰNG SAO ---------------- */
   upgrades: {
     barracks:  { name: 'Người',     icon: 'shield', cost: [1, 1, 2, 2], perLevel: { hp: 0.1, damage: 0.06 },   text: '+10% máu kiếm sĩ, +6% sát thương' },

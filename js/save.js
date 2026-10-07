@@ -8,8 +8,10 @@
   function defaults() {
     const upgrades = {}; Object.keys(CONFIG.upgrades).forEach(k => { upgrades[k] = 0; });
     const heroXp = {}, equip = {}; Object.keys(CONFIG.heroes).forEach(k => { heroXp[k] = 0; equip[k] = { weapon: 0, gloves: 0, armor: 0, boots: 0 }; });
+    const loadout = {}; ['barracks', 'archer', 'mage', 'artillery'].forEach(t => { loadout[t] = [0, 0, 0, 0, 0, 0]; });
     return { stars: {}, unlocked: 1, upgrades, heroXp, seen: {}, settings: { music: true, sound: true, shake: true, art3d: true },
-      coins: CONFIG.startCoins, heroes: { aldric: true }, hero: 'aldric', gear: { weapon: 0, gloves: 0, armor: 0, boots: 0 }, equip };
+      coins: CONFIG.startCoins, heroes: { aldric: true }, hero: 'aldric', gear: { weapon: 0, gloves: 0, armor: 0, boots: 0 }, equip,
+      items: [], itemN: 0, loadout, mapv: 2 };
   }
   const Save = {
     data: null,
@@ -22,6 +24,13 @@
         for (const h in (p.equip || {})) if (d.equip[h]) Object.assign(d.equip[h], p.equip[h]);
         d.unlocked = p.unlocked || 1; d.coins = typeof p.coins === 'number' ? p.coins : d.coins;
         d.hero = d.heroes[p.hero] ? p.hero : 'aldric';
+        if (Array.isArray(p.items)) d.items = p.items.filter(i => i && CONFIG.items.gear[i.t] && i.s >= 0 && i.s < 6 && i.r >= 0 && i.r < 5);
+        d.itemN = Math.max(p.itemN || 0, ...d.items.map(i => i.u), 0);
+        for (const t in d.loadout) if (p.loadout && Array.isArray(p.loadout[t])) d.loadout[t] = d.loadout[t].map((_, s) => { const u = p.loadout[t][s]; return d.items.some(i => i.u === u && i.t === t && i.s === s) ? u : 0; });
+        if (p.mapv !== 2) { // bản cũ 12 màn (2 chương) → chiến dịch mới 6 vùng × 6 map: màn chương 1 = map 1, chương 2 = map 3 của vùng
+          const st = {}; for (const k in d.stars) { const i = +k, ns = i < 6 ? i * 6 : (i - 6) * 6 + 2; if (CONFIG.levels[ns]) st[ns] = d.stars[k]; }
+          d.stars = st; let u = 0; while (d.stars[u]) u++; d.unlocked = Math.min(CONFIG.levels.length, u + 1);
+        }
       }
       this.data = d; return d;
     },

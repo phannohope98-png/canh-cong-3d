@@ -7,9 +7,9 @@
   const Combat = {
     shots: [], pool: [],
     roll(dmg) { return Array.isArray(dmg) ? rand(dmg[0], dmg[1]) : dmg; },
-    hitEnemy(e, dmg, type) {
+    hitEnemy(e, dmg, type, pen) {
       if (!e.alive) return 0;
-      const red = type === 'magic' ? e.mres : type === 'true' ? 0 : e.armor;
+      const red = type === 'magic' ? Math.max(0, e.mres - (pen || 0)) : type === 'true' ? 0 : e.armor;
       const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - red)));
       e.hp -= amt; e.flash = 0.1;
       if (e.hp <= 0) Game.killEnemy(e);
@@ -17,7 +17,7 @@
     },
     hitUnit(u, dmg) {
       if (!u.active) return;
-      const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - u.armor) * (u.shieldT > 0 ? 0.5 : 1)));
+      const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - u.armor) * (u.shieldT > 0 ? 0.5 : 1) * (1 - (u.block || 0))));
       u.hp -= amt; u.flash = 0.1; u.hitT = 0.2;
       if (u.hp <= 0) Units.kill(u);
     },
@@ -25,8 +25,17 @@
       for (const e of Enemies.list) {
         if (!e.alive || (e.flying && !(opts && opts.air))) continue;
         const d = Math.hypot(e.x - x, (e.y - y) * 1.25);
-        if (d <= r + e.radius) this.hitEnemy(e, Array.isArray(dmg) ? [dmg[0] * (d < r * 0.5 ? 1 : 0.6), dmg[1] * (d < r * 0.5 ? 1 : 0.6)] : dmg, type);
+        if (d <= r + e.radius) { const amt = this.hitEnemy(e, Array.isArray(dmg) ? [dmg[0] * (d < r * 0.5 ? 1 : 0.6), dmg[1] * (d < r * 0.5 ? 1 : 0.6)] : dmg, type, opts && opts.pen); if (opts) this.onHit(e, amt, opts); }
       }
+    },
+    /** hiệu ứng phụ từ vật phẩm trụ: độc / cháy (sát thương theo thời gian), làm chậm, choáng, trói chân */
+    onHit(e, amt, o) {
+      if (!e.alive || !amt) return;
+      if (o.poison) Enemies.dot(e, 'poison', amt * o.poison / 3, 3);
+      if (o.burn) Enemies.dot(e, 'burn', amt * o.burn / 3, 3);
+      if (o.slow) { e.slowT = Math.max(e.slowT || 0, 1.5); e.slowMul = Math.min(e.slowMul || 1, 1 - o.slow * (e.boss ? 0.5 : 1)); }
+      const cc = (o.stun || 0) + (o.root || 0);
+      if (cc && !e.boss && Math.random() < cc) { e.stunT = Math.max(e.stunT || 0, 0.8); if (o.root) Effects.ring(e.x, e.y, 4, 22, 0.4, '#6ad04a', 3); }
     },
     clear() { while (this.shots.length) this.pool.push(this.shots.pop()); },
 
@@ -65,11 +74,11 @@
     impact(p, alive) {
       const o = p.o;
       if (p.kind === 'bomb') {
-        this.splash(p.tx, p.ty, o.aoe, o.damage, 'physical');
+        this.splash(p.tx, p.ty, o.aoe, o.damage, 'physical', (o.burn || o.stun) ? o : null);
         Effects.explosion(p.tx, p.ty, o.aoe); Effects.shake(3, 0.15); AudioSys.play('explode'); Effects.comic(p.tx, p.ty - 46, Math.random() < 0.5 ? 'BOOM!' : 'KABOOM!', '#ff9a2a');
         if (o.cluster) for (let k = 0; k < 3; k++) {
           const a = Math.random() * Math.PI * 2, r = 40 + Math.random() * 30, x = p.tx + Math.cos(a) * r, y = p.ty + Math.sin(a) * r * 0.7;
-          setTimeout(() => { if (Game.state !== 'playing') return; this.splash(x, y, o.aoe * 0.55, [o.damage[0] * 0.4, o.damage[1] * 0.4], 'physical'); Effects.explosion(x, y, o.aoe * 0.55); }, 140 + k * 110);
+          setTimeout(() => { if (Game.state !== 'playing') return; this.splash(x, y, o.aoe * 0.55, [o.damage[0] * 0.4, o.damage[1] * 0.4], 'physical', o.burn ? { burn: o.burn } : null); Effects.explosion(x, y, o.aoe * 0.55); }, 140 + k * 110);
         }
         return;
       }
@@ -77,12 +86,13 @@
       if (!alive) return;
       const e = p.target;
       if (p.kind === 'bolt' && o.aoe) { // quả cầu phép nổ thành vòng phép dưới chân quái
-        this.splash(e.x, e.y, o.aoe, o.damage, 'magic', { air: true });
+        this.splash(e.x, e.y, o.aoe, o.damage, 'magic', { air: true, pen: o.pen, slow: o.slow });
         Effects.magicCircle(e.x, e.y, o.aoe); Effects.burst(p.tx, p.ty, '#c8b8ff', 10, 130, 0.4, 4);
         if (Math.random() < 0.25) Effects.comic(e.x, e.y - 50, 'ZAP!', '#b89aff');
         return;
       }
-      this.hitEnemy(e, o.damage, o.type);
+      const amt = this.hitEnemy(e, o.damage, o.type, o.pen);
+      if (o.poison || o.root) this.onHit(e, amt, o);
       if (p.kind === 'bolt') {
         Effects.flash(p.tx, p.ty, 26, '#9fd8ff'); Effects.burst(p.tx, p.ty, '#c8e8ff', 8, 120, 0.35, 4);
         if (o.chain) { // nảy sang quái gần

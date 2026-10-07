@@ -24,7 +24,7 @@
       UI.showScreen('screen-game');
       this.map = Level.build(i);
       const L = this.map.def;
-      Effects.clear(); Combat.clear(); Enemies.clear(); Units.clear();
+      Effects.clear(); Combat.clear(); Enemies.clear(); Units.clear(); Loot.reset(); Items.dirty();
       Towers.init(this.map); Waves.init(L, i); Spells.reset();
       this.gold = L.gold; this.lives = CONFIG.match.lives; this.kills = 0; this.xp = 0;
       this.sel = null; this.heroSelected = false; this.rallyFor = null; this.speed = 1; this.time = 0; this.paused = false;
@@ -39,7 +39,7 @@
       this.state = 'playing';
       UI.setupBattle();
       AudioSys.playMusic('battle_' + L.theme); if (AudioSys.playAmbient) AudioSys.playAmbient(L.theme);
-      UI.story(L.name, L.story);
+      UI.story(L.name + (L.sub ? ' · ' + L.sub : ''), L.story);
       if (window.Art3D && Art3D.warm) setTimeout(() => { // dựng sẵn khung 3D của quái trong màn + anh hùng
         const keys = new Set(); L.waves.join(',').split(',').forEach(s => keys.add(s.split(':')[0].trim()));
         if (keys.has('darkKnight')) { keys.add('darkKnight2'); keys.add('shade'); } if (keys.has('darkLord')) { keys.add('darkLord3'); keys.add('goblin'); keys.add('orc'); }
@@ -95,7 +95,7 @@
     },
     update(dt) {
       this.time += dt;
-      Waves.update(dt); Spells.update(dt); Towers.update(dt); Units.update(dt); Enemies.update(dt); Combat.update(dt); Effects.update(dt);
+      Waves.update(dt); Spells.update(dt); Towers.update(dt); Units.update(dt); Enemies.update(dt); Combat.update(dt); Effects.update(dt); Loot.update(dt);
     },
 
     /* ================= VẼ ================= */
@@ -121,7 +121,7 @@
       for (const e of Enemies.list) L.push(e);
       L.sort((a, b) => a.drawY - b.drawY);
       for (const o of L) o.draw(c, t);
-      Combat.draw(c); Spells.draw(c); Effects.draw(c);
+      Combat.draw(c); Spells.draw(c); Effects.draw(c); Loot.draw(c, now);
       if (window.Lights) Lights.draw(c, now);
       this.drawAtmosphere(c, now);
       for (const e of Enemies.list) e.drawBar(c);
@@ -177,6 +177,7 @@
       Effects.death(e.x, e.y - e.height * 0.4, e.boss ? '#c0303a' : '#a89a8a');
       Effects.coin(e.x, e.y - e.height, e.reward);
       AudioSys.play('death');
+      Items.onKill(e);
       if (e.boss) { Effects.explosion(e.x, e.y, 140); Effects.shake(14, 0.7); }
     },
     enemyEscaped(e) {
@@ -210,14 +211,14 @@
       const newStars = Progress.recordWin(this.levelIndex, stars);
       const hid = Progress.selectedHero(), lv0 = Progress.heroLevel(hid); Progress.addHeroXp(hid, this.xp); const coins = Math.floor(this.xp * 0.3 + 50 + stars * 20); Progress.addCoins(coins); const lvUp = Progress.heroLevel(hid) > lv0;
       Effects.confetti(Camera.x, Camera.y - 200, 500); AudioSys.play('victory');
-      setTimeout(() => UI.showResult({ win: true, stars, newStars, xp: this.xp, lvUp, coins }), 1100);
+      setTimeout(() => UI.showResult({ win: true, stars, newStars, xp: this.xp, lvUp, coins, loot: Loot.found.slice() }), 1100);
     },
     defeat() {
       if (this.state !== 'playing') return;
       this.state = 'ended';
       const xp = Math.floor(this.xp * 0.5), coins = Math.floor(this.xp * 0.25); Progress.addHeroXp(Progress.selectedHero(), xp); Progress.addCoins(coins);
       AudioSys.play('defeat'); Effects.shake(14, 0.8);
-      setTimeout(() => UI.showResult({ win: false, xp, coins }), 1000);
+      setTimeout(() => UI.showResult({ win: false, xp, coins, loot: Loot.found.slice() }), 1000);
     },
 
     /* ================= CẢM ỨNG ================= */

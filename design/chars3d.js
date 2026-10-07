@@ -251,7 +251,7 @@ float surf(){
   const RK = { soldier: {}, elf: {}, mage: {}, aldric: {}, lyra: {}, selene: {}, dwarf: { leg: 1.7, torso: 1.2, head: 0.55, arm: 1.35 }, borin: { leg: 1.7, torso: 1.2, head: 0.55, arm: 1.35 },
     goblin: { leg: 1.6, torso: 1.2, head: 0.58, arm: 1.35 }, orc: { head: 0.5 }, orcArcher: {}, skeleton: {}, deathKnight: { head: 0.5 }, bandit: {}, mummy: {}, voidWalker: { head: 0.5 },
     blackOrc: { head: 0.5 }, darkKnight: { head: 0.55, leg: 1.8, torso: 1.25 }, darkLord: { head: 0.55, leg: 1.7, torso: 1.2 } };
-  function realK(id) { if (!REAL.v || !RK[id]) return null; return Object.assign({ leg: 2.2, torso: 1.38, head: 0.5, arm: 1.55 }, RK[id]); }
+  function realK(id) { if (/^soldierS/.test(id)) id = 'soldier'; if (!REAL.v || !RK[id]) return null; return Object.assign({ leg: 2.2, torso: 1.38, head: 0.5, arm: 1.55 }, RK[id]); }
   function realBody(o) {
     const k = REAL.cur; if (!k || o.real) return;
     o.legL = o.legL * k.leg + 0.04 * (k.leg - 1); o.legR *= 1.12; o.armL *= k.arm; o.armR *= 1.1; o.real = k;
@@ -409,7 +409,7 @@ float surf(){
     if (o.weapon === 'greatsword') sw = WEAP.sword(0.78, 0.15, '#e8f4ff', GOLD, { core: o.wcol || '#9ae0ff', halo: o.wcol || '#9ae0ff', grip: '#3a2a4a' });
     else sw = WEAP.sword(0.7, 0.13, t >= 3 ? '#f0f4fa' : '#d4dae4', t >= 3 ? GOLD : '#8a8e98', { glow: t === 4 ? 0.25 : 0, halo: t === 4 ? '#ffe6a0' : null });
     add(n.handR, sw, 0, 0, 0, 1.15);
-    if (o.shield !== false) { n.shield = WEAP.shield(o.shieldCol || '#8a1e24', t, t >= 3 ? GOLD : '#d8dce6'); add(n.handL, n.shield, 0.07, 0.14, 0.05, 0, 0.45, 0); }
+    if (o.shield !== false) { n.shield = WEAP.shield(o.shieldCol || '#8a1e24', o.shieldStyle || t, o.shieldRim || (t >= 3 ? GOLD : '#d8dce6')); add(n.handL, n.shield, 0.07, 0.14, 0.05, 0, 0.45, 0); if (o.shieldGlow) glow(n.shield, 0, 0, 0.06, 0.55, '#ffd060', 0.45); }
     return { rig, anim: { kind: 'melee', shield: o.shield !== false, skill: o.shield !== false ? 'block' : 'holy' } };
   }
 
@@ -1231,7 +1231,10 @@ float surf(){
     { id: 'soldier', name: 'Kiếm Sĩ Con Người', group: 'Trụ', role: 'Trụ Người · gọi 2 kiếm sĩ chặn đường', tiers: 4, tierName: 'Cấp trụ',
       desc: 'Tóc đen dựng gai, giáp bạc (cấp 3 viền vàng, cấp 4 vai vàng + vương miện), áo choàng đỏ sẫm, kiếm lớn + khiên đỏ thập tự vàng. Chém chéo vai; kỹ năng giơ khiên tạo lá chắn.',
       palette: pal(['#1e1a22', 'Tóc'], ['#dde2ea', 'Giáp bạc'], ['#6a1218', 'Áo choàng'], ['#8a1e24', 'Khiên'], [GOLD, 'Viền vàng']),
-      make: t => SOLDIER(t) },
+      make: t => SOLDIER(t, { shield: false }) },
+    // lính cầm khiên khi trụ Người gắn vật phẩm Khiên – màu khiên theo bậc đồ (Tệ → Huyền thoại)
+    ...[['#7a5a3a', '#5a5a5a', 1], ['#8a1e24', '#d8dce6', 1], ['#2a5ab8', '#dde2ea', 2], ['#6a2ab0', GOLD, 2], ['#e8a020', '#fff0a0', 2]].map(([c, rim, st], r) => ({ id: 'soldierS' + r, hidden: true, name: 'Kiếm Sĩ + Khiên (bậc ' + (r + 1) + ')', group: 'Trụ', role: 'Lính trụ Người cầm khiên', tiers: 4, tierName: 'Cấp trụ', palette: pal([c, 'Khiên'], [rim, 'Viền']),
+      make: t => SOLDIER(t, { shieldCol: c, shieldRim: rim, shieldStyle: st, shieldGlow: r >= 4 }) })),
     { id: 'elf', name: 'Cung Thủ Elf', group: 'Trụ', role: 'Trụ Elf · bắn rất nhanh, chí mạng', tiers: 4, tierName: 'Cấp trụ',
       desc: 'Mảnh mai, tóc vàng dài (cấp 3 bạch kim + vòng vàng ngọc lục bảo), tai nhọn dài, áo xanh lá, ống tên sau lưng, cung vàng cong. Cấp 4 mũi tên phát sáng; kỹ năng bắn 3 mũi liên tiếp.',
       palette: pal(['#f5d878', 'Tóc'], ['#3fa05a', 'Áo'], ['#2f7a40', 'Áo choàng'], ['#c89a3a', 'Cung'], ['#2aa86a', 'Mắt']),

@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=krv28">
+  <link rel="stylesheet" href="style.css?v=krv29">
 </head>
 <body>
 <div id="app">
@@ -31,6 +31,7 @@
       <div class="menu-row">
         <button class="rbtn lg" data-action="open" data-target="screen-heroes" data-icon="crown"><small>Anh hùng</small></button>
         <button class="rbtn lg" data-action="open" data-target="screen-upgrades" data-icon="up"><small>Nâng cấp</small></button>
+        <button class="rbtn lg" data-action="open" data-target="screen-items" data-icon="chest"><small>Kho đồ</small></button>
         <button class="rbtn lg" data-action="open" data-target="screen-codex" data-icon="book"><small>Bách khoa</small></button>
         <button class="rbtn lg" data-action="open" data-target="screen-settings" data-icon="gear"><small>Cài đặt</small></button>
       </div>
@@ -53,6 +54,12 @@
   <section id="screen-upgrades" class="screen">
     <div class="topbar"><button class="rbtn sm" data-action="back" data-icon="back"></button><h2>Nâng Cấp Trụ</h2><span class="pill"><i class="pi star" data-icon="star"></i><b id="free-stars">0</b></span></div>
     <div class="scroll grid-scroll" id="upgrades-list"></div>
+  </section>
+
+  <!-- ===== KHO ĐỒ: vật phẩm gắn trụ ===== -->
+  <section id="screen-items" class="screen">
+    <div class="topbar"><button class="rbtn sm" data-action="back" data-icon="back"></button><h2>Kho Đồ Trụ</h2><span class="pill"><i class="pi coin" data-icon="coin"></i><b class="coin-count">0</b></span></div>
+    <div class="items-wrap"><div id="items-tower" class="scroll"></div><div id="items-bag" class="scroll"></div></div>
   </section>
 
   <!-- ===== BÁCH KHOA ===== -->
@@ -106,41 +113,43 @@
   <div id="rotate"><div><svg viewBox="0 0 64 64" width="84" height="84"><rect x="20" y="8" width="24" height="46" rx="4" fill="none" stroke="#ffd23a" stroke-width="4"/><path d="M50 22c6 3 9 8 8 14M54 36l4 3 3-5" fill="none" stroke="#ffd23a" stroke-width="4" stroke-linecap="round"/></svg><p>Hãy xoay ngang điện thoại để chơi</p><small>Game được thiết kế cho màn hình ngang</small></div></div>
 </div>
 
-<script src="js/config.js?v=krv28"></script>
-<script src="js/maps-img.js?v=krv28"></script>
-<script src="js/save.js?v=krv28"></script>
-<script src="js/audio.js?v=krv28"></script>
-<script src="js/icons.js?v=krv28"></script>
-<script src="js/art-kit.js?v=krv28"></script>
-<script src="js/art-chars.js?v=krv28"></script>
-<script src="js/art-towers.js?v=krv28"></script>
-<script src="js/art.js?v=krv28"></script>
-<script src="js/art-img.js?v=krv28"></script>
-<script src="js/chibi.js?v=krv28"></script>
+<script src="js/config.js?v=krv29"></script>
+<script src="js/maps-img.js?v=krv29"></script>
+<script src="js/campaign.js?v=krv29"></script>
+<script src="js/save.js?v=krv29"></script>
+<script src="js/audio.js?v=krv29"></script>
+<script src="js/icons.js?v=krv29"></script>
+<script src="js/art-kit.js?v=krv29"></script>
+<script src="js/art-chars.js?v=krv29"></script>
+<script src="js/art-towers.js?v=krv29"></script>
+<script src="js/art.js?v=krv29"></script>
+<script src="js/art-img.js?v=krv29"></script>
+<script src="js/chibi.js?v=krv29"></script>
 <script src="design/vendor/three.min.js"></script>
 <script src="design/vendor/BufferGeometryUtils.js"></script>
-<script src="design/chars3d.js?v=krv28"></script>
-<script src="design/towers3d.js?v=krv28"></script>
-<script src="js/art3d.js?v=krv28"></script>
-<script src="js/effects.js?v=krv28"></script>
-<script src="js/level.js?v=krv28"></script>
-<script src="js/mapart.js?v=krv28"></script>
-<script src="design/props3d.js?v=krv28"></script>
-<script src="js/map3d.js?v=krv28"></script>
-<script src="js/fx3d.js?v=krv28"></script>
-<script src="js/terrain3d.js?v=krv28"></script>
-<script src="js/water.js?v=krv28"></script>
-<script src="js/icons3d.js?v=krv28"></script>
-<script src="js/lights.js?v=krv28"></script>
-<script src="js/camera.js?v=krv28"></script>
-<script src="js/combat.js?v=krv28"></script>
-<script src="js/enemies.js?v=krv28"></script>
-<script src="js/units.js?v=krv28"></script>
-<script src="js/towers.js?v=krv28"></script>
-<script src="js/spells.js?v=krv28"></script>
-<script src="js/waves.js?v=krv28"></script>
-<script src="js/game.js?v=krv28"></script>
-<script src="js/ui.js?v=krv28"></script>
-<script src="js/main.js?v=krv28"></script>
+<script src="design/chars3d.js?v=krv29"></script>
+<script src="design/towers3d.js?v=krv29"></script>
+<script src="js/art3d.js?v=krv29"></script>
+<script src="js/effects.js?v=krv29"></script>
+<script src="js/level.js?v=krv29"></script>
+<script src="js/mapart.js?v=krv29"></script>
+<script src="design/props3d.js?v=krv29"></script>
+<script src="js/map3d.js?v=krv29"></script>
+<script src="js/fx3d.js?v=krv29"></script>
+<script src="js/terrain3d.js?v=krv29"></script>
+<script src="js/water.js?v=krv29"></script>
+<script src="js/icons3d.js?v=krv29"></script>
+<script src="js/lights.js?v=krv29"></script>
+<script src="js/camera.js?v=krv29"></script>
+<script src="js/items.js?v=krv29"></script>
+<script src="js/combat.js?v=krv29"></script>
+<script src="js/enemies.js?v=krv29"></script>
+<script src="js/units.js?v=krv29"></script>
+<script src="js/towers.js?v=krv29"></script>
+<script src="js/spells.js?v=krv29"></script>
+<script src="js/waves.js?v=krv29"></script>
+<script src="js/game.js?v=krv29"></script>
+<script src="js/ui.js?v=krv29"></script>
+<script src="js/main.js?v=krv29"></script>
 </body>
 </html>

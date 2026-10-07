@@ -5,6 +5,8 @@
  * Vua Troll đập đất làm choáng lính.
  * ========================================================= */
 (function () {
+  // quái dùng lại mô hình của quái khác (boss phóng to): ArtChars[loại] trỏ tới hình gốc, kể cả các hướng nhìn
+  for (const k in CONFIG.enemies) { const src = CONFIG.enemies[k].art; if (!src || !window.ArtChars || !ArtChars[src]) continue; for (const s of ['', '_b', '_f', '_s', '_a0', '_a1', '_a2', '_a3', '_a4', '_a5', '_a6', '_a7']) if (ArtChars[src + s] && !ArtChars[k + s]) ArtChars[k + s] = ArtChars[src + s]; }
   let uid = 0; const tmp = {}; const K_glow = (...a) => ArtKit.glow(...a);
   class Enemy {
     constructor(type, pathIndex, hpMul) {
@@ -56,6 +58,9 @@
       if (this.flash > 0) this.flash -= dt;
       this.anim += dt;
       if (this.def.regen && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.def.regen * dt);
+      if (this.dots) { // độc / cháy từ vật phẩm trụ
+        for (const k in this.dots) { const d = this.dots[k]; if (d.t <= 0) continue; d.t -= dt; d.acc += d.dps * dt; if (d.acc >= 1) { const n = Math.floor(d.acc); d.acc -= n; Combat.hitEnemy(this, n, 'true'); if (!this.alive) return; } }
+      }
       if (this.atk >= 0) { this.atk += dt / 0.5; if (this.atk >= 1) this.atk = -1; }
       this.cd -= dt;
       if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowMul = 1; }
@@ -124,6 +129,7 @@
       ctx.globalAlpha = 1;
       if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.75, this.flash * 7); Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim); ctx.restore(); }
       if (this.slowT > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.4, this.radius * 2.2, '#8fe0ff', 0.45);
+      if (this.dots) { if (this.dots.poison && this.dots.poison.t > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.45, this.radius * 1.9, '#7aff4a', 0.4); if (this.dots.burn && this.dots.burn.t > 0) { ArtKit.glow(ctx, this.x, fy - this.height * 0.45, this.radius * 1.9, '#ff7a2a', 0.45); if (Math.random() < 0.2) Effects.particle(this.x + (Math.random() - 0.5) * this.radius, fy - this.height * 0.6, 0, -40, 0.4, '#ffb04a', 4); } }
       if (this.stunT > 0) for (let i = 0; i < 3; i++) { const a = this.anim * 6 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * this.radius * 0.7, fy - this.height - 4 + Math.sin(a) * 3, 2.2, '#ffe58a'); }
     }
     drawBar(ctx) {
@@ -143,6 +149,8 @@
   const Enemies = {
     list: [],
     clear() { this.list.length = 0; },
+    /** sát thương theo thời gian (giữ mức mạnh nhất, làm mới thời gian) */
+    dot(e, kind, dps, t) { const D = e.dots || (e.dots = {}), d = D[kind] || (D[kind] = { dps: 0, t: 0, acc: 0 }); if (d.t <= 0 || dps > d.dps) d.dps = dps; d.t = Math.max(d.t, t); },
     spawn(type, pathIndex, hpMul) { const e = new Enemy(type, pathIndex, hpMul); this.list.push(e); if (e.boss) Game.onBoss(e); return e; },
     update(dt) {
       for (let i = this.list.length - 1; i >= 0; i--) { const e = this.list[i]; if (e.alive) e.update(dt); if (!e.alive) this.list.splice(i, 1); }

@@ -36,7 +36,7 @@
     { bg: B2, ipaths: [[[-6, 60], [50, 66], [100, 80], [140, 100], [180, 96], [220, 82], [260, 86], [290, 106], [302, 136], [332, 152], [372, 146], [402, 120], [420, 92], [440, 76]],
                        [[-6, 176], [60, 170], [108, 148], [140, 100], [180, 96], [220, 82], [260, 86], [290, 106], [302, 136], [332, 152], [372, 146], [402, 120], [420, 92], [440, 76]]] }
   );
-  M.forEach((m, i) => { if (CONFIG.levels[i]) Object.assign(CONFIG.levels[i], m); });
+  // bố cục được js/campaign.js ghép thành 6 vùng × 6 map
   /* Địa hình code (toạ độ ô map gốc) – theo bố cục ảnh thiết kế */
   const FEAT = [
     { rivers: [{ pts: [[505, 92], [472, 118], [447, 150], [440, 185], [426, 214], [412, 245]], w: 22 }, { pts: [[322, 86], [330, 120], [338, 150], [333, 185], [322, 245]], w: 9 }, { pts: [[-8, 132], [28, 148], [47, 178], [44, 245]], w: 13 }],
@@ -65,6 +65,6 @@
       props: [{ k: 'fort', x: 446, y: 50, dark: true }, { k: 'tent', x: 200, y: 50, dark: true }, { k: 'ruin', x: 110, y: 180 }] },
     { void: true, props: [{ k: 'portal', x: 440, y: 64 }] }
   ];
-  FEAT.forEach((f, i) => { if (CONFIG.levels[i]) CONFIG.levels[i].feat = f; });
+  window.MAPS = { M, FEAT, B2 };
   CONFIG.mapStyle = 'coded'; // 'coded' = map vẽ bằng code kiểu Kingdom Rush · 'image' = dùng ảnh làm nền
 })();

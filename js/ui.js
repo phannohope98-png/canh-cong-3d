@@ -39,6 +39,9 @@
         case 'back': this.showScreen('screen-menu'); break;
         case 'fullscreen': this.toggleFullscreen(); break;
         case 'level': this.levelCard(+d.index); break;
+        case 'region': this.regionCard(+d.r); break;
+        case 'region-locked': this.toast('Hạ boss map 6 của vùng trước để mở vùng này'); AudioSys.play('error'); break;
+        case 'map-locked': this.toast('Thắng map trước để mở map này'); AudioSys.play('error'); break;
         case 'start-level': this.closeOverlay(); Game.start(+d.index); break;
         case 'buy-up': if (Progress.buyUpgrade(d.type)) { AudioSys.play('build'); this.toast('Đã nâng cấp!'); } else { AudioSys.play('error'); this.toast('Không đủ sao'); } this.renderUpgrades(); break;
         case 'codex-tab': this.codexTab = d.tab; document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === d.tab)); this.renderCodex(); break;
@@ -68,6 +71,16 @@
         case 'ring-build': { const s = this.ringSel && this.ringSel.ref; if (s && Towers.build(s, d.type)) { Game.sel = null; this.closeRing(); } else this.openRing(this.ringSel); break; }
         case 'ring-up': { const T = this.ringSel.ref; if (Towers.upgrade(T)) this.openRing(this.ringSel); break; }
         case 'ring-sell': { const T = this.ringSel.ref; Towers.sell(T); Game.sel = null; this.closeRing(); break; }
+        case 'it-tower': this.itemTower = d.t; this.itemSlot = null; this.itemSel = null; this.renderItems(); break;
+        case 'it-slot': { const s2 = +d.s; this.itemSlot = this.itemSlot === s2 ? null : s2; const eq = Items.equippedAt(this.itemTower, s2); this.itemSel = this.itemSlot === null ? null : eq ? eq.u : null; this.renderItems(); break; }
+        case 'it-all': this.itemSlot = null; this.renderItems(); break;
+        case 'it-sel': this.itemSel = +d.u; this.renderItems(); break;
+        case 'it-equip': { const it = Items.find(+d.u); if (it && Items.equip(it.u)) { AudioSys.play('build'); this.toast('Đã gắn ' + Items.name(it) + ' vào ' + Items.slotName(it.s).toLowerCase() + ' trụ ' + Items.towerName(it.t)); } this.renderItems(); break; }
+        case 'it-unequip': { const it = Items.find(+d.u); if (it) { Items.unequip(it.t, it.s); AudioSys.play('sell'); } this.renderItems(); break; }
+        case 'it-fuse': { const n = Items.fuse(+d.u); if (n) { this.itemSel = n.u; AudioSys.play('holy'); this.toast('Ghép thành công: ' + Items.name(n)); } else { AudioSys.play('error'); this.toast('Cần 3 món giống nhau'); } this.renderItems(); break; }
+        case 'it-salvage': { const it = Items.find(+d.u); if (it) this.confirm('Phân rã <b>' + Items.name(it) + '</b> lấy ' + Items.rar(it).salvage + ' Xu?', () => { Items.salvage(it.u); this.itemSel = null; AudioSys.play('sell'); this.refreshCoins(); this.renderItems(); }); break; }
+        case 'it-auto': Items.autoEquip(this.itemTower); AudioSys.play('build'); this.toast('Đã gắn đồ tốt nhất'); this.renderItems(); break;
+        case 'it-junk': { let c = 0, n = 0; Items.bag().slice().forEach(it => { if (it.r === 0 && !Items.isEquipped(it)) { c += Items.salvage(it.u, true); n++; } }); Save.save(); Items.dirty(); this.toast(n ? 'Phân rã ' + n + ' món tệ: +' + c + ' Xu' : 'Không có đồ tệ thừa'); this.refreshCoins(); this.renderItems(); break; }
         case 'ring-rally': { Game.rallyFor = this.ringSel.ref; this.closeRing(true); this.tip('Chạm lên con đường để đặt điểm tập kết'); break; }
       }
     },
@@ -80,7 +93,7 @@
       document.querySelectorAll('.star-count').forEach(e => { e.textContent = Progress.totalStars(); });
       this.refreshCoins();
       ({ 'screen-menu': () => this.paintMenu(), 'screen-map': () => this.renderMap(), 'screen-upgrades': () => this.renderUpgrades(), 'screen-heroes': () => { this.viewHero = Progress.selectedHero(); this.renderHeroes(); },
-        'screen-codex': () => this.renderCodex(), 'screen-settings': () => this.renderSettings() }[id] || (() => {}))();
+        'screen-codex': () => this.renderCodex(), 'screen-items': () => this.renderItems(), 'screen-settings': () => this.renderSettings() }[id] || (() => {}))();
     },
 
     /* ================= MENU CHÍNH: cảnh nền vẽ từ chính game ================= */
@@ -106,42 +119,51 @@
       g.setTransform(1, 0, 0, 1, 0, 0);
     },
 
-    /* ================= BẢN ĐỒ CHIẾN DỊCH (ngang) ================= */
+    /* ================= BẢN ĐỒ CHIẾN DỊCH: 6 vùng, mỗi vùng 6 map (map 6 = boss) ================= */
+    regionOpen(ri) { return Save.data.unlocked > ri * CONFIG.mapsPerRegion; },
     renderMap() {
-      // Chương 2 nối tiếp bên phải: bản đồ dài gấp đôi, mỗi chương 6 vùng
-      const CH2 = CONFIG.levels.length > 6, LW = CH2 ? 2400 : 1200;
-      const wrap = $('map-scroll'), inner = $('map-inner'), H = wrap.clientHeight || 300, W = Math.max(wrap.clientWidth || 700, Math.round(H * 2.4 * LW / 1200)), dpr = Math.min(2, window.devicePixelRatio || 1);
+      const NR = CONFIG.regions.length, NM = CONFIG.mapsPerRegion, LW = 1200;
+      const wrap = $('map-scroll'), inner = $('map-inner'), H = wrap.clientHeight || 300, W = Math.max(wrap.clientWidth || 700, Math.round(H * 2.4)), dpr = Math.min(2, window.devicePixelRatio || 1);
       inner.style.width = W + 'px'; inner.style.height = H + 'px';
       const c = $('world-map'); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
       const g = c.getContext('2d'); g.scale(W * dpr / LW, H * dpr / 500);
-      const n1 = [[9, 74], [25, 38], [41, 72], [58, 34], [75, 70], [91, 36]], n2 = [[9, 42], [25, 74], [41, 36], [58, 72], [75, 38], [91, 70]];
-      const nodes = CH2 ? n1.map(n => [n[0] / 2, n[1]]).concat(n2.map(n => [50 + n[0] / 2, n[1]])) : n1;
-      if (!(window.Map3D && Map3D.paintWorld(g, 1200, 500, n1))) paintWorld(g, 1200, 500);
-      if (CH2) {
-        g.save(); g.translate(1200, 0); if (!(window.Map3D && Map3D.paintWorld(g, 1200, 500, n2))) paintWorld(g, 1200, 500); g.restore();
-        const sm = g.createLinearGradient(1130, 0, 1270, 0); sm.addColorStop(0, 'rgba(20,10,40,0)'); sm.addColorStop(0.5, 'rgba(20,10,40,.85)'); sm.addColorStop(1, 'rgba(20,10,40,0)'); g.fillStyle = sm; g.fillRect(1130, 0, 140, 500);
-        g.save(); g.font = 'bold 30px "Alegreya SC", Georgia, serif'; g.textAlign = 'center'; g.lineWidth = 7; g.strokeStyle = '#2a1630'; g.fillStyle = '#ffe27a';
-        g.translate(1200, 250); g.rotate(-Math.PI / 2); g.strokeText('CHƯƠNG 2', 0, 10); g.fillText('CHƯƠNG 2', 0, 10); g.restore();
-      }
+      const nodes = [[9, 74], [25, 38], [41, 72], [58, 34], [75, 70], [91, 36]];
+      if (!(window.Map3D && Map3D.paintWorld(g, 1200, 500, nodes))) paintWorld(g, 1200, 500);
       g.setLineDash([2, 12]); g.lineCap = 'round'; g.strokeStyle = 'rgba(40,20,30,.8)'; g.lineWidth = 6;
       g.beginPath(); nodes.forEach((n, i) => { const x = n[0] * LW / 100, y = n[1] * 5; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
       g.strokeStyle = '#fff3c8'; g.lineWidth = 3.4; g.stroke(); g.setLineDash([]);
       const un = Save.data.unlocked;
-      $('map-nodes').innerHTML = CONFIG.levels.map((L, i) => {
-        const st = Save.data.stars[i] || 0, locked = i >= un, next = i === un - 1 && !st;
-        const [x, y] = nodes[i];
-        return `<button class="node ${locked ? 'locked' : ''} ${st ? 'done' : ''} ${next ? 'next' : ''}" style="left:${x}%;top:${y}%" data-action="${locked ? '' : 'level'}" data-index="${i}">
-          <span class="flag" style="background-image:url(${window.ART_BASE || "assets/art/"}map_${i}.jpg)">${locked ? I("lock") : i + 1}</span>
-          <span class="nstars">${[1, 2, 3].map(k => `<span class="${k <= st ? 'got' : ''}">${I('star')}</span>`).join('')}</span>
-          <span class="nname">${L.name}</span><span class="ndiff">${L.diff}</span></button>`;
+      let cur = 0;
+      $('map-nodes').innerHTML = CONFIG.regions.map((R, ri) => {
+        const open = this.regionOpen(ri), lv = CONFIG.levels.slice(ri * NM, ri * NM + NM), done = lv.filter((_, m) => Save.data.stars[ri * NM + m]).length;
+        const st = lv.reduce((a, _, m) => a + (Save.data.stars[ri * NM + m] || 0), 0), cleared = done >= NM, next = open && !cleared;
+        if (open) cur = ri;
+        const [x, y] = nodes[ri];
+        return `<button class="node region ${open ? '' : 'locked'} ${cleared ? 'done' : ''} ${next ? 'next' : ''}" style="left:${x}%;top:${y}%" data-action="${open ? 'region' : 'region-locked'}" data-r="${ri}">
+          <span class="flag" style="background-image:url(${window.ART_BASE || "assets/art/"}map_${ri * NM}.jpg)">${open ? '' : I("lock")}</span>
+          <span class="rprog">${open ? done + '/' + NM : 'Khoá'}</span>
+          <span class="nname">${R.name}</span><span class="ndiff">${I('star')} ${st}/${NM * 3} · Boss: ${CONFIG.enemies[R.boss].name}</span></button>`;
       }).join('');
-      requestAnimationFrame(() => { const n = $('map-nodes').children[Math.min(un, CONFIG.levels.length) - 1]; if (n) wrap.scrollLeft = n.offsetLeft - wrap.clientWidth * 0.5; });
+      requestAnimationFrame(() => { const n = $('map-nodes').children[cur]; if (n) wrap.scrollLeft = n.offsetLeft - wrap.clientWidth * 0.5; });
+    },
+    /** bảng 6 map của 1 vùng: phải thắng map trước mới mở map sau, map 6 là boss */
+    regionCard(ri) {
+      const NM = CONFIG.mapsPerRegion, R = CONFIG.regions[ri], un = Save.data.unlocked;
+      const cells = CONFIG.levels.slice(ri * NM, ri * NM + NM).map((L, m) => {
+        const i = ri * NM + m, st = Save.data.stars[i] || 0, locked = i >= un, next = i === un - 1 && !st;
+        return `<button class="rmap ${locked ? 'locked' : ''} ${st ? 'done' : ''} ${next ? 'next' : ''} ${L.boss ? 'boss' : ''}" data-action="${locked ? 'map-locked' : 'level'}" data-index="${i}">
+          <span class="rthumb" style="background-image:url(${window.ART_BASE || "assets/art/"}map_${i}.jpg)"><b>${m + 1}</b>${L.boss ? `<em>BOSS</em>` : ''}${locked ? I('lock') : ''}</span>
+          <span class="rname">${L.sub}</span><span class="nstars">${[1, 2, 3].map(k => `<span class="${k <= st ? 'got' : ''}">${I('star')}</span>`).join('')}</span></button>`;
+      }).join('');
+      this.overlay(`<div class="ribbon">${R.name}</div><p class="rinfo">Thắng map trước để mở map sau · Map 6: Boss <b>${CONFIG.enemies[R.boss].name}</b> – hạ boss để mở vùng tiếp theo</p>
+        <div class="rgrid">${cells}</div><div class="row" style="margin-top:8px"><button class="gbtn gray sm" data-action="overlay-ok">Đóng</button></div>`);
+      $('overlay-panel').classList.add('wide');
     },
     levelCard(i) {
-      const L = CONFIG.levels[i], st = Save.data.stars[i] || 0;
+      const L = CONFIG.levels[i], st = Save.data.stars[i] || 0; $('overlay-panel').classList.remove('wide');
       const foes = [...new Set(L.waves.join(',').split(',').map(s => s.split(':')[0].trim()))];
       const hid = Progress.selectedHero(), H = CONFIG.heroes[hid];
-      this.overlay(`<div class="ribbon">Màn ${i + 1} · ${L.name}</div>
+      this.overlay(`<div class="ribbon">${L.name} · ${L.sub}</div>
         <div class="lvcard"><div><img class="lvimg" src="${window.ART_BASE || "assets/art/"}map_${i}.jpg" alt="">
           <p>${L.story}</p>
           <div class="row" style="margin:6px 0">${foes.map(f => `<canvas class="portrait dark" data-char="${f}" width="120" height="120" style="width:44px;height:44px;border-radius:12px"></canvas>`).join('')}</div>
@@ -199,6 +221,45 @@
       this.paintCanvases($('upgrades-list'));
     },
 
+    /* ================= KHO ĐỒ: 6 vị trí lắp trên mỗi trụ ================= */
+    itemIcon(it, big) {
+      const u = Items.iconUrl(it), R = Items.rar(it);
+      return `<span class="iico r${it.r} ${big ? 'big' : ''}" style="--rc:${R.col}">${u ? `<img src="${u}" alt="">` : I('gem')}</span>`;
+    },
+    renderItems() {
+      const t = this.itemTower || (this.itemTower = 'barracks'), G = CONFIG.items, M = Items.mods(t), slot = this.itemSlot == null ? null : this.itemSlot;
+      const tabs = Items.TYPES.map(k => `<button class="tab ${k === t ? 'on' : ''}" data-action="it-tower" data-t="${k}">${CONFIG.towers[k].name}</button>`).join('');
+      const POS = [[50, 7], [50, 29], [50, 52], [12, 44], [88, 44], [50, 84]]; // vị trí nút trên hình trụ (%)
+      const slots = G.slots.map((S, i) => {
+        const it = M.list[i], gd = G.gear[t][i];
+        return `<button class="islot ${[0, 1, 2, 5].includes(i) ? "c" : ""} ${it ? "has r" + it.r : ""} ${slot === i ? "on" : ""}" style="left:${POS[i][0]}%;top:${POS[i][1]}%;${it ? '--rc:' + Items.rar(it).col : ''}" data-action="it-slot" data-s="${i}">${it ? this.itemIcon(it) : `<span class="iempty">+</span>`}<small>${S.name}<br><b>${gd.name}</b></small></button>`;
+      }).join('');
+      const bonus = M.list.filter(Boolean).map(it => `<li style="--rc:${Items.rar(it).col}"><b>${Items.def(it).name}</b> ${Items.statText(it)}</li>`).join('') || '<li>Chưa gắn đồ nào</li>';
+      $('items-tower').innerHTML = `<div class="tabs it-tabs">${tabs}</div>
+        <div class="card it-stage-card"><div class="it-stage"><canvas data-tower="${t}" data-tier="4" data-fit="0.8" width="320" height="340"></canvas>${slots}</div>
+        <div class="it-rule"><b>Quy tắc lắp:</b> mỗi trụ có 6 vị trí cố định. Mỗi vị trí chỉ nhận đúng 1 loại đồ của đúng trụ đó (vd. <b>Khiên</b> chỉ lắp ở <b>tầng trên trụ Người</b> – lắp vào thì lính cầm khiên). Đồ gắn tác dụng cho mọi trụ ${CONFIG.towers[t].name} trong trận.</div>
+        <ul class="it-bonus">${bonus}</ul>
+        <div class="row"><button class="gbtn green sm" data-action="it-auto">${I('up')}<span>Gắn đồ tốt nhất</span></button></div></div>`;
+      const list = Items.sortBag().filter(it => it.t === t && (slot === null || it.s === slot));
+      const sel = this.itemSel ? Items.find(this.itemSel) : null;
+      let det = '';
+      if (sel) {
+        const eq = Items.isEquipped(sel), R = Items.rar(sel), cur = Items.equippedAt(sel.t, sel.s), nf = Items.fuseList(sel).length;
+        det = `<div class="card it-detail" style="--rc:${R.col}">${this.itemIcon(sel, true)}<div class="it-dbody"><h3>${Items.name(sel)}</h3>
+          <div class="sub"><span class="rtag" style="background:${R.col}">${R.name}</span> Trụ ${Items.towerName(sel.t)} · vị trí <b>${Items.slotName(sel.s)}</b></div>
+          <p class="it-stat">${Items.statText(sel)}</p>
+          ${!eq && cur ? `<p class="sub">Đang gắn: ${Items.name(cur)} (${Items.statText(cur)})</p>` : ''}
+          <div class="row it-acts">${eq ? `<button class="gbtn gray sm" data-action="it-unequip" data-u="${sel.u}"><span>Tháo ra</span></button>` : `<button class="gbtn green sm" data-action="it-equip" data-u="${sel.u}"><span>Gắn vào trụ</span></button>`}
+          ${sel.r < 4 ? `<button class="gbtn sm ${nf >= 3 ? '' : 'off'}" data-action="it-fuse" data-u="${sel.u}"><span>Ghép 3→1 (${Math.min(nf, 3)}/3)</span></button>` : ''}
+          <button class="gbtn red sm" data-action="it-salvage" data-u="${sel.u}"><span>Phân rã</span><span class="price">${I('coin')}${R.salvage}</span></button></div></div></div>`;
+      }
+      $('items-bag').innerHTML = det + `<div class="it-head"><b>${slot === null ? 'Đồ của trụ ' + CONFIG.towers[t].name : 'Đồ cho ' + G.slots[slot].name.toLowerCase() + ': ' + G.gear[t][slot].name}</b> <small>(${list.length} món · túi ${Items.bag().length}/${G.bag})</small>
+          ${slot !== null ? '<button class="gbtn gray sm" data-action="it-all"><span>Tất cả</span></button>' : ''}<button class="gbtn gray sm" data-action="it-junk"><span>Phân rã đồ Tệ</span></button></div>
+        <div class="it-grid">${list.map(it => `<button class="it-card ${it.u === this.itemSel ? 'on' : ''} ${Items.isEquipped(it) ? 'eq' : ''}" style="--rc:${Items.rar(it).col}" data-action="it-sel" data-u="${it.u}">${this.itemIcon(it)}<span class="nm">${Items.name(it)}</span><span class="st">${Items.statText(it)}</span><span class="ps">${Items.slotName(it.s)}${Items.isEquipped(it) ? ' · ĐANG GẮN' : ''}</span></button>`).join('') || '<p class="it-empty">Chưa có đồ. Diệt quái để nhặt đồ rơi – quái càng to tỉ lệ rơi càng cao, boss luôn rơi đồ Cao / Cao cấp / Huyền thoại.</p>'}</div>
+        <div class="it-legend">${G.rarities.map(r => `<span style="--rc:${r.col}"><i></i>${r.name}</span>`).join('')}</div>`;
+      this.paintCanvases($('items-tower')); Icon.hydrate($('screen-items')); this.refreshCoins();
+    },
+
     /* ================= BÁCH KHOA ================= */
     renderCodex() {
       let html;
@@ -233,7 +294,7 @@
     renderSettings() {
       const s = Save.data.settings, row = (k, label) => `<div class="setting"><span>${label}</span><button class="switch ${s[k] ? 'on' : ''}" data-action="toggle" data-key="${k}"><i></i></button></div>`;
       $('settings-list').innerHTML = `<div class="card">${row('music', 'Nhạc nền')}${row('sound', 'Âm thanh')}${row('shake', 'Rung màn hình')}${window.Art3D ? row('art3d', 'Nhân vật 3D (tắt nếu máy yếu)') : ''}</div>
-        <div class="card"><h3>Cách chơi</h3><p class="sub" style="line-height:1.55;font-size:14px">• Chạm ô đất có cọc gỗ để chọn 1 trong 4 trụ: Người (2 kiếm sĩ), Elf (bắn nhanh), Phù thủy (tầm xa, sát thương lan), Người Lùn (1 chiến binh trâu bò).<br>• Chạm trụ để nâng cấp (4 cấp đổi hình) hoặc bán.<br>• Kéo để di chuyển bản đồ, chụm 2 ngón để phóng to.<br>• Chạm anh hùng rồi chạm bản đồ để di chuyển; nút kỹ năng ở bên cạnh.<br>• Chạm đầu lâu đỏ để gọi đợt quái, gọi sớm được thưởng vàng.<br>• Xu kiếm được dùng mua anh hùng & trang bị.</p></div>
+        <div class="card"><h3>Cách chơi</h3><p class="sub" style="line-height:1.55;font-size:14px">• Chạm ô đất có cọc gỗ để chọn 1 trong 4 trụ: Người (2 kiếm sĩ), Elf (bắn nhanh), Phù thủy (tầm xa, sát thương lan), Người Lùn (đại bác tầm xa nhất, nổ lan).<br>• Chạm trụ để nâng cấp (4 cấp đổi hình) hoặc bán.<br>• Kéo để di chuyển bản đồ, chụm 2 ngón để phóng to.<br>• Chạm anh hùng rồi chạm bản đồ để di chuyển; nút kỹ năng ở bên cạnh.<br>• Chạm đầu lâu đỏ để gọi đợt quái, gọi sớm được thưởng vàng.<br>• Xu kiếm được dùng mua anh hùng & trang bị.<br>• Chiến dịch có 6 vùng, mỗi vùng 6 map; map 6 là boss – hạ boss mới sang vùng mới.<br>• Quái chết có thể rơi đồ (5 bậc: Tệ, Bình thường, Cao, Cao cấp, Huyền thoại). Vào <b>Kho đồ</b> để gắn đồ vào 6 vị trí của mỗi trụ; ghép 3 món giống nhau thành 1 món bậc cao hơn.</p></div>
         <div class="row"><button class="gbtn red sm" data-action="reset">${I('trash')}<span>Xoá dữ liệu</span></button></div>`;
     },
 
@@ -338,7 +399,7 @@
     closeRing(keepSel) { this.ringSel = null; $('ring').classList.add('hidden'); $('ring').innerHTML = ''; if (!keepSel && Game.sel) Game.sel = null; },
 
     /* ---------- Lớp phủ ---------- */
-    overlay(html, cb) { this.overlayCb = cb || null; $('overlay-panel').innerHTML = html; this.paintCanvases($('overlay-panel')); Icon.hydrate($('overlay-panel')); $('overlay').classList.remove('hidden'); },
+    overlay(html, cb) { this.overlayCb = cb || null; $('overlay-panel').classList.remove('wide'); $('overlay-panel').innerHTML = html; this.paintCanvases($('overlay-panel')); Icon.hydrate($('overlay-panel')); $('overlay').classList.remove('hidden'); },
     closeOverlay() { $('overlay').classList.add('hidden'); },
     confirm(msg, yes) { this.overlay(`<div class="ribbon">Xác nhận</div><p style="margin-top:8px">${msg}</p><div class="row" style="margin-top:10px"><button class="gbtn gray sm" onclick="UI.closeOverlay()">Huỷ</button><button class="gbtn red sm" data-action="overlay-ok">Đồng ý</button></div>`, yes); },
     story(name, text) {
@@ -368,15 +429,19 @@
       this.overlay(r.win ? `<div class="ribbon green">Chiến thắng!</div>
           <div class="big-stars" style="margin-top:8px">${[1, 2, 3].map(k => `<span class="s ${k <= r.stars ? 'got' : ''}" style="animation-delay:${k * 0.25}s">${I('star')}</span>`).join('')}</div>
           <div><span class="reward">${I('heart')} ${Game.lives} mạng</span><span class="reward">${I('exp')} +${r.xp} KN</span><span class="reward">${I('coin')} +${r.coins} Xu</span>${r.newStars ? `<span class="reward">${I('star')} +${r.newStars} sao</span>` : ''}</div>
-          ${r.lvUp ? `<p class="levelup">Anh hùng lên cấp ${Progress.heroLevel()}!</p>` : ''}
+          ${r.lvUp ? `<p class="levelup">Anh hùng lên cấp ${Progress.heroLevel()}!</p>` : ''}${CONFIG.levels[Game.levelIndex].boss && CONFIG.regions[CONFIG.levels[Game.levelIndex].region + 1] ? `<p class="levelup">Đã mở vùng mới: ${CONFIG.regions[CONFIG.levels[Game.levelIndex].region + 1].name}!</p>` : ''}${this.lootHtml(r.loot)}
           <div class="row" style="margin-top:8px"><button class="rbtn sm" data-action="restart">${I('restart')}</button><button class="rbtn sm" data-action="to-map">${I('map')}</button>
           ${hasNext ? `<button class="gbtn green sm" data-action="next-level"><span>Màn tiếp</span>${I('play')}</button>` : ''}</div>`
         : `<div class="ribbon">Thất bại</div><p style="margin-top:10px">Quân bóng tối đã tràn qua cổng thành...</p>
-          <div><span class="reward">${I('exp')} +${r.xp} KN</span><span class="reward">${I('coin')} +${r.coins} Xu</span></div>
+          <div><span class="reward">${I('exp')} +${r.xp} KN</span><span class="reward">${I('coin')} +${r.coins} Xu</span></div>${this.lootHtml(r.loot)}
           <p style="font-size:13px">Mẹo: dùng sao nâng cấp trụ, mua trang bị cho anh hùng, xây Phù thủy để hạ quái giáp dày.</p>
           <div class="row" style="margin-top:8px"><button class="rbtn sm" data-action="to-map">${I('map')}</button><button class="gbtn green sm" data-action="restart">${I('restart')}<span>Thử lại</span></button></div>`);
     },
 
+    lootHtml(loot) {
+      if (!loot || !loot.length) return '';
+      return '<div class="loot-row"><small>Đồ nhặt được (đã vào Kho đồ):</small>' + loot.map(it => `<span class="loot-it" style="--rc:${Items.rar(it).col}" title="${Items.statText(it)}">${this.itemIcon(it)}<b>${Items.name(it)}</b></span>`).join('') + '</div>';
+    },
     /* ---------- Thông báo ---------- */
     toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), 1700); },
     tip(m) { const t = $('tip'); if (!m) { t.classList.add('hidden'); return; } t.textContent = m; t.classList.remove('hidden'); },

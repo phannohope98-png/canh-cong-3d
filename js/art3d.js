@@ -130,6 +130,8 @@
   function wrapAll(key, cid, tier) { wrap(key, cid, tier, 'side'); wrap(key + '_b', cid, tier, 'back', key); wrap(key + '_f', cid, tier, 'front', key); for (let k = 0; k < 8; k++) wrap(key + '_a' + k, cid, tier, 'a' + k, key); }
 
   for (let t = 1; t <= 4; t++) { wrapAll('soldier' + t, 'soldier', t); wrapAll('elf' + t, 'elf', t); wrapAll('mage' + t, 'mage', t); wrapAll('dwarf' + t, 'dwarf', t); }
+  // lính cầm khiên (vật phẩm Khiên của trụ Người): khoá soldier{cấp}s{bậc}, hình 2D dự phòng = lính thường
+  for (let t = 1; t <= 4; t++) for (let r = 0; r < 5; r++) { const k = 'soldier' + t + 's' + r, b = 'soldier' + t; wrap(k, 'soldierS' + r, t, 'side', b); wrap(k + '_b', 'soldierS' + r, t, 'back', b); wrap(k + '_f', 'soldierS' + r, t, 'front', b); for (let i = 0; i < 8; i++) wrap(k + '_a' + i, 'soldierS' + r, t, 'a' + i, b); }
   wrapAll('goblin', 'goblin', 1); wrapAll('shade', 'shade', 1); wrapAll('orc', 'orc', 2); wrapAll('wolfRider', 'wolfRider', 1);
   ['orcArcher', 'warg', 'treant', 'skeleton', 'wraith', 'deathKnight', 'bandit', 'mummy', 'scorpion', 'frostWolf', 'iceGolem', 'imp', 'drake', 'magmaGolem', 'voidling', 'voidWalker', 'blackOrc', 'troll', 'trollKing', 'voidLord'].forEach(k => wrapAll(k, k, 1));
   wrapAll('darkKnight', 'darkKnight', 1); wrapAll('darkKnight2', 'darkKnight', 2); wrapAll('darkLord', 'darkLord', 1); wrapAll('darkLord3', 'darkLord', 3);

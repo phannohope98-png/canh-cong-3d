@@ -10,20 +10,53 @@ Mỗi lần sửa code: đổi `CACHE_NAME` trong `service-worker.js` để máy
 ## 4 trụ (4 cấp mỗi trụ, đổi hình khi nâng cấp)
 | Trụ | Vai trò |
 |---|---|
-| Người | Gọi 2 kiếm sĩ (tóc đen, giáp bạc, áo choàng đỏ sẫm, kiếm lớn + khiên). Chém ngang; cấp 4 giơ khiên tạo lá chắn |
+| Người | Gọi 2 kiếm sĩ (tóc đen, giáp bạc, áo choàng đỏ sẫm, kiếm lớn). Lính chỉ cầm khiên khi trụ được gắn vật phẩm **Khiên**; cấp 4 tạo lá chắn khi máu thấp. Tốc đánh nhanh dần theo cấp |
 | Elf | Bắn rất nhanh, sát thương cao, tầm trung; 15% mũi tên phát sáng chí mạng; cấp 4 bắn 3 mũi liên tiếp |
-| Phù Thủy | Tầm xa nhất, quả cầu phép nổ vòng phép sát thương lan; cấp 4 gọi mưa thiên thạch |
-| Người Lùn | Pháo thủ Lùn bắn súng cối: tầm xa, nổ lan cả nhóm quái đi bộ, mỗi phát rất mạnh nhưng nạp đạn chậm hơn Elf nhiều, không bắn quân bay; luôn nhắm chỗ quái đông nhất; cấp 4 đạn chùm |
+| Phù Thủy | Quả cầu phép nổ vòng phép sát thương lan, xuyên giáp; cấp 4 gọi mưa thiên thạch |
+| Người Lùn | Đại bác **tầm xa nhất** (215–258), nạp đạn lâu (2,3–2,6 s), mỗi phát rất mạnh, nổ lan cả nhóm quái đi bộ, không bắn quân bay; luôn nhắm chỗ quái đông nhất; cấp 4 đạn chùm |
 
-Orc giờ là quái: Orc, Orc Cưỡi Sói (sói tăng tốc húc lính). Goblin tí hon đi thành bầy. Boss: Kỵ Sĩ Hắc Ám (giữa màn, triệu hồi bóng tối, giai đoạn 2 kiếm rực đỏ), Chúa Hắc Ám (boss cuối, 3 giai đoạn: đánh mạnh → triệu hồi Orc + Goblin → rực đỏ, tăng tốc).
+**Xây trụ**: trụ rơi từ trên trời xuống (bóng dưới đất to dần), đập đất tung bụi, rung màn hình rồi nảy lại; lính trụ Người bước ra sau khi trụ chạm đất.
 
-Bách khoa → "5 Nhân vật trụ" hiển thị bảng thiết kế từng nhân vật (4 cấp, biểu cảm, trụ, trang bị, bảng màu).
+## Chiến dịch: 6 vùng × 6 map (36 màn)
+Rừng Xanh 1→6 · Thành Cổ 1→6 · Sa Mạc 1→6 · Băng Giá 1→6 · Núi Lửa 1→6 · Cổng Hỗn Mang 1→6.
+Thắng map trước mới mở map sau; **map 6 của mỗi vùng là BOSS**, hạ boss mới sang vùng mới.
 
-## 12 màn, 2 chương
-**Chương 2** (`chapter: 2` trong `js/config.js`, bố cục ở cuối `js/maps-img.js`): Thung Lũng Sương Mù · Cầu Đá Hoàng Gia · Ốc Đảo Bão Cát · Đỉnh Tuyết Vĩnh Cửu · Lò Rèn Địa Ngục · Vực Thẳm Hư Không (boss Chúa Tể Hỗn Mang). Bố cục mới, nhiều lối vào, quái máu cao hơn (`hpMul`). Bản đồ chiến dịch nối Chương 2 sang bên phải.
+| Vùng | Boss map 6 |
+|---|---|
+| Rừng Xanh | Vua Cây Ma (rễ đập đất làm choáng lính, gọi Yêu Tinh, hồi máu) |
+| Thành Cổ | Chúa Hắc Ám (3 giai đoạn: triệu hồi Orc + Goblin, rực đỏ tăng tốc) |
+| Sa Mạc | Pharaoh Xác Ướp (gọi Bọ Cạp Cát, hồi máu nhanh) |
+| Băng Giá | Vua Troll Đá (đập đất choáng cả nhóm lính) |
+| Núi Lửa | Chúa Tể Dung Nham (đập đất, gọi Quỷ Lửa bay) |
+| Cổng Hỗn Mang | Chúa Tể Hỗn Mang (boss cuối) |
 
-### Chương 1 – 6 vùng đất
-Rừng Xanh · Thành Cổ · Sa Mạc · Băng Giá · Núi Lửa · Cổng Hỗn Mang (boss cuối). Nền trận là chính ảnh map (`assets/art/battle_N.jpg`, cắt từ `assets/art/src/maps.png` bằng `test/mkbattle.ps1`). Đường quái đi được dò theo con đường vẽ trong ảnh (`js/maps-img.js`, toạ độ theo ảnh gốc). Ô xây tự đặt dọc đường, tránh nước / dung nham / vực bằng cách đọc màu ảnh.
+- Ghép màn ở `js/campaign.js`: map 1 & 3 dùng bố cục vẽ tay cũ (`js/maps-img.js`), map 4 & 6 là bố cục lật dọc, map 2 & 5 là 12 bố cục mới. Địa hình bố cục mới (sông có cầu, hồ, nhà, lâu đài cổng) tự sinh theo vùng, tránh đường đi.
+- Độ khó: `hpMul` = (0,78 + 0,05 × vùng) × hệ số map (1 → 1,27). Đợt quái map 2/4/5 tự sinh từ bộ quái của vùng; boss chỉ xuất hiện ở map 6.
+- Bản đồ chiến dịch: 6 vùng trên bản đồ thế giới, bấm vùng để mở bảng 6 map. Save cũ (12 màn) tự chuyển: màn chương 1 → map 1, chương 2 → map 3 của vùng.
+
+## Vật phẩm gắn trụ (Kho đồ)
+- Quái chết có tỉ lệ rơi rương đồ (quái càng to càng dễ rơi; tối đa 8 món/trận), **boss luôn rơi đồ Cao / Cao cấp / Huyền thoại**. Đồ rơi có cột sáng theo màu bậc và tự vào Kho đồ.
+- **5 bậc**: Tệ (xám) · Bình thường (trắng) · Cao (xanh) · Cao cấp (tím) · Huyền thoại (cam). Chỉ số = gốc × 0,5 / 1 / 1,7 / 2,6 / 4.
+- **Quy tắc lắp**: mỗi trụ có **6 vị trí** cố định — Đỉnh tháp · Tầng trên · Mặt trước · Cánh trái · Cánh phải · Nền móng. Mỗi vị trí của 1 trụ chỉ nhận đúng **1 loại đồ của đúng trụ đó**; đồ gắn có tác dụng cho mọi trụ cùng loại trong trận và hiện thành huy hiệu đúng chỗ trên thân trụ.
+
+| Vị trí | Người | Elf | Phù Thủy | Người Lùn |
+|---|---|---|---|---|
+| Đỉnh tháp | Cờ Chiến – hồi sinh nhanh | Ngọc Gió – tầm bắn | Pha Lê – sát thương | Ống Ngắm – tầm bắn |
+| Tầng trên | **Khiên – lính cầm khiên**, giảm sát thương nhận | Cung Thần – sát thương | Sách Phép – tốc niệm | Nòng Pháo – sát thương |
+| Mặt trước | Kiếm – sát thương lính | Ống Tên – tốc bắn | Gậy Phép – vùng nổ | Thùng Thuốc Súng – vùng nổ |
+| Cánh trái | Mũ Giáp – máu lính | Lông Ưng – chí mạng | Bùa Băng – làm chậm | Bánh Răng – nạp đạn nhanh |
+| Cánh phải | Giáp Ngực – giáp lính | Lọ Độc – tên tẩm độc | Nhẫn Hư Không – xuyên kháng phép | Đạn Lửa – đốt cháy |
+| Nền móng | Trống Trận – tốc đánh | Rễ Cổ Thụ – trói chân | Vòng Rune – tầm phép | Bệ Thép – làm choáng |
+
+- Kho đồ: chọn trụ → bấm vị trí trên hình trụ để lọc đồ hợp lệ; **Gắn / Tháo**, **Ghép 3→1** (3 món cùng trụ, cùng vị trí, cùng bậc → 1 món bậc trên), **Phân rã** lấy Xu, "Gắn đồ tốt nhất". Túi chứa 80 món, đầy thì tự phân rã món tệ nhất.
+- Mã: `js/items.js` (túi đồ, chỉ số, rơi đồ, rương trên chiến trường), thông số ở `CONFIG.items` trong `js/config.js`.
+
+## Nhân vật tỉ lệ người thật
+Mô hình 3D không còn chibi đầu to: đầu thu nhỏ (~1/5 chiều cao), chân tay dài, thân cao (`realBody/realize` trong `design/chars3d.js`, hệ số riêng từng nhân vật ở `RK`). Người Lùn vẫn lùn chắc, Goblin đầu hơi to. Quái khổng lồ (golem, troll, cây ma…) giữ dáng riêng.
+Elf bắn cung đúng tư thế: tay cầm cung đưa thẳng, tay kia kéo dây cung về trước ngực rồi buông.
+
+## Lính & anh hùng đánh ổn định
+Lính/anh hùng giữ mục tiêu đang đánh (không đổi qua lại giữa nhát chém), ưu tiên con quái đang đánh mình, nhát chém chỉ trúng khi quái còn trong tầm, thời gian vung kiếm theo tốc đánh; quái dừng lại đánh đúng lính đang nhắm vào nó → không còn cảnh đứng im nhìn nhau.
 
 ## Anh hùng & trang bị
 4 anh hùng: **Aldric** (hiệp sĩ – Thánh Quang), **Lyra** (xạ thủ Elf – Mưa Tên), **Selene** (đại pháp sư – Bão Băng làm chậm), **Borin** (chiến thần Người Lùn – Địa Chấn làm choáng).

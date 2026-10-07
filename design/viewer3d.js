@@ -145,7 +145,7 @@
   /* ---------- danh sách nhân vật ---------- */
   function renderRoster() {
     const nav = $('roster'); nav.innerHTML = ''; let g = null;
-    C3.list.forEach(c => {
+    C3.list.forEach(c => { if (c.hidden) return;
       if (c.group !== g) { g = c.group; const h = document.createElement('div'); h.className = 'grp'; h.textContent = g; nav.appendChild(h); }
       const b = document.createElement('button'); b.className = 'card'; b.dataset.id = c.id;
       b.innerHTML = '<span class="ph"></span><div><b>' + c.name + '</b><small>' + c.role.split(' · ')[0] + '</small></div>';
