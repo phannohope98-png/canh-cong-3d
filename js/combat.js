@@ -65,7 +65,7 @@
         p.angle = Math.atan2(ny - p.y, nx - p.x); p.x = nx; p.y = ny;
         if (p.kind === 'bolt' || p.kind === 'bomb') {
           p.trail -= dt;
-          if (p.trail <= 0) { p.trail = 0.03; Effects.particle(p.x, p.y, (Math.random() - 0.5) * 20, -20, 0.35, p.kind === 'bolt' ? (Math.random() < 0.5 ? '#a8d8ff' : '#e0c8ff') : '#c8c0b8', p.kind === 'bolt' ? 5 : 6); }
+          if (p.trail <= 0) { p.trail = 0.03; Effects.particle(p.x, p.y, (Math.random() - 0.5) * 20, -20, 0.35, p.kind === 'bolt' ? (p.o.slow ? '#ffffff' : Math.random() < 0.5 ? '#a8d8ff' : '#e0c8ff') : p.o.burn ? (Math.random() < 0.5 ? '#ffb02a' : '#ff5a1a') : '#c8c0b8', p.kind === 'bolt' ? 5 : 6); }
         }
         if (p.k >= 1) { this.impact(p, alive); this.pool.push(p); swapRemove(this.shots, i); }
       }
@@ -115,8 +115,9 @@
       for (const p of this.shots) {
         const tr = p.tr || (p.tr = []); tr.push(p.x, p.y); if (tr.length > 16) tr.splice(0, 2);
         if (p.kind === 'arrow' || p.kind === 'enemyArrow') {
-          const col = p.kind === 'enemyArrow' ? '#a8ff77' : p.o.pierce ? '#ffe070' : '#fff6d0';
-          trail(ctx, tr, col, p.o.pierce ? 4 : 2.2, 0.55);
+          const col = p.kind === 'enemyArrow' ? '#a8ff77' : p.o.pierce ? '#ffe070' : p.o.poison ? '#8aff4a' : '#fff6d0';
+          trail(ctx, tr, col, p.o.pierce ? 4 : p.o.poison ? 3.4 : 2.2, 0.55);
+          if (p.o.poison && p.kind === 'arrow') K.glow(ctx, p.x, p.y, 9, '#7aff3a', 0.6); // tên tẩm độc (Lọ Độc)
           ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
           if (p.o.pierce) K.glow(ctx, 0, 0, 18, '#ffd860', 0.9);
           if (window.Fx3D && Fx3D.draw(ctx, 'arrow', 0, 0, 0, 1, { dark: p.kind === 'enemyArrow', gold: !!p.o.pierce })) { ctx.restore(); continue; }
@@ -125,8 +126,9 @@
           K.flat(ctx, [-12, 0, -16, -3.6, -9, -0.8], p.kind === 'enemyArrow' ? '#3a2a2a' : '#6ad06a'); K.flat(ctx, [-12, 0, -16, 3.6, -9, 0.8], p.kind === 'enemyArrow' ? '#2a1a1a' : '#4ab04a');
           ctx.restore();
         } else if (p.kind === 'bolt') {
-          trail(ctx, tr, '#9fdcff', 7, 0.8);
-          K.glow(ctx, p.x, p.y, 24, '#8fd0ff', 1);
+          const bc = p.o.slow ? '#e8fbff' : p.o.pen ? '#c890ff' : '#9fdcff'; // Bùa Băng: vệt băng trắng · Nhẫn Hư Không: vệt tím
+          trail(ctx, tr, bc, p.o.slow || p.o.pen ? 9 : 7, 0.8);
+          K.glow(ctx, p.x, p.y, 24, p.o.pen ? '#b070ff' : '#8fd0ff', 1);
           if (window.Fx3D && Fx3D.draw(ctx, 'bolt', p.x, p.y, (p.age || 0) * 8, 1)) continue;
           ctx.save(); ctx.translate(p.x, p.y); ctx.rotate((p.age || 0) * 8);
           ctx.fillStyle = '#ffffff'; ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r = i % 2 ? 2.4 : 7; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); ctx.fill();
@@ -134,7 +136,8 @@
           K.dot(ctx, p.x, p.y, 3.4, '#e8f8ff');
         } else if (p.kind === 'bomb') {
           K.shadow(ctx, p.sx + (p.tx - p.sx) * p.k, p.sy + (p.ty - p.sy) * p.k + 6, 8 * (0.5 + p.k * 0.5), 3, 0.3);
-          trail(ctx, tr, '#d8d0c8', 5, 0.35);
+          trail(ctx, tr, p.o.burn ? '#ff8a2a' : '#d8d0c8', p.o.burn ? 8 : 5, p.o.burn ? 0.7 : 0.35);
+          if (p.o.burn) K.glow(ctx, p.x, p.y, 16, '#ff7a1a', 0.75); // Đạn Lửa
           if (window.Fx3D && Fx3D.draw(ctx, 'bomb', p.x, p.y, (p.age || 0) * 5, 1)) { K.glow(ctx, p.x + 3, p.y - 6, 6, '#ffb030', 0.8); continue; }
           K.circ(ctx, p.x, p.y, 7, '#3a3a44', { lw: 1.8 });
           K.dot(ctx, p.x - 2.4, p.y - 2.4, 1.8, 'rgba(255,255,255,0.6)');

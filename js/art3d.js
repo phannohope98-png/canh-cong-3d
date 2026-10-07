@@ -130,6 +130,8 @@
   function wrapAll(key, cid, tier) { wrap(key, cid, tier, 'side'); wrap(key + '_b', cid, tier, 'back', key); wrap(key + '_f', cid, tier, 'front', key); for (let k = 0; k < 8; k++) wrap(key + '_a' + k, cid, tier, 'a' + k, key); }
 
   for (let t = 1; t <= 4; t++) { wrapAll('soldier' + t, 'soldier', t); wrapAll('elf' + t, 'elf', t); wrapAll('mage' + t, 'mage', t); wrapAll('dwarf' + t, 'dwarf', t); }
+  // boss mới: mô hình riêng, hình 2D dự phòng = quái gốc
+  [['pharaoh', 'mummy'], ['treantKing', 'treant'], ['magmaLord', 'magmaGolem']].forEach(([k, b]) => { wrap(k, k, 1, 'side', b); wrap(k + '_b', k, 1, 'back', b); wrap(k + '_f', k, 1, 'front', b); for (let i = 0; i < 8; i++) wrap(k + '_a' + i, k, 1, 'a' + i, b); });
   // lính cầm khiên (vật phẩm Khiên của trụ Người): khoá soldier{cấp}s{bậc}, hình 2D dự phòng = lính thường
   for (let t = 1; t <= 4; t++) for (let r = 0; r < 5; r++) { const k = 'soldier' + t + 's' + r, b = 'soldier' + t; wrap(k, 'soldierS' + r, t, 'side', b); wrap(k + '_b', 'soldierS' + r, t, 'back', b); wrap(k + '_f', 'soldierS' + r, t, 'front', b); for (let i = 0; i < 8; i++) wrap(k + '_a' + i, 'soldierS' + r, t, 'a' + i, b); }
   wrapAll('goblin', 'goblin', 1); wrapAll('shade', 'shade', 1); wrapAll('orc', 'orc', 2); wrapAll('wolfRider', 'wolfRider', 1);

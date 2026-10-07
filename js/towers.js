@@ -126,6 +126,8 @@
     drawItems(ctx) {
       const M = Items.mods(this.type); if (!M.list.some(Boolean)) return;
       const top = this.topY(), now = performance.now() / 1000;
+      // vũ khí chính ở tầng trên (Cung Thần / Nòng Pháo / Sách Phép): xạ thủ trên trụ toả sáng theo màu bậc đồ
+      const w = M.list[1]; if (w && this.type !== 'barracks' && w.r >= 1) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ArtKit.glow(ctx, this.x, this.y + top - 18, 30 + w.r * 3, Items.rar(w).col, 0.12 + w.r * 0.06 + Math.sin(now * 3) * 0.04); ctx.restore(); }
       CONFIG.items.slots.forEach((S, i) => {
         const it = M.list[i]; if (!it) return;
         const y = S.at === 'top' ? top + S.y : S.at === 'mid' ? top * 0.42 + S.y : S.y;

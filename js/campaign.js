@@ -161,7 +161,7 @@
   const levels = [];
   REGIONS.forEach((R, ri) => {
     const th = THEMES[ri], c1 = MP.M[ri], c2 = MP.M[6 + ri], o1 = OLD[ri], o2 = OLD[6 + ri];
-    const base = 0.78 + 0.05 * ri, F = [1, 1.07, 1.12, 1.2, 1.27, 1.25];
+    const base = 0.8 + 0.18 * ri, F = [1, 1.08, 1.15, 1.22, 1.3, 1.3]; // vùng sau quái trâu hơn hẳn (người chơi đã có sao, cấp anh hùng, đồ trụ)
     const lay = [
       { bg: c1.bg, ipaths: c1.ipaths, feat: MP.FEAT[ri] },
       Object.assign({ bg: B2, ipaths: NEW[ri * 2] }, {}),

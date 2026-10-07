@@ -249,7 +249,7 @@ float surf(){
   /** Tỉ lệ người thật thay cho chibi đầu to: chân/tay dài hơn (tham số), thân kéo cao, đầu thu nhỏ (hậu kỳ trong build) */
   const REAL = { v: true, cur: null };
   const RK = { soldier: {}, elf: {}, mage: {}, aldric: {}, lyra: {}, selene: {}, dwarf: { leg: 1.7, torso: 1.2, head: 0.55, arm: 1.35 }, borin: { leg: 1.7, torso: 1.2, head: 0.55, arm: 1.35 },
-    goblin: { leg: 1.6, torso: 1.2, head: 0.58, arm: 1.35 }, orc: { head: 0.5 }, orcArcher: {}, skeleton: {}, deathKnight: { head: 0.5 }, bandit: {}, mummy: {}, voidWalker: { head: 0.5 },
+    pharaoh: {}, goblin: { leg: 1.6, torso: 1.2, head: 0.58, arm: 1.35 }, orc: { head: 0.5 }, orcArcher: {}, skeleton: {}, deathKnight: { head: 0.5 }, bandit: {}, mummy: {}, voidWalker: { head: 0.5 },
     blackOrc: { head: 0.5 }, darkKnight: { head: 0.55, leg: 1.8, torso: 1.25 }, darkLord: { head: 0.55, leg: 1.7, torso: 1.2 } };
   function realK(id) { if (/^soldierS/.test(id)) id = 'soldier'; if (!REAL.v || !RK[id]) return null; return Object.assign({ leg: 2.2, torso: 1.38, head: 0.5, arm: 1.55 }, RK[id]); }
   function realBody(o) {
@@ -862,6 +862,38 @@ float surf(){
     glow(n.head, R * 0.3, 0, R * 1.0, R * 1.2, '#5aff9a', 0.6);
     return { rig, anim: { kind: 'fist', zombie: true, skill: null } };
   }
+  /** Pharaoh Xác Ướp: mũ nemes sọc vàng-lam, rắn hổ mang vàng, vòng cổ vàng, mắt xanh rực */
+  function PHARAOH() {
+    const made = MUMMY(), { n, o } = made.rig, R = o.R, blue = '#2a4ab8';
+    const nemes = node('nemes', n.head, 0, R * 0.2, -R * 0.05);
+    add(nemes, part(G.ball(R * 1.12, 1.02, 0.85, 1.05), GOLD, { metal: 1 }), 0, 0, -R * 0.04);
+    for (let i = 0; i < 4; i++) add(nemes, new T.Mesh(G.torus(R * (1.08 - i * 0.12), R * 0.05).rotateX(Math.PI / 2), mat(blue)), 0, R * (0.12 + i * 0.2), -R * 0.04);
+    for (const s of [-1, 1]) { add(nemes, part(G.sbox(R * 0.42, R * 1.5, R * 0.18, 0.4), GOLD, { metal: 1 }), s * R * 0.9, -R * 0.75, R * 0.05, 0, 0, s * 0.08); for (let i = 0; i < 3; i++) add(nemes, new T.Mesh(G.sbox(R * 0.44, R * 0.1, R * 0.2), mat(blue)), s * R * 0.9, -R * (0.3 + i * 0.4), R * 0.06, 0, 0, s * 0.08); }
+    add(nemes, part(G.tube([[0, R * 0.55, R * 0.95], [0, R * 0.85, R * 1.05], [0, R * 1.05, R * 0.95]], R * 0.09, 8), GOLD, { metal: 1 }), 0, 0, 0);
+    add(nemes, new T.Mesh(G.ball(R * 0.07), mat('#ff3a2a', { glow: 1.5 })), 0, R * 1.05, R * 1.02);
+    add(n.torso, part(G.cyl(o.torsoW * 0.62, o.torsoW * 0.7, 0.1, 18), GOLD, { metal: 1 }), 0, o.torsoH * 0.92, 0);
+    add(n.torso, new T.Mesh(G.cyl(o.torsoW * 0.6, o.torsoW * 0.66, 0.04, 18), mat(blue)), 0, o.torsoH * 0.9, 0.01);
+    const st = node('weapon', n.handR, 0, 0, 0); add(st, part(G.cyl(0.03, 0.03, 1.1), GOLD, { metal: 1 }), 0, 0.25, 0); add(st, part(G.torus(0.08, 0.025), GOLD, { metal: 1 }), 0, 0.85, 0); add(st, new T.Mesh(G.oct(0.07, 1.4), mat('#5aff9a', { glow: 1.6 })), 0, 0.85, 0);
+    glow(n.torso, 0, 0.3, 0.3, 1.0, '#ffd060', 0.25);
+    return made;
+  }
+  /** Vua Cây Ma: vương miện gai phát sáng, lá rực, vai mọc nấm */
+  function TREANTKING() {
+    const made = TREANT(), { n, o } = made.rig, R = o.R;
+    for (let i = 0; i < 7; i++) { const a = i / 7 * TAU; add(n.head, part(G.cone(R * 0.12, R * (i % 2 ? 0.5 : 0.8)), '#c8ff6a', { glow: 0.8, ink: 0.014 }), S(a) * R * 0.75, R * 1.55, C(a) * R * 0.75 - R * 0.2, C(a) * 0.3, 0, -S(a) * 0.3); }
+    add(n.head, part(G.torus(R * 0.78, R * 0.1).rotateX(Math.PI / 2), '#5a3a1a'), 0, R * 1.42, -R * 0.2);
+    for (const k of ['R', 'L']) for (let i = 0; i < 3; i++) add(n['arm' + k], part(G.ball(0.05 + i * 0.015, 1.4, 0.6, 1.4), '#e84a3a', { ink: 0.01 }), (i - 1) * 0.08, 0.16 + i * 0.03, 0.05);
+    glow(n.head, 0, R * 1.5, 0, R * 3.2, '#b8ff6a', 0.45);
+    return made;
+  }
+  /** Chúa Tể Dung Nham: quái magma với vương miện lửa, sừng lớn, nứt dung nham rực */
+  function MAGMALORD() {
+    const made = GOLEM({ body: '#3a2a2a', light: '#5a4040', dark: '#1e1616', cracks: '#ffb02a', horn: '#1a1212', iris: '#fff07a' }), { n, o } = made.rig, R = o.R;
+    for (let i = 0; i < 5; i++) { const a = (i - 2) * 0.45; add(n.head, part(G.cone(R * 0.16, R * (i === 2 ? 1.2 : 0.8)), '#ff7a1a', { glow: 1.2, ink: 0.014 }), S(a) * R * 0.7, R * 1.2, C(a) * R * 0.3, -0.2, 0, -a * 0.6); }
+    for (const k of ['R', 'L']) for (let i = 0; i < 3; i++) add(n['arm' + k], part(G.cone(0.06, 0.2), '#2a1a1a', { ink: 0.012 }), (i - 1) * 0.1, 0.22, -0.05, -0.3, 0, (i - 1) * 0.4);
+    glow(n.torso, 0, 0.5, 0.2, 1.5, '#ff7a1a', 0.55);
+    return made;
+  }
   /** Người Băng / Quái Magma: khối đá to, nắm đấm lớn, mắt phát sáng */
   function GOLEM(o) {
     const rig = humanoid({ R: 0.34, torsoH: 0.66, torsoW: 0.86, torsoD: 0.62, legL: 0.32, legR: 0.18, bootH: 0.16, armL: 0.58, armR: 0.2, hunch: 0.2, headZ: 0.2, neck: 0.4,
@@ -1304,6 +1336,12 @@ float surf(){
     { id: 'mummy', name: 'Xác Ướp', group: 'Quái', role: 'Sa Mạc · tự hồi máu', tiers: 1,
       desc: 'Quấn băng cổ ngả vàng, băng lỏng phất phơ, một mắt xanh lục phát sáng, khom người tay chìa ra trước.',
       palette: pal(['#ece0c0', 'Băng'], ['#cdbf98', 'Băng cũ'], ['#5aff9a', 'Mắt']), make: () => MUMMY() },
+    { id: 'pharaoh', name: 'Pharaoh Xác Ướp', group: 'Boss', role: 'Boss Sa Mạc · gọi Bọ Cạp, hồi máu', tiers: 1, scale: 1.25,
+      desc: 'Vua xác ướp ngàn năm: mũ nemes sọc vàng-lam, rắn hổ mang vàng trên trán, vòng cổ vàng, gậy ngọc lục bảo.', palette: pal([GOLD, 'Vàng'], ['#2a4ab8', 'Lam'], ['#ece0c0', 'Băng vải']), make: () => PHARAOH() },
+    { id: 'treantKing', name: 'Vua Cây Ma', group: 'Boss', role: 'Boss Rừng Xanh · rễ cây làm choáng', tiers: 1, scale: 1.4,
+      desc: 'Cây cổ thụ nghìn năm hoá quỷ, đội vương miện gai phát sáng.', palette: pal(['#7a5a38', 'Vỏ cây'], ['#c8ff6a', 'Gai sáng']), make: () => TREANTKING() },
+    { id: 'magmaLord', name: 'Chúa Tể Dung Nham', group: 'Boss', role: 'Boss Núi Lửa · đập đất, gọi Quỷ Lửa', tiers: 1, scale: 1.5,
+      desc: 'Khối dung nham khổng lồ, vương miện lửa, nứt dung nham rực khắp thân.', palette: pal(['#3a2a2a', 'Đá'], ['#ffb02a', 'Dung nham']), make: () => MAGMALORD() },
     { id: 'scorpion', name: 'Bọ Cạp Cát', group: 'Quái', role: 'Sa Mạc · vỏ cứng như đá', tiers: 1,
       desc: 'Vỏ cam cát có đốt, 6 chân, 2 càng lớn, đuôi 5 đốt cong qua lưng với ngòi đỏ sẫm. Đánh: quất đuôi chích.',
       palette: pal(['#c8782a', 'Vỏ'], ['#8a4a1a', 'Đốt sẫm'], ['#7a2a1a', 'Ngòi']), make: () => SCORPION() },
