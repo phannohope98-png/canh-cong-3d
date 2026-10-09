@@ -32,7 +32,7 @@
         Game.map.paths.forEach((p, i) => { const n = p.nearest(x, y); if (!best || n.perp < best.perp) best = { perp: n.perp, dist: n.dist, i }; });
         if (!best || best.perp > 60) { UI.toast('Hãy chạm lên con đường'); AudioSys.play('error'); return true; }
         const p = Game.map.paths[best.i];
-        const arts = ['soldier3', 'dwarf3'];
+        const arts = ['soldier3', 'soldier3']; // viện binh: 2 kiếm sĩ người, cùng cỡ lính trụ Người
         [-1, 1].forEach((s, j) => {
           p.pointAt(Math.max(20, Math.min(p.length - 20, best.dist + s * 14)), tmp);
           const px = tmp.x + tmp.nx * s * 12, py = tmp.y + tmp.ny * s * 12, art = arts[j];

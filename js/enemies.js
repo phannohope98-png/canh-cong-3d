@@ -7,6 +7,9 @@
 (function () {
   // quái dùng lại mô hình của quái khác (boss phóng to): ArtChars[loại] trỏ tới hình gốc, kể cả các hướng nhìn
   for (const k in CONFIG.enemies) { const src = CONFIG.enemies[k].art; if (!src || !window.ArtChars || !ArtChars[src]) continue; for (const s of ['', '_b', '_f', '_s', '_a0', '_a1', '_a2', '_a3', '_a4', '_a5', '_a6', '_a7']) if (ArtChars[src + s] && !ArtChars[k + s]) ArtChars[k + s] = ArtChars[src + s]; }
+  /** tỉ lệ vẽ quái: theo bán kính, nhưng KHÔNG BAO GIỜ thấp hơn lính trụ Người (cao ~29,5) — quái nhỏ nhất cao ≥ ~31 */
+  const MIN_H = 31;
+  const scaleOf = type => { const d = CONFIG.enemies[type], art = ArtChars[type]; let s = d.radius / art.dr * (CONFIG.unitScale || 1); if (art.tall && art.tall * s < MIN_H) s = MIN_H / art.tall; return s; };
   let uid = 0; const tmp = {}; const K_glow = (...a) => ArtKit.glow(...a);
   class Enemy {
     constructor(type, pathIndex, hpMul) {
@@ -16,7 +19,7 @@
       this.armor = d.armor; this.mres = d.mres; this.speed = d.speed; this.radius = d.radius;
       this.flying = !!d.flying; this.boss = !!d.boss; this.reward = d.reward;
       this.art = type; this.pathIndex = pathIndex; this.rateMul = 1; this.speedMul = 1; this.chargeT = 0;
-      this.scale = d.radius / art.dr * (CONFIG.unitScale || 1); this.height = (art.tall ? art.tall * 0.95 : art.box[3] * 0.78) * this.scale + (this.flying ? 18 : 0);
+      this.scale = scaleOf(type); this.height = (art.tall ? art.tall * 0.95 : art.box[3] * 0.78) * this.scale + (this.flying ? 18 : 0);
       this.path = Game.map.paths[pathIndex]; this.dist = 0; this.lat = (Math.random() - 0.5) * CONFIG.pathWidth * 0.5;
       this.alive = true; this.state = 'walk'; this.cd = 0.4; this.atk = -1; this.flash = 0; this.slow = 0;
       this.walk = Math.random(); this.anim = Math.random() * 3; this.face = 1; this.slamT = d.slam ? d.slam.every : 0; this.shootCd = 1;
@@ -171,5 +174,5 @@
     },
     boss() { return this.list.find(e => e.boss && e.alive) || null; }
   };
-  window.Enemies = Enemies; window.hpBar = hpBar;
+  Enemies.scaleOf = scaleOf; window.Enemies = Enemies; window.hpBar = hpBar;
 })();

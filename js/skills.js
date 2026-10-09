@@ -39,12 +39,16 @@
         let any = false;
         for (const e of Enemies.list) if (e.alive && Math.hypot(e.x - u.x, e.y - u.y) < S.radius * 1.5) { any = true; break; }
         if (!any) for (const o of Units.list) if (o.active && o !== u && o.hp < o.maxHp && Math.hypot(o.x - u.x, o.y - u.y) < S.radius * 1.5) { any = true; break; }
-        if (!any && u.hp >= u.maxHp) return { ok: false, msg: 'Chưa có quái hoặc đồng đội cần cứu quanh Aldric' };
         this.fx.push({ k: 'holy', u, S, dmg, t: 0, dur: 1.6, x: u.x, y: u.y, fired: false });
         u.castT = 0.55; u.atk = 0; return { ok: true };
       }
-      const tg = this.densest(u.x, u.y, S.range || 420, S.radius, S.id !== 'quake');
-      if (!tg) return { ok: false, msg: 'Chưa có quái trong tầm kỹ năng' };
+      let tg = this.densest(u.x, u.y, S.range || 420, S.radius, S.id !== 'quake');
+      if (!tg) { // không có cụm nào trong tầm → nhắm con quái gần nhất trên bản đồ (kỹ năng luôn tung được)
+        let best = null, bd = 1e9; for (const e of Enemies.list) if (e.alive && (S.id !== 'quake' || !e.flying)) { const d = Math.hypot(e.x - u.x, e.y - u.y); if (d < bd) { bd = d; best = e; } }
+        if (!best) return { ok: false, msg: 'Chưa có quái nào trên bản đồ' };
+        tg = { x: best.x, y: best.y, n: 1 };
+      }
+      if (S.id === 'quake') { const dx = tg.x - u.x, dy = tg.y - u.y, d = Math.hypot(dx, dy), mx = 560; if (d > mx) { tg.x = u.x + dx / d * mx; tg.y = u.y + dy / d * mx; } }
       if (S.id === 'rain') {
         this.fx.push({ k: 'rain', S, dmg, t: 0, dur: 2.7, x: tg.x, y: tg.y, r: S.radius, vol: 0, arrows: [], big: null });
         u.castT = 0.5; u.atk = 0; u.face = tg.x >= u.x ? 1 : -1; return { ok: true };

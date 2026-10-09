@@ -8,8 +8,9 @@
     canvas: null, ctx: null, wrap: null, dpr: 1, viewW: 1, viewH: 1,
     state: 'idle', paused: false, speed: 1, time: 0, raf: 0, last: 0,
     map: null, bg: null, levelIndex: 0, gold: 0, lives: 20, kills: 0, xp: 0,
-    sel: null, heroSelected: false, rallyFor: null, drawList: [], pointers: new Map(), gesture: null,
+    sel: null, heroSel: -1, rallyFor: null, drawList: [], pointers: new Map(), gesture: null,
 
+    get heroSelected() { return this.heroSel >= 0; }, set heroSelected(v) { this.heroSel = v ? Math.max(0, this.heroSel) : -1; },
     init() {
       this.canvas = document.getElementById('game-canvas'); this.ctx = this.canvas.getContext('2d');
       this.wrap = document.getElementById('game-wrap');
@@ -27,7 +28,7 @@
       Effects.clear(); Combat.clear(); Enemies.clear(); Units.clear(); Loot.reset(); Items.dirty();
       Towers.init(this.map); Waves.init(L, i); Spells.reset(); Skills.reset();
       this.gold = L.gold; this.lives = CONFIG.match.lives; this.kills = 0; this.xp = 0;
-      this.sel = null; this.heroSelected = false; this.rallyFor = null; this.speed = 1; this.time = 0; this.paused = false;
+      this.sel = null; this.heroSel = -1; this.rallyFor = null; this.speed = 1; this.time = 0; this.paused = false;
       this.measure();
       Camera.setup(this.map.W, this.map.H, this.viewW, this.viewH);
       Camera.x = this.map.W / 2; Camera.y = this.map.H / 2; Camera.clamp();
@@ -43,8 +44,8 @@
       if (window.Art3D && Art3D.warm) setTimeout(() => { // dựng sẵn khung 3D của quái trong màn + anh hùng
         const keys = new Set(); L.waves.join(',').split(',').forEach(s => keys.add(s.split(':')[0].trim()));
         if (keys.has('darkKnight')) { keys.add('darkKnight2'); keys.add('shade'); } if (keys.has('darkLord')) { keys.add('darkLord3'); keys.add('goblin'); keys.add('orc'); }
-        const list = [], h = Units.list.find(u => u.isHero); if (h) list.push({ key: h.art, scale: h.scale, modes: ['walk', 'atk', 'idle'] });
-        keys.forEach(k => { const d = CONFIG.enemies[k], a = ArtChars[k]; if (d && a) list.push({ key: k, scale: d.radius / a.dr * (CONFIG.unitScale || 1), modes: ['idle', 'die'], dirs: true }); });
+        const list = []; Units.heroes.forEach(h => list.push({ key: h.art, scale: h.scale, modes: ['walk', 'atk', 'idle'] }));
+        keys.forEach(k => { const d = CONFIG.enemies[k], a = ArtChars[k]; if (d && a) list.push({ key: k, scale: Enemies.scaleOf(k), modes: ['idle', 'die'], dirs: true }); });
         Art3D.warmClear(); Art3D.warm(list);
       }, 300);
       this.startLoop();
@@ -128,7 +129,7 @@
       for (const u of Units.list) u.drawBar(c);
       for (const T of Towers.list) T.drawOverlay(c);
       Effects.drawTexts(c); Effects.drawComics(c);
-      if (this.heroSelected && Units.hero && Units.hero.state === 'move') { const h = Units.hero; drawRallyFlag(c, h.postX, h.postY, '#f2c14e', now); }
+      const sh = this.heroSel >= 0 && Units.heroes[this.heroSel]; if (sh && sh.state === 'move') drawRallyFlag(c, sh.postX, sh.postY, '#f2c14e', now);
     },
 
     /** Lớp không khí theo vùng: mây, đom đóm, tuyết, tàn lửa, bụi cát, hạt hỗn mang. Chỉ hình ảnh. */
@@ -191,16 +192,16 @@
     toggleSpeed() { this.speed = this.speed === 1 ? 2 : 1; },
     pause() { if (this.state === 'playing') this.paused = true; },
     resume() { this.paused = false; this.last = performance.now(); },
-    castHero() {
-      const h = Units.hero; if (!h) return;
+    castHero(i) {
+      const h = Units.heroes[i || 0]; if (!h) return;
       if (h.state === 'dead') { UI.toast('Anh hùng đang hồi sinh'); return; }
       if (h.skillCd > 0) { UI.toast('Kỹ năng đang hồi: ' + Math.ceil(h.skillCd) + 's'); return; }
       const r = Hero.cast(h); if (!r.ok) { UI.toast(r.msg || 'Chưa dùng được'); AudioSys.play('error'); }
     },
-    selectHero() {
-      const h = Units.hero; if (!h || h.state === 'dead') { UI.toast('Anh hùng đang hồi sinh'); return; }
-      this.heroSelected = !this.heroSelected; this.sel = null; this.rallyFor = null; UI.closeRing();
-      if (this.heroSelected) { UI.tip('Chạm lên bản đồ để di chuyển anh hùng'); Camera.focus(h.x, h.y); } else UI.tip(null);
+    selectHero(i) {
+      i = i || 0; const h = Units.heroes[i]; if (!h || h.state === 'dead') { UI.toast('Anh hùng đang hồi sinh'); return; }
+      this.heroSel = this.heroSel === i ? -1 : i; this.sel = null; this.rallyFor = null; UI.closeRing();
+      if (this.heroSel >= 0) { UI.tip('Chạm lên bản đồ để di chuyển anh hùng'); Camera.focus(h.x, h.y); } else UI.tip(null);
     },
 
     /* ================= THẮNG / THUA ================= */
@@ -209,14 +210,14 @@
       this.state = 'ended';
       const S = CONFIG.match.stars, stars = this.lives >= S.three ? 3 : this.lives >= S.two ? 2 : 1;
       const newStars = Progress.recordWin(this.levelIndex, stars);
-      const hid = Progress.selectedHero(), lv0 = Progress.heroLevel(hid); Progress.addHeroXp(hid, this.xp); const coins = Math.floor(this.xp * 0.3 + 50 + stars * 20); Progress.addCoins(coins); const lvUp = Progress.heroLevel(hid) > lv0;
+      const ids = Progress.selectedHeroes(), lv0 = ids.map(h => Progress.heroLevel(h)); ids.forEach(h => Progress.addHeroXp(h, this.xp)); const coins = Math.floor(this.xp * 0.3 + 50 + stars * 20); Progress.addCoins(coins); const lvUp = ids.some((h, k) => Progress.heroLevel(h) > lv0[k]);
       Effects.confetti(Camera.x, Camera.y - 200, 500); AudioSys.play('victory');
       setTimeout(() => UI.showResult({ win: true, stars, newStars, xp: this.xp, lvUp, coins, loot: Loot.found.slice() }), 1100);
     },
     defeat() {
       if (this.state !== 'playing') return;
       this.state = 'ended';
-      const xp = Math.floor(this.xp * 0.5), coins = Math.floor(this.xp * 0.25); Progress.addHeroXp(Progress.selectedHero(), xp); Progress.addCoins(coins);
+      const xp = Math.floor(this.xp * 0.5), coins = Math.floor(this.xp * 0.25); Progress.selectedHeroes().forEach(h => Progress.addHeroXp(h, xp)); Progress.addCoins(coins);
       AudioSys.play('defeat'); Effects.shake(14, 0.8);
       setTimeout(() => UI.showResult({ win: false, xp, coins, loot: Loot.found.slice() }), 1000);
     },
@@ -263,7 +264,6 @@
 
     onTap(x, y) {
       if (this.state !== 'playing') return;
-      const h = Units.hero;
       if (Spells.armed && Spells.tap(x, y)) return;
       // dời điểm tập kết
       if (this.rallyFor) {
@@ -273,13 +273,13 @@
         return;
       }
       // chạm anh hùng
-      if (h && h.state !== 'dead' && Math.hypot(h.x - x, h.y - 18 - y) < 30) { this.selectHero(); return; }
+      for (const h of Units.heroes) if (h.state !== 'dead' && Math.hypot(h.x - x, h.y - 18 - y) < 30) { this.selectHero(h.heroIdx); return; }
       const spot = Towers.spotAt(x, y);
-      if (this.heroSelected && !spot) {
-        Hero.moveHero(h, Math.max(20, Math.min(this.map.W - 130, x)), Math.max(40, Math.min(this.map.H - 50, y)));
-        this.heroSelected = false; UI.tip(null); AudioSys.play('click'); return;
+      if (this.heroSel >= 0 && !spot) {
+        Hero.moveHero(Units.heroes[this.heroSel], Math.max(20, Math.min(this.map.W - 130, x)), Math.max(40, Math.min(this.map.H - 50, y)));
+        this.heroSel = -1; UI.tip(null); AudioSys.play('click'); return;
       }
-      this.heroSelected = false;
+      this.heroSel = -1;
       if (spot) {
         const sel = spot.tower ? { kind: 'tower', ref: spot.tower } : { kind: 'spot', ref: spot };
         if (this.sel && this.sel.ref === sel.ref) { this.sel = null; UI.closeRing(); return; }

@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=krv30">
+  <link rel="stylesheet" href="style.css?v=krv31">
 </head>
 <body>
 <div id="app">
@@ -92,12 +92,18 @@
       </div>
       <div id="boss-bar" class="hidden"><span id="boss-name"></span><div><i id="boss-fill"></i></div></div>
       <div class="hero-dock">
-        <button class="hero-face" id="hero-face" data-action="hero">
+        <button class="hero-face" id="hero-face" data-action="hero" data-i="0">
           <canvas id="hero-canvas" width="128" height="128"></canvas>
           <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" class="hr-bg"/><circle cx="32" cy="32" r="29" class="hr-fg" id="hero-hp"/></svg>
           <span class="lvl" id="hero-lvl">1</span><span class="dead-t" id="hero-dead"></span>
         </button>
-        <button class="skill" id="hero-skill" data-action="skill" data-icon="sun"><i class="cd" id="skill-cd"></i></button>
+        <button class="skill" id="hero-skill" data-action="skill" data-i="0" data-icon="sun"><i class="cd" id="skill-cd"></i></button>
+        <button class="hero-face h2 hidden" id="hero-face2" data-action="hero" data-i="1">
+          <canvas id="hero-canvas2" width="128" height="128"></canvas>
+          <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" class="hr-bg"/><circle cx="32" cy="32" r="29" class="hr-fg" id="hero-hp2"/></svg>
+          <span class="lvl" id="hero-lvl2">1</span><span class="dead-t" id="hero-dead2"></span>
+        </button>
+        <button class="skill hidden" id="hero-skill2" data-action="skill" data-i="1" data-icon="sun"><i class="cd" id="skill-cd2"></i></button>
         <button class="skill spell sp-reinforce" id="spell-reinforce" data-action="spell" data-k="reinforce" data-icon="swords" title="Viện Binh"><i class="cd"></i></button>
         <button class="skill spell sp-meteor" id="spell-meteor" data-action="spell" data-k="meteor" data-icon="fire" title="Mưa Thiên Thạch"><i class="cd"></i></button>
       </div>
@@ -113,46 +119,47 @@
   <div id="rotate"><div><svg viewBox="0 0 64 64" width="84" height="84"><rect x="20" y="8" width="24" height="46" rx="4" fill="none" stroke="#ffd23a" stroke-width="4"/><path d="M50 22c6 3 9 8 8 14M54 36l4 3 3-5" fill="none" stroke="#ffd23a" stroke-width="4" stroke-linecap="round"/></svg><p>Hãy xoay ngang điện thoại để chơi</p><small>Game được thiết kế cho màn hình ngang</small></div></div>
 </div>
 
-<script src="js/config.js?v=krv30"></script>
-<script src="js/maps-img.js?v=krv30"></script>
-<script src="js/layouts.js?v=krv30"></script>
-<script src="js/campaign.js?v=krv30"></script>
-<script src="js/save.js?v=krv30"></script>
-<script src="js/audio.js?v=krv30"></script>
-<script src="js/icons.js?v=krv30"></script>
-<script src="js/art-kit.js?v=krv30"></script>
-<script src="js/art-chars.js?v=krv30"></script>
-<script src="js/art-towers.js?v=krv30"></script>
-<script src="js/art.js?v=krv30"></script>
-<script src="js/art-img.js?v=krv30"></script>
-<script src="js/chibi.js?v=krv30"></script>
+<script src="js/config.js?v=krv31"></script>
+<script src="js/maps-img.js?v=krv31"></script>
+<script src="js/layouts.js?v=krv31"></script>
+<script src="js/campaign.js?v=krv31"></script>
+<script src="js/save.js?v=krv31"></script>
+<script src="js/audio.js?v=krv31"></script>
+<script src="js/icons.js?v=krv31"></script>
+<script src="js/art-kit.js?v=krv31"></script>
+<script src="js/art-chars.js?v=krv31"></script>
+<script src="js/art-towers.js?v=krv31"></script>
+<script src="js/art.js?v=krv31"></script>
+<script src="js/art-img.js?v=krv31"></script>
+<script src="js/chibi.js?v=krv31"></script>
 <script src="design/vendor/three.min.js"></script>
 <script src="design/vendor/BufferGeometryUtils.js"></script>
-<script src="design/chars3d.js?v=krv30"></script>
-<script src="design/towers3d.js?v=krv30"></script>
-<script src="js/art3d.js?v=krv30"></script>
-<script src="js/effects.js?v=krv30"></script>
-<script src="js/anim.js?v=krv30"></script>
-<script src="js/level.js?v=krv30"></script>
-<script src="js/mapart.js?v=krv30"></script>
-<script src="design/props3d.js?v=krv30"></script>
-<script src="js/map3d.js?v=krv30"></script>
-<script src="js/fx3d.js?v=krv30"></script>
-<script src="js/terrain3d.js?v=krv30"></script>
-<script src="js/water.js?v=krv30"></script>
-<script src="js/icons3d.js?v=krv30"></script>
-<script src="js/lights.js?v=krv30"></script>
-<script src="js/camera.js?v=krv30"></script>
-<script src="js/items.js?v=krv30"></script>
-<script src="js/combat.js?v=krv30"></script>
-<script src="js/enemies.js?v=krv30"></script>
-<script src="js/units.js?v=krv30"></script>
-<script src="js/towers.js?v=krv30"></script>
-<script src="js/spells.js?v=krv30"></script>
-<script src="js/skills.js?v=krv30"></script>
-<script src="js/waves.js?v=krv30"></script>
-<script src="js/game.js?v=krv30"></script>
-<script src="js/ui.js?v=krv30"></script>
-<script src="js/main.js?v=krv30"></script>
+<script src="design/chars3d.js?v=krv31"></script>
+<script src="design/towers3d.js?v=krv31"></script>
+<script src="js/art3d.js?v=krv31"></script>
+<script src="js/effects.js?v=krv31"></script>
+<script src="js/anim.js?v=krv31"></script>
+<script src="js/level.js?v=krv31"></script>
+<script src="js/mapart.js?v=krv31"></script>
+<script src="design/props3d.js?v=krv31"></script>
+<script src="js/map3d.js?v=krv31"></script>
+<script src="js/fx3d.js?v=krv31"></script>
+<script src="js/terrain3d.js?v=krv31"></script>
+<script src="js/water.js?v=krv31"></script>
+<script src="js/icons3d.js?v=krv31"></script>
+<script src="js/lights.js?v=krv31"></script>
+<script src="js/camera.js?v=krv31"></script>
+<script src="js/items.js?v=krv31"></script>
+<script src="js/gear2d.js?v=krv31"></script>
+<script src="js/combat.js?v=krv31"></script>
+<script src="js/enemies.js?v=krv31"></script>
+<script src="js/units.js?v=krv31"></script>
+<script src="js/towers.js?v=krv31"></script>
+<script src="js/spells.js?v=krv31"></script>
+<script src="js/skills.js?v=krv31"></script>
+<script src="js/waves.js?v=krv31"></script>
+<script src="js/game.js?v=krv31"></script>
+<script src="js/ui.js?v=krv31"></script>
+<script src="js/main.js?v=krv31"></script>
 </body>
 </html>

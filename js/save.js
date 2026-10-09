@@ -10,7 +10,7 @@
     const heroXp = {}, equip = {}; Object.keys(CONFIG.heroes).forEach(k => { heroXp[k] = 0; equip[k] = { weapon: 0, gloves: 0, armor: 0, boots: 0 }; });
     const loadout = {}; ['barracks', 'archer', 'mage', 'artillery'].forEach(t => { loadout[t] = [0, 0, 0, 0, 0, 0]; });
     return { stars: {}, unlocked: 1, upgrades, heroXp, seen: {}, settings: { music: true, sound: true, shake: true, art3d: true },
-      coins: CONFIG.startCoins, heroes: { aldric: true }, hero: 'aldric', gear: { weapon: 0, gloves: 0, armor: 0, boots: 0 }, equip,
+      coins: CONFIG.startCoins, heroes: { aldric: true }, hero: 'aldric', hero2: '', gear: { weapon: 0, gloves: 0, armor: 0, boots: 0 }, equip,
       items: [], itemN: 0, loadout, mapv: 2 };
   }
   const Save = {
@@ -23,7 +23,7 @@
         Object.assign(d.heroXp, p.heroXp || {}); Object.assign(d.heroes, p.heroes || {}); Object.assign(d.gear, p.gear || {});
         for (const h in (p.equip || {})) if (d.equip[h]) Object.assign(d.equip[h], p.equip[h]);
         d.unlocked = p.unlocked || 1; d.coins = typeof p.coins === 'number' ? p.coins : d.coins;
-        d.hero = d.heroes[p.hero] ? p.hero : 'aldric';
+        d.hero = d.heroes[p.hero] ? p.hero : 'aldric'; d.hero2 = d.heroes[p.hero2] && p.hero2 !== d.hero ? p.hero2 : '';
         if (Array.isArray(p.items)) d.items = p.items.filter(i => i && CONFIG.items.gear[i.t] && i.s >= 0 && i.s < 6 && i.r >= 0 && i.r < 5);
         d.itemN = Math.max(p.itemN || 0, ...d.items.map(i => i.u), 0);
         for (const t in d.loadout) if (p.loadout && Array.isArray(p.loadout[t])) d.loadout[t] = d.loadout[t].map((_, s) => { const u = p.loadout[t][s]; return d.items.some(i => i.u === u && i.t === t && i.s === s) ? u : 0; });
@@ -54,6 +54,9 @@
 
     /* ---- Anh hùng ---- */
     selectedHero() { return Save.data.hero; },
+    /** 1 hoặc 2 anh hùng ra trận: [tướng chính, tướng phụ?] */
+    selectedHeroes() { return Save.data.hero2 && Save.data.heroes[Save.data.hero2] ? [Save.data.hero, Save.data.hero2] : [Save.data.hero]; },
+    selectSecond(id) { if (!id) { Save.data.hero2 = ''; Save.save(); return true; } if (!Save.data.heroes[id] || id === Save.data.hero) return false; Save.data.hero2 = Save.data.hero2 === id ? '' : id; Save.save(); return true; },
     heroLevel(id) { id = id || Save.data.hero; const t = CONFIG.heroLevelXp, xp = Save.data.heroXp[id] || 0; let lv = 1; while (lv < t.length && xp >= t[lv]) lv++; return lv; },
     heroXpProgress(id) { id = id || Save.data.hero; const t = CONFIG.heroLevelXp, lv = this.heroLevel(id); if (lv >= t.length) return 1; return ((Save.data.heroXp[id] || 0) - t[lv - 1]) / (t[lv] - t[lv - 1]); },
     addHeroXp(id, n) { Save.data.heroXp[id] = (Save.data.heroXp[id] || 0) + n; },
@@ -61,7 +64,7 @@
       const H = CONFIG.heroes[id]; if (Save.data.heroes[id] || Save.data.coins < H.unlock) return false;
       Save.data.coins -= H.unlock; Save.data.heroes[id] = true; Save.save(); return true;
     },
-    selectHero(id) { if (Save.data.heroes[id]) { Save.data.hero = id; Save.save(); return true; } return false; },
+    selectHero(id) { if (Save.data.heroes[id]) { if (Save.data.hero2 === id) Save.data.hero2 = Save.data.hero; Save.data.hero = id; Save.save(); return true; } return false; },
     /** Trang bị đang mặc của 1 anh hùng: { weapon: item|null, ... } */
     worn(id) { const e = Save.data.equip[id] || {}, out = {}; SLOTS.forEach(s => { const t = e[s] || 0; out[s] = t > 0 ? CONFIG.equipment[s].items[t - 1] : null; }); return out; },
     wornTiers(id) { const e = Save.data.equip[id] || {}; return SLOTS.map(s => e[s] || 0); },

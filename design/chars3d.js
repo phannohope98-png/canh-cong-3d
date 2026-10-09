@@ -286,8 +286,12 @@ float surf(){
       add(arm, part(G.ball(o.armR * 1.28), o.glove || o.skin), 0, -len, 0);
       n['hand' + k] = node('hand' + k, arm, 0, -len, 0);
       const leg = n['leg' + k] = node('leg' + k, n.hips, s * o.torsoW * (o.real ? 0.27 : 0.22), 0.02, 0);
-      add(leg, part(G.cap(o.legR, o.legL - o.legR), o.legs, { tex: 'cloth' }), 0, -o.legL / 2, 0);
-      add(leg, part(G.sbox(o.legR * 2.3, o.bootH, o.legR * 3.3, 0.4), o.boots), 0, -o.legL - o.bootH / 2 + 0.01, o.legR * 0.55);
+      // chân 2 khúc: đùi + ống chân có đầu gối (hoạt ảnh đi gập gối, nhấc chân thật)
+      const hl = o.legL * 0.5, shin = n['shin' + k] = node('shin' + k, leg, 0, -hl, 0);
+      add(leg, part(G.cap(o.legR, hl - o.legR * 0.2), o.legs, { tex: 'cloth' }), 0, -hl / 2 + o.legR * 0.1, 0);
+      add(leg, part(G.ball(o.legR * 1.0), o.legs, { tex: 'cloth' }), 0, -hl, 0);
+      add(shin, part(G.cap(o.legR * 0.94, hl - o.legR * 0.2), o.legs, { tex: 'cloth' }), 0, -hl / 2 - o.legR * 0.1, 0);
+      add(shin, part(G.sbox(o.legR * 2.3, o.bootH, o.legR * 3.3, 0.4), o.boots), 0, -hl - o.bootH / 2 + 0.01, o.legR * 0.55);
     }
     return { root, n, o };
   }
@@ -1140,6 +1144,10 @@ float surf(){
       const p = t * TAU, s = S(p);
       const o = { hips: { y: Math.abs(s) * (A.heavy ? 0.04 : 0.07), ry: s * 0.08, rz: s * 0.03 }, torso: { rx: 0.1 }, head: { rx: -0.08 + Math.abs(C(p)) * 0.04 },
         legR: { rx: s * 0.75 }, legL: { rx: -s * 0.75 }, armR: { rx: -s * 0.6 }, armL: { rx: s * 0.6 } };
+      // gập gối khi chân bước tới (nhấc bàn chân lên), duỗi khi chống đất; thân xoay ngược hông, đầu giữ thăng bằng
+      const knee = ph => 0.12 + 1.0 * Math.pow(Math.max(0, -Math.cos(ph - 0.3)), 1.3) * (A.heavy ? 0.7 : 1);
+      o.shinR = { rx: knee(p) }; o.shinL = { rx: knee(p + Math.PI) };
+      o.hips.ry = s * 0.14; o.torso = { rx: 0.1, ry: -s * 0.16, rz: -s * 0.025 }; o.head = { rx: -0.08 + Math.abs(C(p)) * 0.04, ry: s * 0.06 };
       armsRest(o, s * 0.12); if (!two && !bow && !A.shield && !staff) { o.armR = { rx: -s * 0.6 }; o.armL = { rx: s * 0.6 }; }
       if (A.zombie) { o.armR = { rx: -s * 0.15 }; o.armL = { rx: s * 0.15 }; o.hips.y *= 0.4; }
       if (A.fly) { o.legR = { rx: 0.3 + s * 0.2 }; o.legL = { rx: 0.2 - s * 0.2 }; o.hips = { y: S(p) * 0.05 }; o.torso = { rx: 0.25 }; }

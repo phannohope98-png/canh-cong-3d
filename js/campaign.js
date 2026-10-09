@@ -77,10 +77,10 @@
       if (best) { const rx = Math.round(Math.min(34, 16 + best.d * 0.25)); lakes.push({ x: Math.round(best.x), y: Math.round(best.y), rx, ry: Math.round(rx * 0.4), kind: kind === 'water' ? undefined : kind }); }
     }
     // nhà cửa / lều / phế tích
-    const kinds = { forest: ['cabin', 'house', 'well', 'cabin'], castle: ['house', 'house', 'ruin', 'well', 'house'], desert: ['tent', 'tent', 'mesa', 'ruin', 'mesa'], ice: ['house', 'ruin', 'house'], lava: ['tent', 'ruin', 'tent'] }[theme];
+    const kinds = { forest: ['burnhouse', 'palisade', 'burnhouse', 'wreck', 'burnhouse'], castle: ['burnhouse', 'burnhouse', 'ruin', 'wreck', 'palisade'], desert: ['tent', 'tent', 'mesa', 'ruin', 'mesa'], ice: ['burnhouse', 'ruin', 'burnhouse'], lava: ['tent', 'ruin', 'tent'] }[theme]; // nhà luôn là nhà BỊ PHÁ CHÁY (quái đã tràn qua), không còn nhà lành
     for (const k of kinds) for (let t = 0; t < 50; t++) {
       const x = B.x0 + 16 + r() * (W - 40), y = B.y0 + 16 + r() * (H - 30); if (!freeAt(x, y, 30)) continue;
-      const p = { k, x: Math.round(x), y: Math.round(y) }; if (theme === 'ice' && k === 'house') p.snow = true; if (theme === 'lava' && k === 'tent') p.dark = true;
+      const p = { k, x: Math.round(x), y: Math.round(y) }; if (theme === 'ice' && k === 'burnhouse') p.snow = true; if (theme === 'lava' && k === 'tent') p.dark = true;
       props.push(p); break;
     }
     return { rivers, lakes, props };

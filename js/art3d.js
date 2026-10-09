@@ -117,6 +117,29 @@
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(r.domElement, 0, _sz.y - H, W, H, 0, 0, W, H); g.restore();
   }
 
+  /** Đo khung chữ nhật thật chứa mô hình qua mọi tư thế (đứng, đi, đánh, ngã) ở hướng nhìn của spec → khung tranh KHÔNG bao giờ cắt cụt boss / anh hùng */
+  const boxCache = new Map(), _vv = new T.Vector3();
+  function measureBox(spec, base) {
+    const ck = spec.cid + spec.tier + '|' + spec.view; let b = boxCache.get(ck); if (b) return b;
+    const I = inst(spec.cid, spec.tier, spec.tall), cE = Math.cos(EL), sE = Math.sin(EL), k = I.k;
+    let x0 = -spec.shadow, x1 = spec.shadow, y0 = -spec.shadow * 0.3, y1 = spec.shadow * 0.3 + 1;
+    const plan = [['idle', [0, 0.25, 0.5, 0.75]], ['walk', [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875]], ['attack', [0.15, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9]], ['die', [0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 0.999]], ['skill', [0.3, 0.6, 0.9]]];
+    I.root.rotation.y = YAW[spec.view]; const meshes = [];
+    for (const [name, ts] of plan) {
+      const a = I.actions[name]; if (!a) continue;
+      for (const f of ts) {
+        if (I.cur !== a) { I.mixer.stopAllAction(); a.reset().play(); I.cur = a; }
+        I.mixer.setTime(a.getClip().duration * f); I.root.updateMatrixWorld(true); meshes.length = 0; I.root.traverse(o => { if (o.isMesh && o.geometry.attributes.position) meshes.push(o); });
+        for (const o of meshes) {
+          const p = o.geometry.attributes.position, mw = o.matrixWorld;
+          for (let i = 0; i < p.count; i += 2) { _vv.fromBufferAttribute(p, i).applyMatrix4(mw); const sx = _vv.x * k, sy = -(_vv.y * cE - _vv.z * sE) * k; if (sx < x0) x0 = sx; if (sx > x1) x1 = sx; if (sy < y0) y0 = sy; if (sy > y1) y1 = sy; }
+        }
+      }
+    }
+    const pad = 6, ob = base.box, ox = Math.max(ob[2], -x0 + pad), oy = Math.max(ob[3], -y0 + pad), w = Math.max(ob[0], ox + x1 + pad), h = Math.max(ob[1], oy + y1 + pad);
+    b = [Math.ceil(w), Math.ceil(h), Math.ceil(ox), Math.ceil(oy)]; boxCache.set(ck, b); return b;
+  }
+
   /* ---------- thay hình 2D bằng 3D (giữ hình 2D để quay về khi tắt) ---------- */
   const Art3D = { enabled: true, keys: [], stats: { frames: 0, ms: 0 } };
   Chars3D.setDetail(0.62); // trong trận: ít đa giác hơn (nhân vật chỉ cao vài chục điểm ảnh)
@@ -125,6 +148,8 @@
     const orig = (reg[key] || base).draw;
     const spec = { cid, tier, view, orig, tall: base.tall || 30, shadow: Math.min(26, (base.wide || 26) * (cid === 'wolfRider' ? 0.5 : 0.48)) };
     reg[key] = Object.assign({}, base, reg[key] || {}, { chibi: true, __3d: true, draw: (g, P) => (Art3D.enabled && !failed ? draw3d(spec, g, P) : orig(g, P)) });
+    let mb = null; // khung tranh: đo thật từ mô hình 3D (lười, 1 lần)
+    Object.defineProperty(reg[key], 'box', { configurable: true, enumerable: true, get() { if (!Art3D.enabled || failed || !gl()) return base.box; if (!mb) { try { mb = measureBox(spec, base); } catch (e) { mb = base.box; } } return mb; } });
     Art3D.keys.push(key);
   }
   function wrapAll(key, cid, tier) { wrap(key, cid, tier, 'side'); wrap(key + '_b', cid, tier, 'back', key); wrap(key + '_f', cid, tier, 'front', key); for (let k = 0; k < 8; k++) wrap(key + '_a' + k, cid, tier, 'a' + k, key); }
@@ -231,6 +256,16 @@
       drawFront(type, tier, g);
     };
   });
+
+  /** đỉnh cao nhất của trụ gần trục giữa (px, âm = lên) → chỗ cắm cột cờ / ngọc đỉnh tháp */
+  const apexCache = new Map();
+  if (window.ArtTowers) ArtTowers.apex = (type, tier) => {
+    if (!Art3D.enabled || failed || !gl() || !window.Towers3D) return null;
+    const k = type + tier; if (apexCache.has(k)) return apexCache.get(k);
+    const root = towerRoot(type, tier); root.updateMatrixWorld(true); let best = 0, tmp = new T.Vector3(); const cE2 = Math.cos(EL), sE2 = Math.sin(EL);
+    root.traverse(o => { if (!o.isMesh || !o.geometry.attributes.position) return; const p = o.geometry.attributes.position; for (let i = 0; i < p.count; i += 2) { tmp.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); const sx = tmp.x * 40, sy = -(tmp.y * cE2 - tmp.z * sE2) * 40; if (Math.abs(sx) < 8 && sy < best) best = sy; } });
+    apexCache.set(k, best); return best;
+  };
 
   /* bóng đổ của trụ: chiếu mô hình xuống mặt đất theo cùng hướng nắng với cây cối (terrain3d SDIR) */
   const SDIR = new T.Vector3(-2.4, 3.2, -1.1).normalize(), shMat = new T.MeshBasicMaterial({ color: 0x000000 });

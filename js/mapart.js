@@ -15,10 +15,10 @@
 
   /* ---------------- Bảng màu theo vùng ---------------- */
   const TH = {
-    forest: { g0: '#6aa83e', g1: '#4a842c', g2: '#9ccc56', road: '#e8cf94', roadD: '#c09a60', roadL: '#f8e8bc', edge: '#8a6a3c', water: '#2f8fc0', waterL: '#7fd0ee', bank: '#5a4a30',
-      tree: ['#3f8a2e', '#4f9a34', '#2f7a2a'], flowers: ['#fff6a0', '#ffffff', '#ff9ab8', '#c8b0ff'], mix: [['tree', 0.5], ['pine', 0.14], ['bush', 0.15], ['rock', 0.1], ['stump', 0.05], ['mush', 0.06]] },
-    castle: { g0: '#74ae48', g1: '#4e8630', g2: '#a2d062', road: '#e2d6b8', roadD: '#b0a284', roadL: '#f4ecd6', edge: '#7a6e58', cobble: true, water: '#2f86b8', waterL: '#80cce8', bank: '#6a6458',
-      tree: ['#3f8a2e', '#4f9a34', '#2f7a2a'], flowers: ['#fff6a0', '#ffffff', '#ff9ab8'], mix: [['tree', 0.36], ['bush', 0.2], ['rock', 0.14], ['pine', 0.1], ['barrel', 0.06], ['crate', 0.06], ['hay', 0.08]] },
+    forest: { g0: '#6aa83e', g1: '#4a842c', g2: '#9ccc56', road: '#cfa86a', roadD: '#9a7040', roadL: '#e6c88a', edge: '#6a4a2a', water: '#2f8fc0', waterL: '#7fd0ee', bank: '#5a4a30',
+      tree: ['#3f8a2e', '#4f9a34', '#2f7a2a'], flowers: ['#fff6a0', '#ffffff', '#ff9ab8', '#c8b0ff'], mix: [['tree', 0.42], ['pine', 0.1], ['bush', 0.1], ['rock', 0.08], ['choppedstump', 0.08], ['felled', 0.12], ['logpile', 0.04], ['mush', 0.03], ['warbanner', 0.03]] },
+    castle: { g0: '#74ae48', g1: '#4e8630', g2: '#a2d062', road: '#c4b9a0', roadD: '#8e8268', roadL: '#e0d6bc', edge: '#5e5444', cobble: true, water: '#2f86b8', waterL: '#80cce8', bank: '#6a6458',
+      tree: ['#3f8a2e', '#4f9a34', '#2f7a2a'], flowers: ['#fff6a0', '#ffffff', '#ff9ab8'], mix: [['tree', 0.34], ['bush', 0.14], ['rock', 0.12], ['pine', 0.08], ['barrel', 0.06], ['crate', 0.06], ['brokenwall', 0.08], ['wreck', 0.06], ['felled', 0.06]] },
     desert: { g0: '#dca85e', g1: '#c08440', g2: '#f2cc88', road: '#f6deae', roadD: '#d2aa70', roadL: '#fff2d4', edge: '#a8743e', water: '#2fa0b8', waterL: '#8ae0e8', bank: '#7a9a3a',
       tree: ['#6a9a3a', '#5a8a32', '#7aaa42'], flowers: ['#ffe080', '#ff8a5a'], mix: [['cactus', 0.24], ['rock', 0.3], ['deadtree', 0.1], ['bones', 0.1], ['palm', 0.08], ['drybush', 0.12], ['barrel', 0.06]] },
     ice: { g0: '#e4eef8', g1: '#bccee2', g2: '#ffffff', road: '#c4d8ea', roadD: '#98b0c8', roadL: '#e8f2fa', edge: '#7088a4', water: '#8ad0ee', waterL: '#e0f6ff', bank: '#9ab0c8',
@@ -60,7 +60,7 @@
       props: (f.props || []).map(p => Object.assign({}, p, cv([p.x, p.y])))
     };
   }
-  const PROP_R = { monument: 190, castle: 230, fort: 190, gateway: 70, cabin: 80, house: 80, ruin: 75, tent: 60, mesa: 110, well: 40, portal: 150 };
+  const PROP_R = { monument: 190, castle: 230, fort: 190, gateway: 70, cabin: 80, house: 80, ruin: 75, tent: 60, mesa: 110, well: 40, portal: 150, burnhouse: 80, palisade: 62, wreck: 50 };
   /** Loại nước/dung nham tại điểm (có lề m), hoặc null */
   function wetAt(F_, x, y, m) {
     for (const r of F_.rivers) if (distPoly(r.pts, x, y) < r.w / 2 + m) return r.kind;
@@ -82,7 +82,7 @@
     const T = TH[theme] || TH.forest, r = K.seeded(seed), out = [], PW = CONFIG.pathWidth, tmp = {};
     const pick = () => { let a = 0, v = r(); for (const [k, p] of T.mix) { a += p; if (v < a) return k; } return T.mix[0][0]; };
     const BIG = new Set(['tree', 'pine', 'snowpine', 'palm', 'spire', 'mesa']);
-    const SMALL = theme === 'ice' ? ['rock', 'bush', 'icecrystal'] : theme === 'lava' ? ['rock', 'bones', 'redcrystal'] : theme === 'desert' ? ['rock', 'drybush', 'cactus', 'bones'] : theme === 'chaos' ? ['rock', 'rune', 'voidcrystal'] : ['bush', 'rock', 'stump', 'mush', 'flowerbed', 'flowerbed'];
+    const SMALL = theme === 'ice' ? ['rock', 'bush', 'icecrystal'] : theme === 'lava' ? ['rock', 'bones', 'redcrystal'] : theme === 'desert' ? ['rock', 'drybush', 'cactus', 'bones'] : theme === 'chaos' ? ['rock', 'rune', 'voidcrystal'] : theme === 'castle' ? ['bush', 'rock', 'barrel', 'crate', 'brokenwall', 'wreck', 'felled'] : ['bush', 'rock', 'choppedstump', 'felled', 'felled', 'logpile', 'warbanner'];
     const dpOf = (x, y) => { let d = Infinity; for (const p of paths) d = Math.min(d, p.nearest(x, y).perp); return d; };
     const nearSpot = (x, y, m) => { for (const s of spots) if (Math.hypot(s.x - x, (s.y - y) * 1.2) < m) return true; return false; };
     // 1) quảng trường / tượng đài
@@ -463,6 +463,18 @@
         for (let j = 0; j < 5; j++) { const x = cx + (rnd() - 0.5) * 30, y = cy + (rnd() - 0.5) * 16; if (det) { det.flower.push([x, y, col]); continue; } K.dot(g, x, y, 2.2, INK); K.dot(g, x, y, 1.6, col); K.dot(g, x - 0.4, y - 0.4, 0.6, '#ffffff'); } }
     }
     for (let i = 0; i < 160; i++) { const x = rnd() * W, y = rnd() * H; if (!free(x, y, 8)) continue; if (map.feat.void) { let d = Infinity; for (const p of map.paths) d = Math.min(d, p.nearest(x, y).perp); if (d > 130) continue; } if (det) { det.peb.push([x, y, 2 + rnd() * 2.5, 1.4 + rnd() * 1.2]); continue; } F(g, ell(x, y, 2 + rnd() * 2.5, 1.4 + rnd() * 1.2), theme === 'lava' ? '#2a2022' : theme === 'chaos' ? '#3a2a6a' : '#9a968e', { s: 0.6, h: 0.3, lw: 1 }); }
+    // 3b) đất cháy xém / bị giẫm nát dọc đường (quân quái đã tràn qua): rừng, thành cổ, băng giá
+    if (theme === 'forest' || theme === 'castle' || theme === 'ice') {
+      const tmpS = {};
+      for (let i = 0; i < 26; i++) {
+        const p = map.paths[(rnd() * map.paths.length) | 0]; p.pointAt(rnd() * p.length, tmpS); const o = (rnd() < 0.5 ? -1 : 1) * (PW / 2 + 16 + rnd() * 120), x = tmpS.x + tmpS.nx * o, y = tmpS.y + tmpS.ny * o;
+        if (x < 0 || y < 0 || x > W || y > H || wetAt(map.feat, x, y, 10)) continue;
+        const r = 22 + rnd() * 40, gr = g.createRadialGradient(x, y, 0, x, y, r);
+        gr.addColorStop(0, theme === 'ice' ? 'rgba(60,70,90,0.5)' : 'rgba(22,14,8,0.62)'); gr.addColorStop(0.6, 'rgba(34,22,12,0.3)'); gr.addColorStop(1, 'rgba(34,22,12,0)');
+        g.save(); g.translate(x, y); g.scale(1, 0.62); g.translate(-x, -y); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); g.restore();
+        for (let k = 0; k < 7; k++) K.dot(g, x + (rnd() - 0.5) * r * 1.2, y + (rnd() - 0.5) * r * 0.7, 0.8 + rnd() * 1.4, rnd() < 0.3 ? 'rgba(255,150,60,0.85)' : 'rgba(70,60,56,0.85)'); // than hồng + tro
+      }
+    }
     // 4) đường đi + cầu
     drawRoad(g, map, T, res, rnd);
     const t3 = window.Terrain3D && Terrain3D.render(map, res, c, T); // mặt đất 3D: bờ sông dốc, đường trũng, cầu 3D

@@ -121,6 +121,13 @@
       glow(g, 0, HY(28), 0, 1.2, '#ff9a2a', 0.55);
     },
     lamp(g, P, v, name) {
+      if (name === 'forest' || name === 'castle' || name === 'ice') { // cột đuốc cháy (không còn đèn lồng thanh bình)
+        const fc = name === 'ice' ? ['#6ac8ff', '#c8f0ff'] : ['#ff8a1a', '#ffd860'];
+        add(g, part(G.cyl(U(1.4), U(1.9), HY(30), 7), '#5a3a22', { tex: 'bark' }), 0, HY(15), 0, 0, 0, 0.06);
+        add(g, part(G.cyl(U(3.6), U(2.4), HY(5), 8), '#2a2020'), 0, HY(32), 0);
+        add(g, part(G.cone(U(3.6), HY(12), 7), fc[0], { glow: 1, ink: 0.01 }), 0, HY(40), 0); add(g, part(G.cone(U(2), HY(8), 7), fc[1], { glow: 1.2, ink: 0.008 }), 0, HY(40), U(0.6));
+        glow(g, 0, HY(40), 0, 1.5, fc[0], 0.6); return;
+      }
       if (name === 'desert' || name === 'lava') {
         add(g, part(G.cyl(U(1.6), U(2), HY(32), 8), '#6a4426'), 0, HY(16), 0);
         add(g, part(G.cyl(U(4.5), U(3.5), HY(6), 10), '#3a3036'), 0, HY(34), 0);
@@ -134,6 +141,48 @@
       add(g, part(G.cone(U(7.5), HY(7), 6), name === 'chaos' ? '#3a2c66' : '#3a3a48'), 0, HY(53), 0);
       add(g, part(G.cyl(U(7), U(7), HY(2.5), 6), '#3a3a48'), 0, HY(38.5), 0);
       glow(g, 0, HY(44), 0, 1.4, lc, 0.6);
+    },
+    /** cây bị quái chặt đổ: thân nằm, gốc toác, tán lá héo */
+    felled(g0, P, v) { const g = node('k'); g.scale.setScalar(1.25); g0.add(g);
+      const r = U(5.2), L = U(50), c = P.tree[Math.min(2, (v * 3) | 0)], k = node('felled'); g.add(k); k.rotation.y = (v - 0.5) * 1.1;
+      add(k, part(G.cyl(r, r * 1.12, L, 10).rotateZ(Math.PI / 2), '#6a4426', { tex: 'bark' }), 0, r, 0, 0, 0, 0.04);
+      add(k, new T.Mesh(G.ball(r * 1.0, 0.1, 1, 1, 12), mat('#dcae72')), -L / 2 - 0.004, r, 0);
+      for (const [a, l] of [[0.5, 14], [-0.6, 12], [2.4, 11]]) TK.beam(k, [L / 2 - U(2), r, 0], [L / 2 + U(l * 0.5) - U(2), r + HY(7), S(a) * U(10)], U(1.4), '#5a3a22');
+      for (const [x, y, z, rr] of [[L / 2 + U(6), 6, 4, 11], [L / 2 + U(1), 8, -6, 9], [L / 2 + U(14), 5, -1, 8]]) add(k, part(G.ball(U(rr), 1, 0.7, 1, 10), sh(c, 0.02), { tex: 'leaf' }), x, HY(y), U(z));
+      for (let i = 0; i < 4; i++) { const a = i * 1.7 + 0.4; add(k, new T.Mesh(G.cone(U(1.4), HY(9), 5), mat('#a8864e')), -L / 2 + S(a) * U(3), HY(5), C(a) * U(4), 0.5 * S(a), 0, 0.6 * C(a)); }
+    },
+    logpile(g0, P, v) { const g = node('k'); g.scale.setScalar(1.5); g0.add(g);
+      const r = U(3.6), L = U(24);
+      for (const [y, zs] of [[0, [-1, 0, 1]], [1, [-0.5, 0.5]], [2, [0]]]) for (const z of zs) { add(g, part(G.cyl(r, r, L, 8).rotateZ(Math.PI / 2), '#7a4a26', { tex: 'bark' }), 0, r + y * r * 1.7, z * r * 2.05); add(g, new T.Mesh(G.ball(r * 0.98, 0.1, 1, 1, 10), mat('#dcae72')), L / 2 + 0.004, r + y * r * 1.7, z * r * 2.05); }
+    },
+    choppedstump(g0) { const g = node('k'); g.scale.setScalar(1.3); g0.add(g); // gốc cây bị chặt, rìu còn cắm
+      D.stump(g); const a = node('axe'); a.position.set(U(3), HY(10), 0); a.rotation.z = -0.5; g.add(a);
+      add(a, part(G.cyl(U(0.9), U(0.9), HY(26), 6), '#7a4a26', { ink: 0.008 }), 0, HY(12), 0); add(a, part(G.sbox(U(10), HY(7), U(1.6), 0.3), '#c8ccd6', { metal: 1, ink: 0.008 }), U(4), HY(22), 0);
+    },
+    warbanner(g) { // cờ chiến của đám quái: cột gỗ, vải đỏ sẫm rách
+      add(g, part(G.cyl(U(1.2), U(1.6), HY(52), 6), '#4a3220', { tex: 'bark' }), 0, HY(26), 0);
+      add(g, part(G.ext([0, 0, U(18), -HY(3), U(15), -HY(14), U(10), -HY(12), U(6), -HY(19), 0, -HY(24)], 0.014, 0.004), '#7a1e22', { ds: true }), 0, HY(50), 0);
+      add(g, part(G.ball(U(3), 1, 1, 1, 8), '#efe6d0', { ink: 0.01 }), 0, HY(54), 0);
+    },
+    campfire(g) {
+      for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; add(g, part(rockGeo(U(3.2), 1, 0.7, 1), '#7a766e', { tex: 'rock' }), S(a) * U(9), HY(2), C(a) * U(9)); }
+      for (const a of [0, 1.1, 2.2]) TK.beam(g, [S(a) * U(8), HY(2), C(a) * U(8)], [-S(a) * U(2), HY(7), -C(a) * U(2)], U(1.4), '#4a2e1a');
+      for (const [x, h, c] of [[-2, 14, '#ff7a1a'], [2, 11, '#ffb04a'], [0, 8, '#ffe06a']]) add(g, part(G.cone(U(4), HY(h), 8), c, { glow: 1, ink: 0.01 }), U(x), HY(6 + h / 2), 0);
+      glow(g, 0, HY(14), 0, 1.8, '#ff9a2a', 0.65);
+    },
+    brokenwall(g0, P, v, name) { const g = node('k'); g.scale.setScalar(1.3); g0.add(g);
+      const c = name === 'lava' ? '#4a3e44' : '#a8a296';
+      add(g, part(G.sbox(U(40), HY(14), U(10), 0.15), c, { tex: 'stone.f' }), 0, HY(7), 0);
+      add(g, part(G.sbox(U(14), HY(12), U(10), 0.15), sh(c, 0.04), { tex: 'stone.f' }), -U(10), HY(20), 0, 0, 0.1, 0.05);
+      add(g, part(G.sbox(U(8), HY(7), U(10), 0.15), sh(c, -0.05), { tex: 'stone.f' }), U(12), HY(17), 0, 0, -0.2, -0.08);
+      for (const [x, z, r] of [[-26, 8, 5], [22, 9, 4], [4, 12, 3.5]]) add(g, part(rockGeo(U(r), 1, 0.6, 1), c, { tex: 'rock' }), U(x), HY(2), U(z));
+    },
+    wreck(g0) { const g = node('k'); g.scale.setScalar(1.45); g0.add(g); // xe gỗ gãy bánh
+      add(g, part(G.sbox(U(26), HY(8), U(15), 0.2), '#8a5a32', { tex: 'wood.f' }), 0, HY(10), 0, 0, 0, 0.18);
+      add(g, part(G.torus(U(8), U(1.6)).rotateY(Math.PI / 2), '#5a3a22', { tex: 'wood' }), U(10), HY(8), U(9));
+      add(g, part(G.torus(U(8), U(1.6)).rotateY(Math.PI / 2), '#5a3a22', { tex: 'wood' }), -U(11), HY(4), -U(8), 0, 0, 0.6);
+      TK.beam(g, [-U(12), HY(14), 0], [-U(26), HY(6), U(4)], U(1.3), '#6a4426');
+      for (const [x, z] of [[-4, 3], [5, -3]]) add(g, part(G.sbox(U(8), HY(5), U(8), 0.3), '#b8864e', { tex: 'wood.f' }), U(x), HY(16), U(z), 0, x * 0.1, 0.3);
     },
     flowerbed(g, P, v) {
       const cols = P.flowers.length ? P.flowers : ['#ff9ab8'];
@@ -168,12 +217,23 @@
   const PROPS = {
     monument(g, p) {
       const t = p.theme, stone = t === 'desert' ? '#e2c48e' : t === 'ice' ? '#d4e0ec' : t === 'lava' ? '#6a5a58' : '#c8c0b0';
+      if (t === 'lava') { // chỉ vùng núi lửa có nền bệ đá; các vùng khác đặt thẳng lên mặt đất
       add(g, part(G.cyl(U(112), U(114), 0.06, 40), sh(stone, -0.22), { tex: 'stone' }), 0, 0.03, 0);
       add(g, part(G.cyl(U(106), U(106), 0.04, 40), stone, { ink: 0.01, tex: 'flag' }), 0, 0.07, 0);
       for (const rr of [30, 56, 82]) add(g, new T.Mesh(G.torus(U(rr), 0.008, Math.PI * 2).rotateX(Math.PI / 2), mat(sh(stone, -0.4))), 0, 0.092, 0);
       for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; add(g, new T.Mesh(G.sbox(0.012, 0.004, U(76)), mat(sh(stone, -0.4))), S(a) * U(68), 0.092, C(a) * U(68), 0, a, 0); }
       add(g, part(G.cyl(U(46), U(46), 0.03, 32), t === 'lava' ? '#3a2a28' : t === 'ice' ? '#ffffff' : t === 'desert' ? '#c8a050' : '#6aa83e', { ink: 0.01 }), 0, 0.1, 0);
-      if (t === 'forest' || t === 'castle') { // đài phun nước
+      }
+      if (t === 'forest') { // doanh trại quái: lửa trại + cọc nhọn + cờ chiến, đất cháy xém
+        add(g, part(G.cyl(U(60), U(62), 0.02, 28), '#4a3a2c', { ink: 0.01 }), 0, 0.12, 0); D.campfire(g);
+        for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; add(g, part(G.cyl(U(2.4), U(2.8), HY(26), 6), '#6a4426', { tex: 'bark' }), S(a) * U(52), HY(13), C(a) * U(52), 0, 0, S(a) * 0.1); add(g, part(G.cone(U(2.4), HY(9), 6), '#7a5230', { ink: 0.01 }), S(a) * U(52), HY(30), C(a) * U(52)); }
+        const f = node('wb'); f.position.set(U(24), 0, -U(26)); g.add(f); D.warbanner(f);
+      } else if (t === 'castle') { // đài phun nước vỡ nát
+        add(g, part(G.cyl(U(30), U(31), HY(8), 28), '#8a867e', { tex: 'stone' }), 0, HY(4) + 0.1, 0);
+        add(g, part(G.cyl(U(6), U(7), HY(14), 14), '#a8a29a'), 0, HY(15), 0, 0, 0, 0.12);
+        for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; add(g, part(G.sbox(U(8), HY(7), U(6), 0.3), '#8a867e'), S(a) * U(30), HY(10), C(a) * U(30), 0, a, 0.1 * i); }
+        add(g, new T.Mesh(G.cyl(U(24), U(24), 0.01, 20), mat('#2a4a5a')), 0, HY(8) + 0.1, 0);
+      } else if (false) { // đài phun nước
         add(g, part(G.cyl(U(30), U(31), HY(10), 28), '#b8b2a6', { tex: 'stone' }), 0, HY(5) + 0.1, 0);
         add(g, new T.Mesh(G.cyl(U(27), U(27), 0.01, 28), mat('#4aa8d8', { glow: 0.25 })), 0, HY(10) + 0.1, 0);
         add(g, part(G.cyl(U(6), U(7), HY(22), 14), '#c8c2b6'), 0, HY(21), 0);
@@ -254,6 +314,24 @@
       add(g, part(G.ext([-U(10), 0, U(10), 0, 0, HY(10)], U(30), 0.006).rotateY(Math.PI / 2), '#b8483a', { tex: 'tile.f' }), 0, HY(31), 0);
       add(g, part(G.cyl(U(3), U(2.6), HY(5), 8), '#7a5232'), 0, HY(22), 0);
     },
+    burnhouse(g0, p) { const g = node('k'); g.scale.setScalar(1.5); g0.add(g); // nhà bị quái tràn vào phá: tường cháy đen sập một nửa, mái sập, xà cháy, lửa + khói
+      const wall = p.snow ? '#5a5a62' : '#4a3c34', ch = '#1e1816';
+      add(g, part(G.sbox(U(44), HY(15), U(5), 0.1), wall, { tex: 'brick' }), 0, HY(7.5), -U(14));
+      add(g, part(G.sbox(U(5), HY(30), U(30), 0.1), sh(wall, -0.06), { tex: 'brick' }), -U(20), HY(15), 0);
+      add(g, part(G.sbox(U(5), HY(11), U(30), 0.1), wall, { tex: 'brick' }), U(20), HY(5.5), 0);
+      add(g, part(G.sbox(U(32), HY(3), U(22), 0.3), '#3a2420', { tex: 'tile.f' }), U(3), HY(9), U(3), -0.3, 0.1, 0.12);
+      for (const [x, y, z, x2, y2, z2] of [[-14, 0, -8, -4, 36, -3], [-2, 0, -10, 6, 40, 0], [10, 0, -6, 14, 30, 6]]) TK.beam(g, [U(x), HY(y), U(z)], [U(x2), HY(y2), U(z2)], U(1.5), ch);
+      add(g, part(G.sbox(U(6), HY(3), U(4), 0.3), ch), U(-8), HY(1.5), U(8)); add(g, part(G.sbox(U(5), HY(3), U(7), 0.3), ch), U(8), HY(1.5), U(10), 0, 0.6, 0);
+      for (const [x, h, c] of [[-4, 16, '#ff7a1a'], [4, 12, '#ffb04a'], [-9, 9, '#ff8a2a'], [0, 8, '#ffe06a']]) add(g, part(G.cone(U(4.4), HY(h), 8), c, { glow: 1, ink: 0.01 }), U(x), HY(5 + h / 2), U(2));
+      glow(g, 0, HY(14), U(2), 2.6, '#ff8a2a', 0.7);
+      for (let i = 0; i < 6; i++) add(g, new T.Mesh(G.ball(U(6 + i * 2.2), 1, 0.9, 1, 10), mat(i < 2 ? '#4a4648' : '#6a6668', { op: 0.55 - i * 0.05 })), U(-2 + S(i * 1.7) * 5 + i * 1.6), HY(34 + i * 15), U(-2 + C(i * 1.3) * 3));
+    },
+    palisade(g0) { const g = node('k'); g.scale.setScalar(1.35); g0.add(g); // hàng rào cọc nhọn đổ nát của quân xâm lược
+      for (let i = 0; i < 7; i++) { const x = (i - 3) * U(9), h = 30 + ((i * 37) % 5) * 7, lean = ((i % 3) - 1) * 0.13; add(g, part(G.cyl(U(3), U(3.4), HY(h), 7), '#6a4426', { tex: 'bark' }), x, HY(h / 2), 0, 0, 0, lean); add(g, part(G.cone(U(3), HY(10), 7), '#7a5230', { ink: 0.01 }), x - lean * HY(h), HY(h + 4), 0, 0, 0, lean); }
+      TK.beam(g, [-U(26), HY(14), U(2)], [U(26), HY(20), U(2)], U(1.3), '#4a2e1a');
+      for (const [x, z] of [[-30, 6], [24, 8]]) add(g, part(rockGeo(U(4), 1, 0.6, 1), '#8a8478', { tex: 'rock' }), U(x), HY(2), U(z));
+    },
+    wreck(g) { D.wreck(g); },
     portal(g) {
       const k = 1.3, st = '#3a2c5a';
       for (const s of [-1, 1]) add(g, part(G.cyl(U(6 * k), U(10 * k), HY(80 * k), 6), st), s * U(34 * k), HY(40 * k), 0, 0, 0, -s * 0.08);

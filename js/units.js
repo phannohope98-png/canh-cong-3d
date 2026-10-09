@@ -112,7 +112,7 @@
       ctx.globalAlpha = this.alpha * (this.temp ? Math.max(0, Math.min(1, this.life)) : 1);
       if (this.isHero) {
         ArtKit.shadow(ctx, this.x, fy, 22, 7, 0.25);
-        ctx.strokeStyle = Game.heroSelected ? '#ffe58a' : 'rgba(255,229,138,0.55)'; ctx.lineWidth = Game.heroSelected ? 3 : 2;
+        const hs = Game.heroSel === this.heroIdx; ctx.strokeStyle = hs ? '#ffe58a' : this.heroIdx ? 'rgba(140,220,255,0.6)' : 'rgba(255,229,138,0.55)'; ctx.lineWidth = hs ? 3 : 2;
         ctx.beginPath(); ctx.ellipse(this.x, fy, 20, 7.5, 0, 0, Math.PI * 2); ctx.stroke();
       }
       const mode = this.atk >= 0 ? 'atk' : this.moving ? 'walk' : 'idle';
@@ -145,11 +145,11 @@
 
   /* ---------------- Anh hùng (4 nhân vật, mang trang bị) ---------------- */
   const Hero = {
-    create(map) {
-      const id = Progress.selectedHero(), H = CONFIG.heroes[id], lv = Progress.heroLevel(id), m = 1 + (lv - 1) * CONFIG.heroPerLevel, gm = Progress.gearMods(id);
-      const art = ArtChars.heroKey(id, Progress.wornTiers(id)), p = map.paths[0].pointAt(map.paths[0].length - 190, {});
+    create(map, id, idx) {
+      idx = idx || 0; id = id || Progress.selectedHero(); const H = CONFIG.heroes[id], lv = Progress.heroLevel(id), m = 1 + (lv - 1) * CONFIG.heroPerLevel, gm = Progress.gearMods(id);
+      const art = ArtChars.heroKey(id, Progress.wornTiers(id)), p = map.paths[0].pointAt(map.paths[0].length - 190 - idx * 56, {}); p.x += (p.nx || 0) * idx * 26; p.y += (p.ny || 0) * idx * 26;
       const hp = Math.round(H.hp * m * (1 + gm.hp)), dm = m * (1 + gm.dmg);
-      const u = new Unit({ isHero: true, heroId: id, heroDef: H, art, radius: H.radius, scale: H.radius / ArtChars[art].dr * (CONFIG.unitScale || 1) * 1.1, x: p.x, y: p.y, postX: p.x, postY: p.y,
+      const u = new Unit({ isHero: true, heroIdx: idx, heroId: id, heroDef: H, art, radius: H.radius, scale: H.radius / ArtChars[art].dr * (CONFIG.unitScale || 1) * 1.1, x: p.x, y: p.y, postX: p.x, postY: p.y,
         maxHp: hp, hp, damage: [H.damage[0] * dm, H.damage[1] * dm], armor: Math.min(0.8, H.armor + gm.arm), rate: H.attackRate / (1 + gm.rate),
         speed: H.speed * (1 + gm.spd), regen: H.regen, engage: 80, level: lv, skillCd: 0, range: H.range || 0, proj: H.proj, air: !!H.air, dtype: H.type, fx: null });
       return u;
@@ -175,8 +175,10 @@
 
   const Units = {
     list: [], hero: null,
-    clear() { this.list.length = 0; this.hero = null; },
-    addHero(map) { this.hero = Hero.create(map); this.list.push(this.hero); return this.hero; },
+    heroes: [],
+    clear() { this.list.length = 0; this.hero = null; this.heroes = []; },
+    /** đưa 1–2 anh hùng đã chọn ra trận (Units.hero = tướng chính, giữ cho mã cũ) */
+    addHero(map) { this.heroes = Progress.selectedHeroes().map((id, i) => Hero.create(map, id, i)); this.heroes.forEach(h => this.list.push(h)); this.hero = this.heroes[0]; return this.hero; },
     count(towerType) { let n = 0; for (const u of this.list) if (u.active && !u.isHero && (!towerType || (u.tower && u.tower.type === towerType))) n++; return n; },
 
     /** Doanh trại vừa xây: tạo lính 1 lần */

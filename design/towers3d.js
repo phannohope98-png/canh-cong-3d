@@ -106,6 +106,7 @@
   }
   /** cờ treo có huy hiệu: 'cross' | 'leaf' | 'star' | 'hammer' */
   function crest(g, r, y, a, w, h, col, emblem, emCol) {
+    if (!window.__TOWER_FLAGS) return onCyl(g, node('crest'), r, y, a); // cờ / huy hiệu mặc định BỎ: cờ chỉ hiện khi gắn Cờ Chiến (js/gear2d.js)
     const f = banner(g, r, y, a, w, h, col, null), ec = emCol || GOLD, z = 0.016, cy = -h * 0.42;
     add(f, part(G.sbox(w * 0.88, 0.022, 0.02, 0.5), ec, { metal: 1, ink: 0.006 }), 0, -0.035, z);
     if (emblem === 'cross') { add(f, part(G.sbox(w * 0.16, h * 0.46, 0.02, 0.5), ec, { metal: 1, ink: 0.008 }), 0, cy, z); add(f, part(G.sbox(w * 0.52, w * 0.16, 0.02, 0.5), ec, { metal: 1, ink: 0.008 }), 0, cy + h * 0.08, z); }
@@ -163,9 +164,6 @@
       deck(g, H, U(33), '#a8783e', 'wood');
       add(g, part(G.torus(U(33), 0.028).rotateX(Math.PI / 2), wood2, { ink: 0.012, tex: 'wood' }), 0, H - 0.04, 0);
       // mái lá nhỏ che phía sau
-      const pole = node('pole'); pole.position.set(-0.32, 0, -0.26); g.add(pole);
-      add(pole, part(G.cyl(0.025, 0.03, H + 0.55, 6), wood2, { tex: 'wood' }), 0, (H + 0.55) / 2, 0);
-      crest(pole, 0.03, H + 0.5, 0, 0.2, 0.3, leafG, 'leaf');
       frontParapet(g, H, U(32), wood, { wood: true, n: 6, h: 0.17 });
     } else {
       const four = t === 4, r0 = U(32), r1 = U(28);
@@ -227,7 +225,6 @@
       add(tent, part(G.cone(U(30), HY(44), 8), '#e8dcc0', { tex: 'cloth' }), 0, HY(22), 0);
       for (let i = 0; i < 8; i += 2) { const a = i / 8 * TAU + Math.PI / 8; add(tent, new T.Mesh(new T.ConeGeometry(U(30) * 1.006, HY(44) * 1.006, 8, 1, true, a, TAU / 8), mat(blue, { ds: true })), 0, HY(22), 0); }
       add(tent, new T.Mesh(G.ext([-U(8), 0, U(8), 0, 0, HY(24)], 0.01, 0.002), mat('#2a1a14')), 0, 0, U(27));
-      add(tent, part(G.cyl(0.02, 0.02, 0.3, 6), '#6a4426', { ink: 0.008 }), 0, HY(44) + 0.12, 0);
       crest(tent, 0.02, HY(44) + 0.26, 0, 0.18, 0.24, banner, 'cross');
       for (const s of [-1, 1]) { const rk = node('rack'); rk.position.set(s * 0.62, 0.08, 0.2); g.add(rk); beam(rk, [-0.08, 0, 0], [-0.08, 0.3, 0], 0.018, '#6a4426'); beam(rk, [0.08, 0, 0], [0.08, 0.3, 0], 0.018, '#6a4426'); beam(rk, [-0.1, 0.24, 0], [0.1, 0.24, 0], 0.016, '#6a4426'); add(rk, part(WEAPON(), '#c8ccd6', { metal: 1, ink: 0.008 }), 0, 0.2, 0.03, 0, 0, 0.12); }
       return g;

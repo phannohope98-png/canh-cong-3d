@@ -75,6 +75,16 @@ Mỗi anh hùng mang 4 ô trang bị: **vũ khí, găng tay, giáp, giày** (3 b
 - **Viện Binh** (hồi 20s): chạm lên đường, gọi 2 lính tạm thời ra chặn quái trong 20 giây.
 - **Mưa Thiên Thạch** (hồi 45s): chạm lên bản đồ, 5 thiên thạch rơi gây sát thương diện rộng.
 
+## Bản cập nhật 2 (sửa lỗi theo phản hồi)
+- **Khung tranh không còn cắt cụt**: mỗi nhân vật / quái / boss / tướng được đo khung thật từ mô hình 3D qua mọi tư thế (đứng, đi, đánh, ngã, kỹ năng) — hết cảnh boss nhỏ và tướng bị cắt mất một nửa (kiểm 225 bộ khung, 0 cạnh bị cắt).
+- **Cỡ quái ≥ lính trụ Người**: mọi quái cao ít nhất ~31 (lính trụ Người ~29,5), Goblin / Quỷ Lửa / Sói không còn nhỏ hơn lính.
+- **Viện Binh** gọi ra 2 kiếm sĩ người, đúng cỡ lính trụ Người (trước đây 1 con là người lùn).
+- **Bước đi**: nhân vật người có đầu gối thật (đùi + ống chân), nhấc chân khi bước tới, hông xoay – thân xoay ngược, đầu giữ thăng bằng (`design/chars3d.js`).
+- **Vật phẩm gắn trụ khớp hoàn toàn** (`js/gear2d.js`): trụ xuất xưởng KHÔNG có cờ / huy hiệu / khiên… Ô chưa có đồ chỉ thấy móc, cột trống hoặc bệ đá trống. Có đồ thì bộ phận thật hiện đúng điểm gắn: Cờ Chiến = lá cờ bay trên cột đỉnh tháp, Khiên = khiên treo tường, Kiếm, Mũ Giáp, Giáp Ngực, Trống Trận; Elf: Ngọc Gió, Cung Thần, Ống Tên, Lông Ưng, Lọ Độc, Rễ Cổ Thụ; Phù Thủy: Pha Lê, Sách Phép, Gậy Phép, Bùa Băng, Nhẫn Hư Không, Vòng Rune; Người Lùn: Ống Ngắm, Nòng Pháo, Thùng Thuốc Súng, Bánh Răng, Đạn Lửa, Bệ Thép. Màu theo bậc đồ, bậc Cao cấp trở lên toả sáng. Đỉnh tháp đo từ mô hình để cột cờ cắm đúng đỉnh mái.
+- **Bản đồ chiến tranh**: bỏ nhà lành / giếng / đài phun nước / đèn lồng. Rừng có cây bị chặt đổ, gốc cây còn rìu cắm, đống gỗ, hàng rào cọc nhọn, cờ chiến của quái, doanh trại quái với lửa trại, **nhà bị đốt cháy** (tường đen sập, mái sập, lửa + khói); Thành Cổ có tường đổ, xe gãy bánh, đài phun nước vỡ, nhà cháy; đuốc thay đèn; đất cháy xém dọc đường. Màu đường đất đậm hơn, đỡ nhạt nhoà.
+- **Kỹ năng tướng luôn tung được**: không có cụm quái trong tầm thì nhắm con quái gần nhất trên bản đồ; chỉ báo "chưa có quái" khi bản đồ không còn quái.
+- **2 tướng một trận**: màn Anh Hùng có "Chọn làm tướng chính" / "Chọn làm tướng phụ"; trong trận có 2 chân dung + 2 nút kỹ năng, chạm chân dung (hoặc tướng trên bản đồ) để chọn rồi chạm bản đồ để dời; cả hai nhận kinh nghiệm.
+
 ## Hoạt ảnh (mượt hơn)
 - Trước: quái to (cây ma, troll, golem, boss) có vòng bước kéo dài 2–5 giây nên chỉ đổi tư thế 3–8 lần/giây → giật cục. Nay vòng bước tối đa ~1s và mỗi vòng có 20 khung (đi 20 · đánh 14 · đứng 12 · ngã 14) → quái đi đều, không giật.
 - **Lớp chuyển động phụ** (`js/anim.js`) vẽ trên các khung 3D: đòn đánh có lấy đà → lao tới → thu về (dùng cả cho quái, lính và anh hùng); trúng đòn thì giật lùi + bẹp rồi nảy lại; đang giao chiến thì nhún nhảy qua lại (không đứng đơ như tượng); đi thì hơi chúi người; lính/quái mới xuất hiện nảy phồng lên.

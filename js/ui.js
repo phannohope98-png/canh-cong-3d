@@ -45,6 +45,7 @@
         case 'start-level': this.closeOverlay(); Game.start(+d.index); break;
         case 'buy-up': if (Progress.buyUpgrade(d.type)) { AudioSys.play('build'); this.toast('Đã nâng cấp!'); } else { AudioSys.play('error'); this.toast('Không đủ sao'); } this.renderUpgrades(); break;
         case 'codex-tab': this.codexTab = d.tab; document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === d.tab)); this.renderCodex(); break;
+        case 'hero-view': this.viewHero = d.id; this.renderHeroes(); break;
         case 'hero-pick': this.viewHero = d.id; if (Save.data.heroes[d.id]) Progress.selectHero(d.id); this.renderHeroes(); break;
         case 'hero-unlock': if (Progress.unlockHero(d.id)) { Progress.selectHero(d.id); AudioSys.play('build'); this.toast('Đã mở khoá anh hùng!'); } else { AudioSys.play('error'); this.toast('Không đủ Xu'); } this.renderHeroes(); break;
         case 'gear': {
@@ -64,8 +65,9 @@
         case 'restart': this.closeOverlay(); this.pauseOpen = false; Game.restart(); break;
         case 'to-map': this.closeOverlay(); this.pauseOpen = false; Game.quit(); this.showScreen('screen-map'); break;
         case 'next-level': this.closeOverlay(); Game.start(Math.min(CONFIG.levels.length - 1, Game.levelIndex + 1)); break;
-        case 'hero': Game.selectHero(); break;
-        case 'skill': Game.castHero(); break;
+        case 'hero': Game.selectHero(+d.i || 0); break;
+        case 'skill': Game.castHero(+d.i || 0); break;
+        case 'hero-second': Progress.selectSecond(d.id === '-' ? '' : d.id); this.renderHeroes(); break;
         case 'spell': Spells.arm(d.k); break;
         case 'call-wave': Waves.callNext(); break;
         case 'ring-build': { const s = this.ringSel && this.ringSel.ref; if (s && Towers.build(s, d.type)) { Game.sel = null; this.closeRing(); } else this.openRing(this.ringSel); break; }
@@ -171,7 +173,7 @@
           <p style="font-size:13px">${L.waves.length} đợt quái · ${(L.ipaths || L.paths).length > 1 ? (L.ipaths || L.paths).length + ' cửa vào · ' : ''}${L.gold} vàng khởi đầu · Độ khó: ${L.diff}</p>
         </div><div>
           <div class="big-stars">${[1, 2, 3].map(k => `<span class="s ${k <= st ? 'got' : ''}">${I('star')}</span>`).join('')}</div>
-          <p style="font-size:13px">Anh hùng: <b>${H.name}</b> (cấp ${Progress.heroLevel(hid)})</p>
+          <p style="font-size:13px">Anh hùng: <b>${H.name}</b> (cấp ${Progress.heroLevel(hid)})${Save.data.hero2 ? ' + <b>' + CONFIG.heroes[Save.data.hero2].name + '</b> (cấp ' + Progress.heroLevel(Save.data.hero2) + ')' : ''}</p>
           <div class="row" style="margin-top:8px"><button class="gbtn gray sm" data-action="overlay-ok">Đóng</button><button class="gbtn sm" data-action="open-heroes-ov" onclick="UI.closeOverlay();UI.showScreen('screen-heroes')">${I('crown')}<span>Anh hùng</span></button><button class="gbtn green sm" data-action="start-level" data-index="${i}">${I('sword')}<span>Chiến đấu</span></button></div>
         </div></div>`);
     },
@@ -181,8 +183,8 @@
       const hid = this.viewHero || Progress.selectedHero(), sel = Progress.selectedHero();
       $('hero-roster').innerHTML = Object.keys(CONFIG.heroes).map(id => {
         const H = CONFIG.heroes[id], own = Save.data.heroes[id];
-        return `<button class="roster-item ${hid === id ? 'on' : ''} ${own ? '' : 'locked'}" data-action="hero-pick" data-id="${id}"><canvas data-hero="${id}" width="108" height="132"></canvas>
-          <div><b>${H.name}</b><small>${H.race}${own ? ' · Cấp ' + Progress.heroLevel(id) : ''}</small>${sel === id ? '<small style="color:#2a7a1a">✔ Đang dùng</small>' : ''}</div>${own ? '' : `<span class="lk">${I('lock')}</span>`}</button>`;
+        return `<button class="roster-item ${hid === id ? 'on' : ''} ${own ? '' : 'locked'}" data-action="hero-view" data-id="${id}"><canvas data-hero="${id}" width="108" height="132"></canvas>
+          <div><b>${H.name}</b><small>${H.race}${own ? ' · Cấp ' + Progress.heroLevel(id) : ''}</small>${sel === id ? '<small style="color:#2a7a1a">✔ Tướng chính</small>' : Save.data.hero2 === id ? '<small style="color:#1a6a9a">✔ Tướng phụ</small>' : ''}</div>${own ? '' : `<span class="lk">${I('lock')}</span>`}</button>`;
       }).join('');
       const H = CONFIG.heroes[hid], own = Save.data.heroes[hid], lv = Progress.heroLevel(hid), prog = Progress.heroXpProgress(hid), m = 1 + (lv - 1) * CONFIG.heroPerLevel, gm = Progress.gearMods(hid);
       const hp = Math.round(H.hp * m * (1 + gm.hp)), d0 = Math.round(H.damage[0] * m * (1 + gm.dmg)), d1 = Math.round(H.damage[1] * m * (1 + gm.dmg)), ar = Math.round(Math.min(0.8, H.armor + gm.arm) * 100), sp = Math.round(H.speed * (1 + gm.spd));
@@ -200,7 +202,7 @@
         <div class="bar"><i style="width:${Math.round(prog * 100)}%"></i><span>${own ? (lv >= CONFIG.heroMax ? 'Cấp tối đa' : 'Cấp ' + lv + ' · KN ' + Math.round(prog * 100) + '%') : 'Chưa mở khoá'}</span></div>
         <div class="stat-row"><span class="chip">${I('heart')}${hp}</span><span class="chip">${I('sword')}${d0}-${d1}</span><span class="chip">${I('shield')}${ar}%</span><span class="chip">${I('fast')}${sp}</span>${H.range ? `<span class="chip">${I('target')}Bắn xa ${H.range}</span>` : '<span class="chip">Cận chiến</span>'}</div>
         <p class="sub" style="margin:6px 0 0">${H.desc}</p><p class="sub" style="margin:4px 0 0"><b>${H.skill.name} (hồi ${H.skill.cooldown}s):</b> ${H.text}</p>
-        <div class="row" style="justify-content:flex-start;margin-top:8px">${own ? (sel === hid ? '<span class="chip" style="background:#a6f05a">✔ Đang dùng trong trận</span>' : `<button class="gbtn green sm" data-action="hero-pick" data-id="${hid}">Chọn anh hùng này</button>`)
+        <div class="row" style="justify-content:flex-start;margin-top:8px">${own ? (sel === hid ? '<span class="chip" style="background:#a6f05a">✔ Tướng chính</span>' : `<button class="gbtn green sm" data-action="hero-pick" data-id="${hid}">Chọn làm tướng chính</button>`) + (sel === hid ? (Save.data.hero2 ? `<button class="gbtn gray sm" data-action="hero-second" data-id="-">Bỏ tướng phụ</button>` : '<span class="chip">Chọn thêm 1 tướng phụ ở danh sách</span>') : (Save.data.hero2 === hid ? `<span class="chip" style="background:#8ad8ff">✔ Tướng phụ</span><button class="gbtn gray sm" data-action="hero-second" data-id="-">Bỏ tướng phụ</button>` : `<button class="gbtn sm" data-action="hero-second" data-id="${hid}">Chọn làm tướng phụ (ra trận 2 tướng)</button>`))
           : `<button class="gbtn sm ${Save.data.coins >= H.unlock ? '' : 'off'}" data-action="hero-unlock" data-id="${hid}">${I('lock')}<span>Mở khoá</span><span class="price">${I('coin')}${H.unlock}</span></button>`}</div></div></div>
         <div class="slots">${slots}</div>
         <p class="sub" style="margin:8px 0 0;color:#d8c8f0">Xu kiếm được sau mỗi trận. Trang bị mặc lên người anh hùng và đổi hình dạng nhân vật.</p></div>`;
@@ -312,12 +314,16 @@
     /* ================= TRONG TRẬN ================= */
     setupBattle() {
       this.closeRing(); this.closeOverlay(); this.tip(null);
-      const H = Units.hero;
-      Painter.charPortrait($('hero-canvas'), H.art, { zoom: 1.55, head: true });
-      $('hero-lvl').textContent = H.level;
-      $('hero-skill').innerHTML = I(H.heroDef.skill.icon) + '<i class="cd" id="skill-cd"></i>';
-      $('hero-skill').title = H.heroDef.skill.name;
-      this.hud = { lives: $('hud-lives'), gold: $('hud-gold'), wave: $('hud-wave'), speed: $('btn-speed'), hp: $('hero-hp'), face: $('hero-face'), dead: $('hero-dead'), skill: $('hero-skill'), cd: $('skill-cd'), boss: $('boss-bar'), bossFill: $('boss-fill'), waves: $('wave-btns'), cache: {},
+      const hs = Units.heroes.map((H, i) => {
+        const sfx = i ? '2' : '';
+        Painter.charPortrait($('hero-canvas' + sfx), H.art, { zoom: 1.55, head: true });
+        $('hero-lvl' + sfx).textContent = H.level;
+        $('hero-skill' + sfx).innerHTML = I(H.heroDef.skill.icon) + '<i class="cd" id="skill-cd' + sfx + '"></i>';
+        $('hero-skill' + sfx).title = H.heroDef.skill.name;
+        return { hp: $('hero-hp' + sfx), face: $('hero-face' + sfx), dead: $('hero-dead' + sfx), skill: $('hero-skill' + sfx), cd: $('skill-cd' + sfx) };
+      });
+      $('hero-face2').classList.toggle('hidden', hs.length < 2); $('hero-skill2').classList.toggle('hidden', hs.length < 2);
+      this.hud = { lives: $('hud-lives'), gold: $('hud-gold'), wave: $('hud-wave'), speed: $('btn-speed'), heroes: hs, boss: $('boss-bar'), bossFill: $('boss-fill'), waves: $('wave-btns'), cache: {},
         spells: { reinforce: { el: $('spell-reinforce'), cd: $('spell-reinforce').querySelector('.cd') }, meteor: { el: $('spell-meteor'), cd: $('spell-meteor').querySelector('.cd') } } };
       this.hud.waves.innerHTML = '';
     },
@@ -328,14 +334,14 @@
       set('gold', Math.floor(Game.gold), v => h.gold.textContent = fmt(v));
       set('wave', Waves.shown + '/' + Waves.total, v => h.wave.textContent = v);
       set('speed', Game.speed, v => { h.speed.querySelector('em').textContent = v + 'x'; h.speed.classList.toggle('on', v === 2); });
-      const H = Units.hero;
-      if (H) {
-        set('hp', Math.round(H.state === 'dead' ? 0 : H.hp / H.maxHp * 100), v => h.hp.style.strokeDashoffset = 182.2 * (1 - v / 100));
-        set('dead', H.state === 'dead' ? Math.ceil(H.respawnT) : 0, v => { h.face.classList.toggle('dead', v > 0); h.dead.textContent = v || ''; });
-        set('sel', Game.heroSelected, v => h.face.classList.toggle('sel', v));
+      Units.heroes.forEach((H, i) => {
+        const e = h.heroes[i]; if (!e) return;
+        set('hp' + i, Math.round(H.state === 'dead' ? 0 : H.hp / H.maxHp * 100), v => e.hp.style.strokeDashoffset = 182.2 * (1 - v / 100));
+        set('dead' + i, H.state === 'dead' ? Math.ceil(H.respawnT) : 0, v => { e.face.classList.toggle('dead', v > 0); e.dead.textContent = v || ''; });
+        set('sel' + i, Game.heroSel === i, v => e.face.classList.toggle('sel', v));
         const p = H.skillCd > 0 ? Math.round(H.skillCd / H.heroDef.skill.cooldown * 100) : 0;
-        set('cd', p, v => { h.cd.style.setProperty('--p', v + '%'); h.skill.classList.toggle('ready', v === 0); });
-      }
+        set('cd' + i, p, v => { e.cd.style.setProperty('--p', v + '%'); e.skill.classList.toggle('ready', v === 0); });
+      });
       if (window.Spells) for (const k in Spells.DEF) {
         const b = h.spells[k]; if (!b) continue;
         set('sp' + k, Math.round(Spells.cd[k] / Spells.DEF[k].cd * 100), v => { b.cd.style.setProperty('--p', v + '%'); b.el.classList.toggle('ready', v === 0); });
