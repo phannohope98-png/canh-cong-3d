@@ -115,8 +115,8 @@
       if (F_.void) { k = dp > 80 ? pick() : SMALL[(r() * SMALL.length) | 0]; ch = dp > 70 ? 0.28 : 0.08; }
       else if (edge < 120 && dp > 90) { k = pick(); ch = 0.95; }                       // khung viền: dày đặc
       else if (dp > 230) { k = pick(); ch = 0.42 * Math.max(0.15, dn * dn * 1.8); }       // xa đường: cụm cây thưa
-      else if (dp > 120) { k = r() < 0.35 ? pick() : SMALL[(r() * SMALL.length) | 0]; ch = 0.16 * Math.max(0.2, dn * 1.6); }
-      else { k = SMALL[(r() * SMALL.length) | 0]; ch = 0.07; }
+      else if (dp > 120) { k = r() < 0.35 ? pick() : SMALL[(r() * SMALL.length) | 0]; ch = 0.07 * Math.max(0.2, dn * 1.6); } // vùng chơi giữa: THOÁNG, vật trang trí ít và gom cụm
+      else { k = r() < 0.6 ? 'bush' : 'rock'; ch = 0.025; }                                                                  // sát đường: gần như trống, chỉ bụi/đá
       if (r() > ch) continue;
       if (dp < 150 && BIG.has(k)) k = SMALL[(r() * SMALL.length) | 0];
       out.push({ k, x: jx, y: jy, s: BIG.has(k) ? 1.3 + r() * 0.5 : 1.05 + r() * 0.35, v: r(), flip: r() < 0.5 ? -1 : 1 });
@@ -177,8 +177,9 @@
     const rl = mk(W * res, H * res), r = rl.getContext('2d'); r.scale(res, res); r.lineCap = 'round'; r.lineJoin = 'round';
     // viền cỏ tối (môi cỏ) → mép đất → mặt đường sáng
     const lip = map.feat.void ? '#2a1c52' : map.def.theme === 'ice' ? '#8aa4c0' : sh(T.g0, -0.42);
-    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 14; r.strokeStyle = lip; r.stroke(); }
-    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 6; r.strokeStyle = T.edge; r.stroke(); }
+    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 18; r.strokeStyle = lip; r.stroke(); }
+    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 9; r.strokeStyle = map.feat.void ? '#1a1036' : '#2a1a0e'; r.stroke(); } // viền mực rõ kiểu hoạt hình
+    for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW + 5; r.strokeStyle = T.edge; r.stroke(); }
     for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW; r.strokeStyle = T.roadD; r.stroke(); }
     for (const p of map.paths) { polyPath(r, p.points); r.lineWidth = PW - 8; r.strokeStyle = T.road; r.stroke(); }
     r.globalCompositeOperation = 'source-atop';

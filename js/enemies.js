@@ -8,7 +8,7 @@
   // quái dùng lại mô hình của quái khác (boss phóng to): ArtChars[loại] trỏ tới hình gốc, kể cả các hướng nhìn
   for (const k in CONFIG.enemies) { const src = CONFIG.enemies[k].art; if (!src || !window.ArtChars || !ArtChars[src]) continue; for (const s of ['', '_b', '_f', '_s', '_a0', '_a1', '_a2', '_a3', '_a4', '_a5', '_a6', '_a7']) if (ArtChars[src + s] && !ArtChars[k + s]) ArtChars[k + s] = ArtChars[src + s]; }
   /** tỉ lệ vẽ quái: theo bán kính, nhưng KHÔNG BAO GIỜ thấp hơn lính trụ Người (cao ~29,5) — quái nhỏ nhất cao ≥ ~31 */
-  const MIN_H = 31;
+  const MIN_H = 42.5 * (CONFIG.unitScale || 1);
   const scaleOf = type => { const d = CONFIG.enemies[type], art = ArtChars[type]; let s = d.radius / art.dr * (CONFIG.unitScale || 1); if (art.tall && art.tall * s < MIN_H) s = MIN_H / art.tall; return s; };
   let uid = 0; const tmp = {}; const K_glow = (...a) => ArtKit.glow(...a);
   class Enemy {

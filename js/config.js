@@ -6,7 +6,7 @@
 window.CONFIG = {
   world: { width: 1520, height: 760 }, // map gọn cho điện thoại: đường ngắn, nhân vật to hơn khi xem toàn cảnh
   pathWidth: 88,
-  unitScale: 0.72,            // tỉ lệ vẽ nhân vật (nhỏ so với đường & trụ như Kingdom Rush)
+  unitScale: 1.0,             // tỉ lệ vẽ nhân vật: đủ to để nhìn rõ trên điện thoại (trước 0,72 → chỉ còn chấm li ti)
 
   match: {
     lives: 20,

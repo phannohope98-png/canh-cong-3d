@@ -296,8 +296,8 @@ button { font-family: inherit; color: inherit; border: 0; padding: 0; background
 #boss-bar i { display: block; height: 100%; background: linear-gradient(#ff6a5a, #c01e1e); }
 #tip { position: absolute; left: 50%; bottom: calc(14px + var(--sb)); transform: translateX(-50%); z-index: 5; max-width: 60%; padding: 6px 14px; border-radius: 14px; text-align: center;
   background: linear-gradient(rgba(58,34,70,.95), rgba(32,18,40,.95)); border: 2.5px solid var(--ink); font-size: 14px; pointer-events: none; text-shadow: 0 2px 0 var(--ink); }
-#banner { position: absolute; top: 28%; left: 0; right: 0; z-index: 4; text-align: center; pointer-events: none; opacity: 0;
-  font-family: var(--display); font-size: clamp(30px, 7vw, 52px); color: #ffe27a; text-shadow: var(--outline), 0 10px 20px rgba(0,0,0,.6); }
+#banner { position: absolute; top: 13%; left: 0; right: 0; z-index: 4; text-align: center; pointer-events: none; opacity: 0;
+  font-family: var(--display); font-size: clamp(20px, 4vw, 30px); color: #ffe27a; text-shadow: var(--outline), 0 10px 20px rgba(0,0,0,.6); }
 #banner.show { animation: banner 1.8s ease-out forwards; }
 #banner.boss { color: #ff6a5a; }
 @keyframes banner { 0% { opacity: 0; transform: scale(1.8); } 15% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }
