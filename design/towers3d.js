@@ -269,8 +269,9 @@
 
   /* =================== PHÁO ĐÀI NGƯỜI LÙN – đá granite, mái đỏ gỉ, súng cối =================== */
   const ART_TOP = [0, 24, 34, 40, 46];
-  function mortar(g, y, t) {
-    const m = node('mortar'); m.position.set(0.16, y, 0.02); g.add(m);
+  /** súng cối (khối riêng, vẽ như nhân vật để XOAY theo hướng bắn): gốc ở giữa chân giá, mặt sàn y=0 */
+  function mortar(g, y, t, x, z) {
+    const m = node('mortar'); m.position.set(x || 0, y, z || 0); g.add(m);
     const bc = t === 4 ? GOLD : t === 3 ? '#3a3a46' : t === 2 ? '#a87a3a' : '#9a6a32', R = 0.11 + t * 0.012, L = 0.3 + t * 0.03;
     add(m, part(G.sbox(0.32, 0.12, 0.26, 0.35), t >= 3 ? '#4a4a56' : '#6a4426', { tex: t >= 3 ? null : 'wood.f', metal: t >= 3 ? 1 : 0 }), 0, 0.06, 0); // giá
     for (const s of [-1, 1]) { add(m, part(G.cyl(0.07, 0.07, 0.04, 14).rotateX(Math.PI / 2), '#5a3a22', { tex: 'wood' }), -0.08, 0.06, s * 0.14); add(m, part(G.ball(0.022), GOLD, { metal: 1, ink: 0.006 }), -0.08, 0.06, s * 0.165); }
@@ -278,10 +279,15 @@
     add(b, part(G.lathe([[0, -0.06], [R * 0.95, -0.06], [R * 1.05, 0.02], [R * 0.86, L * 0.65], [R * 1.02, L * 0.9], [R * 1.08, L], [R * 0.72, L], [R * 0.7, L * 0.7], [0, L * 0.68]], 18), bc, { metal: 1 }), 0, 0, 0);
     add(b, part(G.torus(R * 0.9, 0.016).rotateX(Math.PI / 2), sh(bc, -0.3), { metal: 1, ink: 0.006 }), 0, L * 0.35, 0);
     if (t >= 4) add(b, new T.Mesh(G.torus(R * 0.88, 0.012).rotateX(Math.PI / 2), mat('#ff9a3a', { glow: 1.6 })), 0, L * 0.6, 0);
-    for (const [x, z] of [[-0.32, 0.16], [-0.38, 0.06], [-0.34, 0.1]]) add(g, part(G.ball(0.05, 1, 1, 1, 10), '#2e2e38', { metal: 1, ink: 0.01 }), x, y + 0.05, z);
-    add(g, part(G.lathe([[0, 0], [0.08, 0], [0.095, 0.08], [0.08, 0.16], [0, 0.16]], 12), '#8a5a32', { tex: 'wood' }), -0.36, y, -0.12); // thùng thuốc súng
     return m;
   }
+  /** đạn xếp đống + thùng thuốc súng: nằm phía SAU bệ, không che nòng */
+  function ammo(g, y) {
+    for (const [x, z] of [[-0.3, -0.2], [-0.2, -0.26], [-0.25, -0.17]]) add(g, part(G.ball(0.05, 1, 1, 1, 10), '#2e2e38', { metal: 1, ink: 0.01 }), x, y + 0.05, z);
+    add(g, part(G.lathe([[0, 0], [0.08, 0], [0.095, 0.08], [0.08, 0.16], [0, 0.16]], 12), '#8a5a32', { tex: 'wood' }), 0.28, y, -0.22); // thùng thuốc súng
+  }
+  /** súng cối riêng, xoay yaw quanh trục đứng (0 = nòng hướng sang phải) */
+  function MORTAR(t, yaw) { const g = node('root'); mortar(g, 0, t, 0, 0); g.rotation.y = yaw || 0; return g; }
   function DWARFHALL(t) {
     const g = node('root'), Y = HY(ART_TOP[t]), red = t >= 4 ? '#b8401a' : '#a8481e', granite = t >= 4 ? '#9a94a6' : '#8a8494';
     if (t === 1) { // ụ pháo gỗ: sàn ván trên chân đá, bao cát
@@ -289,7 +295,7 @@
       for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) add(g, part(G.cyl(0.05, 0.06, Y - 0.1, 8), '#6a4426', { tex: 'wood' }), x * 0.42, 0.1 + (Y - 0.1) / 2, z * 0.34);
       deck(g, Y, U(36), '#a8783e', 'wood');
       for (let i = 0; i < 7; i++) { const a = Math.PI * 0.55 + i / 6 * Math.PI * 0.9; add(g, part(G.sbox(0.2, 0.1, 0.13, 0.6), '#a88a5a', { ink: 0.012, tex: 'cloth' }), S(a) * U(33), Y + 0.05, C(a) * U(33), 0, a, 0); }
-      mortar(g, Y, t);
+      ammo(g, Y);
       const f = node('front'); g.add(f);
       for (let i = 0; i < 6; i++) { const a = -1.1 + i * 0.44; add(f, part(G.sbox(0.19, 0.1, 0.12, 0.6), '#a88a5a', { ink: 0.012, tex: 'cloth' }), S(a) * U(34), Y + 0.05, C(a) * U(34), 0, a, 0); }
       crest(g, U(34), Y - 0.02, 0.8, 0.16, 0.24, red, 'hammer');
@@ -317,7 +323,7 @@
       for (const s of [-1, 1]) add(g, part(G.tube([[s * 0.42, Y - 0.06, 0], [s * 0.88, Y + 0.08, 0], [s * 0.86, Y + 0.6, -0.08]], 0.06, 14), '#f2ead6'), 0, 0, 0);
     }
     backMerlons(g, Y, r1 + 0.02, granite, 5);
-    mortar(g, Y, t);
+    ammo(g, Y);
     frontParapet(g, Y, r1 + 0.02, granite, { n: 5, from: -1.05, to: 1.05, h: 0.12 });
     return g;
   }
@@ -347,5 +353,5 @@
   DEFS.forEach(([type, name, desc, palette]) => Chars3D.list.push({ id: 'tower_' + type, name, group: 'Công trình', role: 'Trụ · 4 cấp', tiers: 4, tierName: 'Cấp trụ', desc, palette,
     make: t => ({ rig: { root: build(type, t), n: {}, o: {} }, anim: { kind: 'static' } }) }));
 
-  window.Towers3D = { build, plot: PLOT, U, HY, TOPS: { archer: ARCH_TOP, mage: MAGE_TOP, artillery: ART_TOP }, kit: { plinth, body, trim, spire, turret, crest, gate, archWin, footing, tower, rAt, onCyl, win, door, banner, planks, beam, merlons, house, stakes, leafShape } };
+  window.Towers3D = { build, plot: PLOT, mortar: MORTAR, U, HY, TOPS: { archer: ARCH_TOP, mage: MAGE_TOP, artillery: ART_TOP }, kit: { plinth, body, trim, spire, turret, crest, gate, archWin, footing, tower, rAt, onCyl, win, door, banner, planks, beam, merlons, house, stakes, leafShape } };
 })();

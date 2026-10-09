@@ -27,7 +27,7 @@
 
     update(dt) {
       if (this.flash > 0) this.flash -= dt;
-      if (this.hitT > 0) this.hitT -= dt;
+      if (this.hitT > 0) this.hitT -= dt; if (this.popT > 0) this.popT -= dt; if (this.ward > 0) this.ward -= dt;
       if (this.shieldT > 0) this.shieldT -= dt;
       if (this.special === 'shieldwall' && this.active) { this.shieldCd = (this.shieldCd || 0) - dt; if (this.shieldCd <= 0 && this.hp < this.maxHp * 0.5) { this.shieldCd = 12; this.shieldT = 3; Effects.comic(this.x, this.y - 40, 'KHIÊN!', '#ffe14a', true); Effects.ring(this.x, this.y - 10, 6, 28, 0.4, '#ffe58a', 4); } }
       this.idleT += dt;
@@ -56,6 +56,8 @@
         }
         if (this.atk >= 1) this.atk = -1;
       }
+      // đang tung kỹ năng (nhảy / giơ vũ khí): đứng yên, không đánh thường
+      if (this.castT > 0) { this.castT -= dt; this.moving = false; if (this.leap) Skills.stepLeap(this, dt); return; }
       // người chơi ra lệnh di chuyển (anh hùng / dời cờ) → bỏ mục tiêu
       if (this.state === 'move') {
         if (this.moveTo(this.postX, this.postY, dt)) this.state = 'post';
@@ -98,7 +100,7 @@
     }
 
     respawn() {
-      this.hp = this.maxHp; this.state = 'post'; this.alpha = 0; this.target = null; this.atk = -1; this.stun = 0;
+      this.hp = this.maxHp; this.state = 'post'; this.alpha = 0; this.popT = 0.4; this.target = null; this.atk = -1; this.stun = 0;
       if (this.isHero) { this.x = this.postX; this.y = this.postY; Effects.ring(this.x, this.y, 6, 50, 0.5, '#ffe58a', 5); }
       else { this.x = this.tower.x; this.y = this.tower.y + 12; this.tower.anim.door = 0.6; }
     }
@@ -114,18 +116,19 @@
         ctx.beginPath(); ctx.ellipse(this.x, fy, 20, 7.5, 0, 0, Math.PI * 2); ctx.stroke();
       }
       const mode = this.atk >= 0 ? 'atk' : this.moving ? 'walk' : 'idle';
-      const hb = this.hitT > 0 ? Math.sin(this.hitT / 0.2 * Math.PI) : 0; // bị đánh: lùi 1 bước
-      if (hb) { ctx.save(); ctx.translate(-this.face * hb * 5, 0); ctx.translate(this.x, fy); ctx.rotate(-this.face * hb * 0.12); ctx.translate(-this.x, -fy); }
-      // ảnh art có 4 góc: đi lên → quay lưng, đi ngang → nghiêng, đi xuống → quay mặt
-      let art = this.art;
-      let face = this.face;
+      // ảnh art có 8 hướng 3D (hoặc 4 góc 2D): đi lên → quay lưng, đi ngang → nghiêng, đi xuống → quay mặt
+      let art = this.art, face = this.face;
       const aim = mode === 'walk' ? Math.atan2(this.dvy || 0, this.dvx || 0) : this.target && this.target.alive !== false ? Math.atan2(this.target.y - this.y, this.target.x - this.x) : (this.face > 0 ? 0.35 : Math.PI - 0.35);
-      const dk = window.Art3D && Art3D.dirKey && Art3D.dirKey(art, aim); // 3D: 8 hướng thật
+      const dk = (window.Anim && Anim.dirKey(art, aim, this)) || (window.Art3D && Art3D.dirKey && Art3D.dirKey(art, aim)); // 3D: 8 hướng thật, có trễ để không giật
       if (dk) { art = dk; face = 1; }
       else if (mode === 'walk') { const v = this.dvy || 0, s = v < -0.55 ? '_b' : v > 0.6 ? '_f' : Math.abs(this.dvx || 0) > 0.8 ? '_s' : ''; if (s && ArtChars[art + s]) art += s; }
-      Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT);
-      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.6, this.flash * 6); Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT); ctx.restore(); }
-      if (hb) ctx.restore();
+      const ph = mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.idleT;
+      const P = Anim.pose(this, mode, mode === 'atk' ? this.atk : this.walk, mode === 'walk' ? (Math.cos(aim) >= 0 ? 1 : -1) : this.face, time); if (this.lift) { P.dy -= this.lift; P.sy *= 1 + this.lift * 0.0016; P.sx *= 1 - this.lift * 0.0009; }
+      if (this.ward > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ArtKit.glow(ctx, this.x, fy - 16 * (CONFIG.unitScale || 1), 24, '#ffe58a', Math.min(0.55, this.ward * 0.5) * (0.75 + Math.sin(time * 6) * 0.25)); ctx.restore(); }
+      Anim.begin(ctx, this.x, fy, P);
+      Painter.char(ctx, art, this.x, fy, this.scale, face, mode, ph);
+      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.6, this.flash * 6); Painter.char(ctx, art, this.x, fy, this.scale, face, mode, ph); ctx.restore(); }
+      ctx.restore();
       if (this.shieldT > 0) { // lá chắn khiên vàng
         const k = Math.min(1, this.shieldT * 3), s = (CONFIG.unitScale || 1);
         ctx.save(); ctx.globalAlpha = 0.55 * k; ctx.globalCompositeOperation = 'lighter'; const gr = ctx.createRadialGradient(this.x, fy - 14 * s, 4, this.x, fy - 14 * s, 26 * s); gr.addColorStop(0, 'rgba(255,230,120,0)'); gr.addColorStop(0.75, 'rgba(255,220,90,0.35)'); gr.addColorStop(1, 'rgba(255,245,180,0.9)');
@@ -154,52 +157,19 @@
     tick(u, dt) {
       if (u.skillCd > 0) u.skillCd -= dt;
       u.engage = u.state === 'post' ? (u.range ? u.range + 20 : 80) : 0;
-      const f = u.fx; if (!f) return;
-      f.t += dt;
-      if (f.kind === 'rain') {
-        while (f.n < f.ticks && f.t >= f.n * 0.22) {
-          f.n++; Combat.splash(f.x, f.y, f.r, f.dmg, 'physical', { air: true });
-          for (let i = 0; i < 9; i++) { const ax = f.x + (Math.random() - 0.5) * f.r * 1.8, ay = f.y + (Math.random() - 0.5) * f.r * 1.1; Effects.particle(ax + 14, ay - 170, -50, 700, 0.26, '#fff6d0', 3.2); Effects.hit(ax, ay, '#ffe58a'); }
-          Effects.ring(f.x, f.y, 10, f.r, 0.3, '#c8ffb0', 3); AudioSys.play('arrow');
-        }
-        if (f.n >= f.ticks && f.t > f.ticks * 0.22 + 0.3) u.fx = null;
-      } else u.fx = null;
     },
     moveHero(u, x, y) {
       if (u.state === 'dead') return;
       u.postX = x; u.postY = y; u.state = 'move'; u.target = null; u.tUid = -1; u.atk = -1;
       Effects.ring(x, y, 4, 26, 0.4, '#ffe58a', 3);
     },
+    /** Chạm nút kỹ năng: Skills tự nhắm mục tiêu; không có mục tiêu thì không mất thời gian hồi. Trả { ok, msg } */
     cast(u) {
-      const S = u.heroDef.skill, lvm = 1 + (u.level - 1) * CONFIG.heroPerLevel, dm = u.damage[1] / u.heroDef.damage[1] / lvm;
-      if (u.state === 'dead' || u.skillCd > 0) return false;
-      u.skillCd = S.cooldown; u.atk = 0;
-      if (S.id === 'holy') {
-        Effects.flash(u.x, u.y - 20, S.radius * 1.4, '#fff0a0'); Effects.ring(u.x, u.y, 10, S.radius, 0.6, '#ffe58a', 8);
-        Effects.burst(u.x, u.y - 20, '#fff6c0', 28, 220, 0.7, 6, -40);
-        Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'magic', { air: true });
-        for (const o of Units.list) if (o.active && Math.hypot(o.x - u.x, o.y - u.y) < S.radius * 1.4) { o.hp = Math.min(o.maxHp, o.hp + o.maxHp * S.heal); Effects.text(o.x, o.y - 50, '+', '#8aff6a', 22); }
-        AudioSys.play('holy'); Effects.shake(6, 0.3); Effects.comic(u.x, u.y - 70, 'SHINE!', '#fff27a', true);
-      } else if (S.id === 'rain') {
-        // tâm mưa tên: cụm quái đông nhất quanh anh hùng
-        let cx = u.x, cy = u.y, best = -1;
-        for (const e of Enemies.list) { if (!e.alive || Math.hypot(e.x - u.x, e.y - u.y) > 260) continue; let c = 0; for (const o of Enemies.list) if (o.alive && Math.hypot(o.x - e.x, o.y - e.y) < S.radius) c++; if (c > best) { best = c; cx = e.x; cy = e.y; } }
-        u.fx = { kind: 'rain', t: 0, n: 0, ticks: S.ticks, x: cx, y: cy, r: S.radius, dmg: S.damage * lvm * dm / S.ticks };
-        Effects.flash(cx, cy, S.radius * 1.1, '#c8ffb0');
-      } else if (S.id === 'frost') {
-        Effects.flash(u.x, u.y - 20, S.radius * 1.5, '#cfeeff'); Effects.ring(u.x, u.y, 10, S.radius, 0.6, '#9fe0ff', 8); Effects.ring(u.x, u.y, 4, S.radius * 0.7, 0.45, '#ffffff', 4);
-        Effects.burst(u.x, u.y - 20, '#dff6ff', 34, 240, 0.8, 5, 60);
-        Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'magic', { air: true });
-        for (const e of Enemies.list) if (e.alive && Math.hypot(e.x - u.x, (e.y - u.y) * 1.2) < S.radius + e.radius) { e.slowT = S.slowTime; e.slowMul = 1 - S.slow * (e.boss ? 0.5 : 1); }
-        AudioSys.play('magic'); Effects.shake(4, 0.25);
-      } else if (S.id === 'quake') {
-        Effects.ring(u.x, u.y, 10, S.radius, 0.5, '#d8c8a8', 9); Effects.ring(u.x, u.y, 4, S.radius * 0.6, 0.35, '#ffb060', 6);
-        Effects.burst(u.x, u.y, '#a89878', 30, 200, 0.6, 7, 260);
-        Combat.splash(u.x, u.y, S.radius, S.damage * lvm * dm, 'physical');
-        for (const e of Enemies.list) if (e.alive && !e.flying && Math.hypot(e.x - u.x, (e.y - u.y) * 1.2) < S.radius + e.radius) e.stunT = Math.max(e.stunT || 0, S.stun * (e.boss ? 0.4 : 1));
-        AudioSys.play('explode'); Effects.shake(12, 0.5); Effects.comic(u.x, u.y - 70, 'KRAKOOM!', '#ffb04a', true);
-      }
-      return true;
+      if (u.state === 'dead') return { ok: false, msg: 'Anh hùng đang hồi sinh' };
+      if (u.skillCd > 0) return { ok: false, msg: 'Kỹ năng đang hồi' };
+      const r = Skills.cast(u);
+      if (r.ok) { u.skillCd = u.heroDef.skill.cooldown; Effects.ring(u.x, u.y, 6, 46, 0.4, '#ffffff', 4); }
+      return r;
     }
   };
 
@@ -237,7 +207,7 @@
     },
     kill(u) {
       if (!u.active) return;
-      u.state = 'dead'; u.target = null; u.tUid = -1; u.atk = -1;
+      u.state = 'dead'; u.target = null; u.tUid = -1; u.atk = -1; u.leap = null; u.lift = 0; u.castT = 0; u.ward = 0;
       u.respawnT = u.respawnMax = u.isHero ? u.heroDef.respawn : u.tower ? u.tower.def.respawn * (1 - Math.min(0.6, Items.mods(u.tower.type).respawn)) : 0;
       Effects.corpse(u.art, u.x, u.y + u.radius * 0.5, u.scale, u.face);
       Effects.death(u.x, u.y - 14, u.isHero ? '#f2c14e' : '#9aa3b2');

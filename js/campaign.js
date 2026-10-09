@@ -1,11 +1,11 @@
 /* =========================================================
  * campaign.js – Chiến dịch 6 vùng × 6 map (map 6 = BOSS của vùng)
  * Rừng Xanh 1→6 → Sa Mạc... phải thắng map trước mới mở map sau; thắng map 6 mới sang vùng mới.
- * Bố cục đường đi lấy từ js/maps-img.js (12 bản vẽ tay + bản lật dọc) + 12 bố cục mới bên dưới.
- * Địa hình (sông, hồ, nhà, lâu đài) của bố cục mới tự sinh theo vùng, tránh đường đi.
+ * Bố cục đường đi: 36 kiểu riêng, NGẮN cho điện thoại – xem js/layouts.js (khung 380 × 190 → thế giới 1520 × 760).
+ * Địa hình (sông, hồ, nhà, lâu đài) tự sinh theo vùng, tránh đường đi.
  * ========================================================= */
 (function () {
-  const MP = window.MAPS, OLD = CONFIG.levels.slice(), B2 = MP.B2;
+  const OLD = CONFIG.levels.slice(), LY = window.LAYOUTS, B3 = LY.B3;
   const THEMES = ['forest', 'castle', 'desert', 'ice', 'lava', 'chaos'];
   const REGIONS = [
     { name: 'Rừng Xanh', subs: ['Bìa Rừng', 'Suối Hoa', 'Thung Lũng Sương Mù', 'Ngã Ba Cổ Thụ', 'Rừng Thẳm', 'Hang Vua Cây Ma'], boss: 'treantKing' },
@@ -30,39 +30,11 @@
   CONFIG.enemies.trollKing.desc = 'Boss Băng Giá: chúa tể vùng núi tuyết. Đập đất làm choáng và gây sát thương cả nhóm lính.';
   CONFIG.enemies.voidLord.desc = 'Boss cuối – Cổng Hỗn Mang: xé toạc không gian, choáng cả đội hình.';
 
-  /* ---------- 12 bố cục mới (khung 480 × 200, quái vào từ trái / trên / dưới, thành ở phải) ---------- */
-  const NEW = [
-    [[[-6, 40], [60, 40], [110, 60], [120, 110], [100, 150], [140, 175], [200, 170], [230, 130], [220, 80], [250, 45], [310, 40], [350, 70], [350, 120], [380, 150], [430, 140], [455, 100], [460, 70]]],
-    [[[-6, 50], [60, 55], [120, 80], [170, 100], [220, 100], [260, 70], [300, 50], [350, 60], [380, 95], [400, 135], [440, 140], [462, 110]],
-     [[-6, 160], [60, 150], [120, 125], [170, 100], [220, 100], [260, 70], [300, 50], [350, 60], [380, 95], [400, 135], [440, 140], [462, 110]]],
-    [[[150, -6], [150, 30], [120, 60], [80, 80], [70, 115], [100, 145], [160, 155], [220, 140], [260, 110], [300, 95], [340, 110], [360, 150], [400, 165], [440, 150], [458, 120]]],
-    [[[-6, 170], [50, 170], [90, 150], [100, 110], [80, 70], [100, 35], [150, 30], [180, 60], [185, 110], [200, 150], [250, 165], [290, 140], [300, 95], [320, 55], [370, 45], [410, 70], [430, 110], [455, 120]]],
-    [[[-6, 100], [50, 100], [100, 88], [150, 58], [205, 48], [255, 62], [295, 92], [335, 100], [375, 92], [415, 72], [456, 66]],
-     [[-6, 100], [50, 100], [100, 112], [150, 142], [205, 152], [255, 140], [295, 108], [335, 100], [375, 92], [415, 72], [456, 66]]],
-    [[[60, 206], [60, 170], [90, 140], [140, 130], [170, 100], [160, 60], [200, 35], [260, 40], [290, 75], [280, 120], [310, 160], [370, 170], [420, 150], [440, 110], [445, 70]]],
-    [[[-6, 30], [60, 40], [110, 70], [150, 100], [200, 105], [240, 130], [290, 140], [330, 115], [350, 80], [390, 55], [440, 60], [462, 85]],
-     [[-6, 100], [70, 100], [150, 100], [200, 105], [240, 130], [290, 140], [330, 115], [350, 80], [390, 55], [440, 60], [462, 85]],
-     [[-6, 175], [60, 165], [110, 130], [150, 100], [200, 105], [240, 130], [290, 140], [330, 115], [350, 80], [390, 55], [440, 60], [462, 85]]],
-    [[[-6, 45], [90, 45], [160, 55], [200, 85], [200, 130], [230, 165], [290, 170], [330, 140], [330, 95], [350, 55], [400, 40], [440, 60], [455, 95]]],
-    [[[-6, 120], [50, 125], [100, 140], [150, 160], [200, 160], [230, 130], [210, 95], [170, 80], [160, 45], [200, 25], [260, 30], [300, 60], [310, 105], [340, 140], [390, 150], [430, 125], [450, 90]]],
-    [[[-6, 45], [80, 50], [150, 40], [220, 55], [280, 75], [320, 100], [370, 100], [410, 85], [455, 70]],
-     [[-6, 165], [80, 160], [150, 170], [220, 150], [280, 125], [320, 100], [370, 100], [410, 85], [455, 70]]],
-    [[[-6, 140], [60, 140], [120, 120], [170, 90], [160, 130], [190, 165], [250, 170], [290, 140], [300, 100], [330, 65], [380, 55], [420, 80], [440, 120], [462, 130]],
-     [[200, -6], [200, 30], [185, 60], [170, 90], [160, 130], [190, 165], [250, 170], [290, 140], [300, 100], [330, 65], [380, 55], [420, 80], [440, 120], [462, 130]]],
-    [[[-6, 180], [60, 175], [120, 180], [170, 160], [160, 125], [110, 110], [90, 80], [120, 50], [180, 40], [240, 55], [260, 95], [250, 140], [290, 170], [350, 165], [380, 130], [370, 90], [400, 55], [445, 45], [462, 60]]]
-  ];
-
   /* ---------- tiện ích hình học (toạ độ khung map gốc) ---------- */
   const segD = (x, y, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy || 1; let t = ((x - a[0]) * dx + (y - a[1]) * dy) / l; t = Math.max(0, Math.min(1, t)); return Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t); };
   const polyD = (pts, x, y) => { let m = Infinity; for (let i = 0; i < pts.length - 1; i++) m = Math.min(m, segD(x, y, pts[i], pts[i + 1])); return m; };
   const pathD = (ip, x, y) => { let m = Infinity; for (const p of ip) m = Math.min(m, polyD(p, x, y)); return m; };
   const rng = seed => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
-  /** lật dọc bố cục (đường + địa hình) trong khung của nó */
-  function mirror(m, feat) {
-    const B = m.bg, fy = y => B.y0 + B.y1 - y, P = p => [p[0], fy(p[1])];
-    const f = feat ? { void: feat.void, rivers: (feat.rivers || []).map(r => Object.assign({}, r, { pts: r.pts.map(P) })), lakes: (feat.lakes || []).map(l => Object.assign({}, l, { y: fy(l.y) })), props: (feat.props || []).map(p => Object.assign({}, p, { y: fy(p.y) })) } : null;
-    return { bg: B, ipaths: m.ipaths.map(path => path.map(P)), feat: f };
-  }
   /** địa hình tự sinh: lâu đài ở cổng thành, 1 dòng sông cắt ngang đường (có cầu), hồ & nhà cửa ở chỗ trống */
   function autoFeat(m, theme, seed) {
     const B = m.bg, ip = m.ipaths, r = rng(seed * 7919 + 13), W = B.x1 - B.x0, H = B.y1 - B.y0;
@@ -127,7 +99,7 @@
     const P = POOL[THEMES[ri]], r = rng(seed * 104729 + 7), n = 7 + (m >= 3 ? 1 : 0) + (m >= 4 ? 1 : 0), out = [];
     const pick = a => a[(r() * a.length) | 0], hp = k => CONFIG.enemies[k].hp;
     for (let i = 0; i < n; i++) {
-      const budget = (520 + 110 * ri) * (1 + 0.62 * i) * (1 + 0.06 * m), parts = [];
+      const budget = (560 + 120 * ri) * (1 + 0.7 * i) * (1 + 0.07 * m), parts = [];
       const L = pick(P.light); parts.push([L, Math.max(4, Math.round(budget * (i >= 4 ? 0.4 : i >= 2 ? 0.55 : 1) / hp(L)))]);
       if (i >= 2) { const M = pick(P.mid); parts.push([M, Math.max(2, Math.round(budget * (i >= 4 ? 0.32 : 0.45) / hp(M)))]); }
       if (i >= 4) { const Hh = pick(P.heavy); parts.push([Hh, Math.max(1, Math.round(budget * 0.28 / hp(Hh)))]); }
@@ -140,6 +112,11 @@
   const deBoss = waves => waves.map(w => w.split(',').map(p => { const [k] = p.trim().split(':'); return NOBOSS[k] || p.trim(); }).join(','));
   const ESCORT = { treantKing: 'goblin:12,orc:4', darkLord: 'skeleton:10,wraith:6', pharaoh: 'mummy:4,bandit:12', trollKing: 'iceGolem:2,frostWolf:12', magmaLord: 'imp:10,blackOrc:4', voidLord: 'voidWalker:8,voidling:14,drake:4' };
 
+  /* Độ khó nhân thêm theo vùng: trụ nay mạnh hơn nhiều nhờ đồ + nâng cấp sao, nên quái trâu hơn hẳn — phải kết hợp kỹ năng & điều khiển anh hùng mới thắng.
+     Vùng đầu nhân cao hơn vì người chơi còn yếu nên phần còn lại của đường cong (base) mới tăng từ từ. */
+  const HARD = [1.7, 1.6, 1.5, 1.35, 1.2, 1.15];
+  /* Hệ số chỉnh riêng từng map (36 số), đo bằng test/calib.js: bot khôn dùng 10 trụ + đồ + anh hùng dẫn quân & bấm kỹ năng đo ra ngưỡng quái trâu nhất mà vẫn thắng, rồi nhân 0,85 (cận ngưỡng = khó thật sự, cần chơi tốt). */
+  const CAL = [1.54,1.2,0.78,0.81,0.98,0.96,1.41,1.63,0.79,1.91,1.98,0.87,3.52,2.86,1.57,3.21,2.86,1.16,1.91,0.81,1.26,1.25,1.95,0.9,0.81,0.9,0.74,0.63,0.85,0.67,1.46,1.31,1.16,2.36,1.46,0.55];
   /* ---------- ghép 36 màn ---------- */
   const STORY = [
     s => 'Bầy yêu tinh và thú hoang kéo qua ' + s + '. Giữ con đường về thành!',
@@ -160,19 +137,12 @@
   const DIFF = ['Dễ', 'Dễ - Trung bình', 'Trung bình', 'Trung bình - Khó', 'Khó', 'Rất khó', 'Cực khó'];
   const levels = [];
   REGIONS.forEach((R, ri) => {
-    const th = THEMES[ri], c1 = MP.M[ri], c2 = MP.M[6 + ri], o1 = OLD[ri], o2 = OLD[6 + ri];
-    const base = 0.8 + 0.18 * ri, F = [1, 1.08, 1.15, 1.22, 1.3, 1.3]; // vùng sau quái trâu hơn hẳn (người chơi đã có sao, cấp anh hùng, đồ trụ)
-    const lay = [
-      { bg: c1.bg, ipaths: c1.ipaths, feat: MP.FEAT[ri] },
-      Object.assign({ bg: B2, ipaths: NEW[ri * 2] }, {}),
-      { bg: c2.bg, ipaths: c2.ipaths, feat: MP.FEAT[6 + ri] },
-      mirror(MP.M[(ri + 1) % 6]),
-      { bg: B2, ipaths: NEW[ri * 2 + 1] },
-      mirror(c2, MP.FEAT[6 + ri])
-    ];
+    const th = THEMES[ri], o1 = OLD[ri], o2 = OLD[6 + ri];
+    const base = (0.8 + 0.18 * ri) * HARD[ri], F = [1, 1.08, 1.15, 1.22, 1.3, 1.3]; // vùng sau quái trâu hơn hẳn (người chơi đã có sao, cấp anh hùng, đồ trụ)
+    const lay = LY.L.slice(ri * 6, ri * 6 + 6).map(ip => ({ bg: B3, ipaths: ip }));
     lay.forEach((L, m) => {
       const gi = ri * 6 + m, boss = m === 5;
-      const feat = L.feat || autoFeat(L, th, gi + 1);
+      const feat = autoFeat(L, th, gi + 1), raw = base * F[m] * CAL[gi];
       let waves;
       if (m === 0) waves = deBoss(o1.waves);
       else if (m === 2) waves = deBoss(o2.waves).slice(0, 9);
@@ -182,8 +152,8 @@
       levels.push({
         name: R.name + ' ' + (m + 1), sub: R.subs[m], region: ri, map: m, boss, theme: th,
         diff: boss ? 'BOSS · ' + CONFIG.enemies[R.boss].name : DIFF[Math.min(6, Math.floor(ri * 0.9 + m * 0.45))],
-        gold, spots: Math.min(18, 13 + Math.floor(m / 2) + (ri >= 3 ? 1 : 0) + (boss ? 1 : 0)),
-        hpMul: +(base * F[m]).toFixed(3),
+        gold, spots: 10 + Math.floor(m / 2) + (ri >= 3 ? 1 : 0) + (boss ? 1 : 0),
+        hpMul: +Math.min(raw, (raw + 1.3 + 0.065 * gi) / 2).toFixed(3), // map nào đo ra quá dễ (đợt quái nhẹ) thì kéo về đường cong chung, không vượt ngưỡng đo
         story: boss ? BOSS_STORY[ri] : m === 0 ? o1.story : m === 2 ? o2.story : STORY[ri](R.subs[m]),
         bg: L.bg, ipaths: L.ipaths, feat, waves
       });

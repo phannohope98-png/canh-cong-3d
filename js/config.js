@@ -4,7 +4,7 @@
  * Giáp (armor) & kháng phép (mres) tính theo % giảm sát thương (0 – 0.8).
  * ========================================================= */
 window.CONFIG = {
-  world: { width: 1800, height: 900 },
+  world: { width: 1520, height: 760 }, // map gọn cho điện thoại: đường ngắn, nhân vật to hơn khi xem toàn cảnh
   pathWidth: 88,
   unitScale: 0.72,            // tỉ lệ vẽ nhân vật (nhỏ so với đường & trụ như Kingdom Rush)
 
@@ -88,26 +88,26 @@ window.CONFIG = {
     aldric: {
       name: 'Aldric Tóc Bạc', title: 'Hiệp sĩ Bình Minh', role: 'Cận chiến · Hồi máu đồng đội', race: 'Con người',
       hp: 380, damage: [16, 24], armor: 0.4, speed: 95, attackRate: 0.9, regen: 12, respawn: 15, radius: 15, unlock: 0,
-      skill: { id: 'holy', name: 'Thánh Quang', icon: 'sun', cooldown: 18, radius: 95, damage: 90, heal: 0.35 },
-      desc: 'Hiệp sĩ cầm đại kiếm. Thánh Quang gây sát thương xung quanh và hồi máu cho quân ta.'
+      skill: { id: 'holy', name: 'Thánh Quang Giáng Thế', icon: 'sun', cooldown: 18, radius: 125, damage: 150, heal: 0.4, ward: 0.3, wardTime: 5, slow: 0.4, slowTime: 2 },
+      desc: 'Hiệp sĩ cầm đại kiếm, tiền tuyến của cả đội.', text: 'Trụ sáng từ trời giáng xuống Aldric, thiêu quái quanh người và làm chúng choáng váng chậm lại; hồi 40% máu và ban Giáp Phước (-30% sát thương nhận, 5 giây) cho quân ta. Chạm 1 lần là dùng.'
     },
     lyra: {
       name: 'Lyra Gió Bạc', title: 'Xạ thủ Elf', role: 'Bắn xa · Mưa tên diện rộng', race: 'Elf',
       hp: 260, damage: [14, 20], armor: 0.15, speed: 105, attackRate: 0.7, regen: 9, respawn: 14, radius: 14, unlock: 200, range: 175, proj: 'arrow', air: true,
-      skill: { id: 'rain', name: 'Mưa Tên', icon: 'bow', cooldown: 20, radius: 130, damage: 130, ticks: 5 },
-      desc: 'Bắn tên từ xa, trúng cả quân bay. Mưa Tên trút xuống một vùng, sát thương liên tục.'
+      skill: { id: 'rain', name: 'Mưa Tên Sao Băng', icon: 'bow', cooldown: 20, radius: 125, damage: 320, range: 520 },
+      desc: 'Bắn tên từ xa, trúng cả quân bay.', text: 'Tự nhắm CỤM QUÁI ĐÔNG NHẤT trong tầm: 4 đợt tên rơi xiên từ trời rồi một mũi tên khổng lồ phát sáng đóng đinh cả cụm. Chạm 1 lần là dùng.'
     },
     selene: {
       name: 'Selene Nguyệt Quang', title: 'Đại pháp sư', role: 'Phép xa · Làm chậm kẻ địch', race: 'Phù thủy',
       hp: 230, damage: [18, 28], armor: 0.1, speed: 90, attackRate: 1.1, regen: 8, respawn: 15, radius: 14, unlock: 400, range: 160, proj: 'bolt', air: true, type: 'magic',
-      skill: { id: 'frost', name: 'Bão Băng', icon: 'frost', cooldown: 22, radius: 135, damage: 85, slow: 0.55, slowTime: 4.5 },
-      desc: 'Phép thuật xuyên giáp. Bão Băng gây sát thương phép và làm chậm cả nhóm quái.'
+      skill: { id: 'frost', name: 'Bão Tuyết Vĩnh Cửu', icon: 'frost', cooldown: 22, radius: 130, damage: 260, slow: 0.6, slowTime: 1.2, zone: 4.4, ticks: 6, freeze: 1.2, range: 520 },
+      desc: 'Phép thuật xuyên giáp, bắn xa.', text: 'Ném quả cầu băng vào CỤM QUÁI ĐÔNG NHẤT, mở vùng bão tuyết 4 giây liên tục gây sát thương phép + làm chậm 60%; khi tan, vỡ thành băng đóng băng quái còn trong vùng. Chạm 1 lần là dùng.'
     },
     borin: {
       name: 'Borin Rìu Lửa', title: 'Chiến thần Người Lùn', role: 'Cận chiến · Choáng diện rộng', race: 'Người Lùn',
       hp: 520, damage: [20, 30], armor: 0.5, speed: 78, attackRate: 1.15, regen: 14, respawn: 16, radius: 16, unlock: 600,
-      skill: { id: 'quake', name: 'Địa Chấn', icon: 'axe', cooldown: 20, radius: 120, damage: 70, stun: 2.4 },
-      desc: 'Người Lùn thấp, béo chắc, râu khổng lồ, mũ sắt, giáp nặng, rìu hai tay. Địa Chấn: đập đất làm choáng toàn bộ quái xung quanh.'
+      skill: { id: 'quake', name: 'Rồng Đá Địa Chấn', icon: 'axe', cooldown: 20, radius: 125, damage: 190, stun: 2.6, after: 0.4, range: 480 },
+      desc: 'Người Lùn thấp, béo chắc, râu khổng lồ, mũ sắt, giáp nặng, rìu hai tay.', text: 'Nhảy vọt tới CỤM QUÁI ĐÔNG NHẤT, đập đất nứt toác làm choáng cả đám 2,6 giây, rồi dư chấn lần hai. Chạm 1 lần là dùng.'
     }
   },
   heroMax: 10, heroPerLevel: 0.08, heroLevelXp: [0, 120, 300, 560, 900, 1350, 1900, 2600, 3500, 4600],

@@ -46,7 +46,7 @@
     summon(list) {
       let i = 0;
       for (const [type, n] of list) for (let k = 0; k < n; k++, i++) {
-        const m = new Enemy(type, this.pathIndex, Waves.hpMul); m.dist = Math.max(0, this.dist - 30 - i * 14); m.lat = (Math.random() - 0.5) * CONFIG.pathWidth * 0.6; m.place(); m.alpha = 0;
+        const m = new Enemy(type, this.pathIndex, Waves.hpMul); m.dist = Math.max(0, this.dist - 30 - i * 14); m.lat = (Math.random() - 0.5) * CONFIG.pathWidth * 0.6; m.place(); m.alpha = 0; m.popT = 0.4;
         Enemies.list.push(m); Effects.burst(m.x, m.y - 10, '#3a1a4a', 10, 120, 0.5, 7, -60);
       }
       Effects.ring(this.x, this.y, 10, 110, 0.6, '#7a2ab0', 7); Effects.flash(this.x, this.y - 30, 120, '#5a1a8a'); AudioSys.play('boss');
@@ -61,7 +61,12 @@
       if (this.dots) { // độc / cháy từ vật phẩm trụ
         for (const k in this.dots) { const d = this.dots[k]; if (d.t <= 0) continue; d.t -= dt; d.acc += d.dps * dt; if (d.acc >= 1) { const n = Math.floor(d.acc); d.acc -= n; Combat.hitEnemy(this, n, 'true'); if (!this.alive) return; } }
       }
-      if (this.atk >= 0) { this.atk += dt / 0.5; if (this.atk >= 1) this.atk = -1; }
+      if (this.hitT > 0) this.hitT -= dt; if (this.popT > 0) this.popT -= dt;
+      if (this.atk >= 0) { // đòn đánh: sát thương rơi đúng lúc vung tới (giữa hoạt ảnh), không trúng trước khi tay vung
+        const prev = this.atk; this.atk += dt / (this.atkDur || 0.5);
+        if (prev < 0.5 && this.atk >= 0.5 && this.onStrike) { const f = this.onStrike; this.onStrike = null; f(); }
+        if (this.atk >= 1) { this.atk = -1; this.onStrike = null; }
+      }
       this.cd -= dt;
       if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slowMul = 1; }
       if (this.stunT > 0) { this.stunT -= dt; this.state = 'idle'; return; }
@@ -71,10 +76,12 @@
       if (this.def.slam) {
         this.slamT -= dt;
         if (this.slamT <= 0) {
-          this.slamT = this.def.slam.every; this.atk = 0;
-          const s = this.def.slam; let n = 0;
-          for (const u of Units.list) if (u.active && Math.hypot(u.x - this.x, u.y - this.y) < s.radius) { Combat.hitUnit(u, s.damage); u.stun = 2; n++; }
-          Effects.ring(this.x, this.y, 10, s.radius, 0.5, '#d8c8a8', 8); Effects.shake(10, 0.4); AudioSys.play('explode');
+          this.slamT = this.def.slam.every; this.atk = 0; this.atkDur = 0.8;
+          const s = this.def.slam;
+          this.onStrike = () => {
+            for (const u of Units.list) if (u.active && Math.hypot(u.x - this.x, u.y - this.y) < s.radius) { Combat.hitUnit(u, s.damage); u.stun = 2; }
+            Effects.ring(this.x, this.y, 10, s.radius, 0.5, '#d8c8a8', 8); Effects.ring(this.x, this.y, 4, s.radius * 0.6, 0.4, '#ffb060', 6); Effects.burst(this.x, this.y, '#a89878', 18, 180, 0.55, 7, 260); Effects.shake(10, 0.4); AudioSys.play('explode');
+          };
         }
       }
 
@@ -91,10 +98,14 @@
         if (blocker) {
           this.state = 'fight'; this.face = blocker.x >= this.x ? 1 : -1;
           if (this.cd <= 0) {
-            this.cd = this.def.rate * this.rateMul; this.atk = 0;
-            if (this.chargeT > 0) { this.chargeT = 0; Combat.hitUnit(blocker, [this.def.damage[0] * 2, this.def.damage[1] * 2]); Effects.comic(blocker.x, blocker.y - 40, 'HÚC!', '#ff9a3a', true); Effects.shake(3, 0.15); }
-            else Combat.hitUnit(blocker, this.def.damage);
-            Effects.hit(blocker.x, blocker.y - 14, '#ffb0a0'); if (blocker.hitT !== undefined) blocker.hitT = 0.2;
+            this.cd = this.def.rate * this.rateMul; this.atk = 0; this.atkDur = Math.max(0.38, Math.min(0.75, this.def.rate * this.rateMul * 0.45));
+            const charged = this.chargeT > 0; if (charged) this.chargeT = 0;
+            this.onStrike = () => {
+              if (!blocker.active) return;
+              if (charged) { Combat.hitUnit(blocker, [this.def.damage[0] * 2, this.def.damage[1] * 2]); Effects.comic(blocker.x, blocker.y - 40, 'HÚC!', '#ff9a3a', true); Effects.shake(3, 0.15); }
+              else Combat.hitUnit(blocker, this.def.damage);
+              Effects.hit(blocker.x, blocker.y - 14, '#ffb0a0'); if (blocker.hitT !== undefined) blocker.hitT = 0.2;
+            };
           }
           return;
         }
@@ -105,13 +116,13 @@
         if (this.shootCd <= 0) {
           let best = null, bd = this.def.ranged;
           for (const u of Units.list) { if (!u.active) continue; const d = Math.hypot(u.x - this.x, u.y - this.y); if (d < bd) { bd = d; best = u; } }
-          if (best) { this.shootCd = this.def.rate * 1.4; this.atk = 0; Combat.fire('enemyArrow', this.x, this.y - this.height * 0.6, best, { damage: this.def.damage }); }
+          if (best) { this.shootCd = this.def.rate * 1.4; this.atk = 0; this.atkDur = 0.5; this.face = best.x >= this.x ? 1 : -1; this.onStrike = () => { if (best.active) Combat.fire('enemyArrow', this.x, this.y - this.height * 0.6, best, { damage: this.def.damage }); }; }
           else this.shootCd = 0.3;
         }
       }
       this.state = 'walk';
       const step = this.speed * (this.slowMul || 1) * this.speedMul * (this.chargeT > 0 ? this.def.charge.mul : 1) * dt;
-      this.dist += step; this.walk += step / (this.radius * 2.8);
+      this.dist += step; this.walk += step / Math.min(this.radius * 2.8, this.def.speed * 1.05); // vòng bước ≤ ~1 s: quái to đi chậm vẫn đổi tư thế đều, không giật từng nhịp
       if (this.dist >= this.path.length) { Game.enemyEscaped(this); return; }
       this.place();
     }
@@ -124,10 +135,13 @@
       if (this.alpha !== undefined && this.alpha < 1) { this.alpha = Math.min(1, this.alpha + 0.04); ctx.globalAlpha = this.alpha; }
       if (this.p3 || (this.p2 && this.def.phase2)) K_glow(ctx, this.x, fy - this.height * 0.5, this.radius * 3, '#ff2a1a', 0.35 + Math.sin(this.anim * 8) * 0.15);
       const aim = mode === 'walk' ? Math.atan2(this.tdy || 0, this.tdx || 1) : (this.face > 0 ? 0.35 : Math.PI - 0.35);
-      let art = this.art, face = this.face; const dk = window.Art3D && Art3D.dirKey && Art3D.dirKey(art, aim); if (dk) { art = dk; face = 1; }
-      Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim);
+      let art = this.art, face = this.face; const dk = (window.Anim && Anim.dirKey(art, aim, this)) || (window.Art3D && Art3D.dirKey && Art3D.dirKey(art, aim)); if (dk) { art = dk; face = 1; }
+      const ph = mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim, dsg = mode === 'walk' ? ((this.tdx || 0) >= 0 ? 1 : -1) : this.face;
+      const P = Anim.pose(this, mode, mode === 'atk' ? this.atk : this.walk, dsg, this.anim); Anim.begin(ctx, this.x, fy, P);
+      Painter.char(ctx, art, this.x, fy, this.scale, face, mode, ph);
       ctx.globalAlpha = 1;
-      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.75, this.flash * 7); Painter.char(ctx, art, this.x, fy, this.scale, face, mode, mode === 'atk' ? this.atk : mode === 'walk' ? this.walk : this.anim); ctx.restore(); }
+      if (this.flash > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(0.75, this.flash * 7); Painter.char(ctx, art, this.x, fy, this.scale, face, mode, ph); ctx.restore(); }
+      ctx.restore();
       if (this.slowT > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.4, this.radius * 2.2, '#8fe0ff', 0.45);
       if (this.dots) { if (this.dots.poison && this.dots.poison.t > 0) ArtKit.glow(ctx, this.x, fy - this.height * 0.45, this.radius * 1.9, '#7aff4a', 0.4); if (this.dots.burn && this.dots.burn.t > 0) { ArtKit.glow(ctx, this.x, fy - this.height * 0.45, this.radius * 1.9, '#ff7a2a', 0.45); if (Math.random() < 0.2) Effects.particle(this.x + (Math.random() - 0.5) * this.radius, fy - this.height * 0.6, 0, -40, 0.4, '#ffb04a', 4); } }
       if (this.stunT > 0) for (let i = 0; i < 3; i++) { const a = this.anim * 6 + i * 2.1; ArtKit.dot(ctx, this.x + Math.cos(a) * this.radius * 0.7, fy - this.height - 4 + Math.sin(a) * 3, 2.2, '#ffe58a'); }

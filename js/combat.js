@@ -11,13 +11,13 @@
       if (!e.alive) return 0;
       const red = type === 'magic' ? Math.max(0, e.mres - (pen || 0)) : type === 'true' ? 0 : e.armor;
       const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - red)));
-      e.hp -= amt; e.flash = 0.1;
+      e.hp -= amt; e.flash = 0.1; if (!e.boss || amt > 40) e.hitT = 0.16;
       if (e.hp <= 0) Game.killEnemy(e);
       return amt;
     },
     hitUnit(u, dmg) {
       if (!u.active) return;
-      const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - u.armor) * (u.shieldT > 0 ? 0.5 : 1) * (1 - (u.block || 0))));
+      const amt = Math.max(1, Math.round(this.roll(dmg) * (1 - u.armor) * (u.shieldT > 0 ? 0.5 : 1) * (u.ward > 0 ? 0.7 : 1) * (1 - (u.block || 0))));
       u.hp -= amt; u.flash = 0.1; u.hitT = 0.2;
       if (u.hp <= 0) Units.kill(u);
     },

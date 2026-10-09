@@ -4,13 +4,13 @@
  * ========================================================= */
 (function () {
   const K = ArtKit, TAU = Math.PI * 2;
-  const N = { walk: 16, atk: 12, idle: 10, die: 10 }, IDLE = 2.618;
+  const N = { walk: 20, atk: 14, idle: 12, die: 14 }, IDLE = 2.618; // số khung / vòng (nhiều hơn = mượt hơn, tốn bộ nhớ đệm hơn)
   const BUCKETS = [0.35, 0.5, 0.7, 1, 1.4, 2, 2.4, 2.8, 3.4, 4];
   const bucket = v => { v = Math.min(v, (window.Painter && Painter.ppuCap) || 4); for (const b of BUCKETS) if (v <= b * 1.02) return b; return 4; }; // làm tròn LÊN: luôn thu nhỏ khi vẽ → nét
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; };
   const cache = new Map();
   let px = 0;
-  function remember(key, c) { px += c.width * c.height; if (cache.size > 1600 || px > 60e6) { cache.clear(); px = c.width * c.height; } cache.set(key, c); return c; } // giới hạn ~240 MB ảnh đệm
+  function remember(key, c) { px += c.width * c.height; if (cache.size > 3200 || px > 70e6) { cache.clear(); px = c.width * c.height; } cache.set(key, c); return c; } // giới hạn ~240 MB ảnh đệm
 
   function charFrame(type, mode, i, ppu) {
     const key = 'c' + type + mode + i + '|' + ppu; let c = cache.get(key); if (c) return c;
@@ -55,7 +55,7 @@
   }
 
   const Painter = {
-    res: 1,
+    res: 1, N,
     clear() { cache.clear(); px = 0; },
     char(ctx, type, x, y, scale, face, mode, phase, ppuOverride, aim) {
       if (aim !== undefined && window.Art3D && Art3D.dirKey) { const dk = Art3D.dirKey(type, aim); if (dk) { type = dk; face = 1; } }

@@ -25,7 +25,7 @@
       this.map = Level.build(i);
       const L = this.map.def;
       Effects.clear(); Combat.clear(); Enemies.clear(); Units.clear(); Loot.reset(); Items.dirty();
-      Towers.init(this.map); Waves.init(L, i); Spells.reset();
+      Towers.init(this.map); Waves.init(L, i); Spells.reset(); Skills.reset();
       this.gold = L.gold; this.lives = CONFIG.match.lives; this.kills = 0; this.xp = 0;
       this.sel = null; this.heroSelected = false; this.rallyFor = null; this.speed = 1; this.time = 0; this.paused = false;
       this.measure();
@@ -95,7 +95,7 @@
     },
     update(dt) {
       this.time += dt;
-      Waves.update(dt); Spells.update(dt); Towers.update(dt); Units.update(dt); Enemies.update(dt); Combat.update(dt); Effects.update(dt); Loot.update(dt);
+      Waves.update(dt); Spells.update(dt); Skills.update(dt); Towers.update(dt); Units.update(dt); Enemies.update(dt); Combat.update(dt); Effects.update(dt); Loot.update(dt);
     },
 
     /* ================= VẼ ================= */
@@ -112,7 +112,7 @@
       // ô trống
       const showAll = this.sel && this.sel.kind === 'spot';
       for (const s of Towers.spots) if (!s.tower) Painter.plot(c, s.x, s.y, this.sel && this.sel.ref === s, now);
-      Effects.drawDecals(c); Effects.drawCircles(c); Effects.drawCorpses(c);
+      Effects.drawDecals(c); Effects.drawCircles(c); Effects.drawCorpses(c); Skills.drawGround(c, now);
       this.drawSelection(c, now);
       // theo chiều sâu
       const L = this.drawList; L.length = 0;
@@ -121,7 +121,7 @@
       for (const e of Enemies.list) L.push(e);
       L.sort((a, b) => a.drawY - b.drawY);
       for (const o of L) o.draw(c, t);
-      Combat.draw(c); Spells.draw(c); Effects.draw(c); Loot.draw(c, now);
+      Combat.draw(c); Spells.draw(c); Skills.drawSky(c, now); Effects.draw(c); Loot.draw(c, now);
       if (window.Lights) Lights.draw(c, now);
       this.drawAtmosphere(c, now);
       for (const e of Enemies.list) e.drawBar(c);
@@ -195,7 +195,7 @@
       const h = Units.hero; if (!h) return;
       if (h.state === 'dead') { UI.toast('Anh hùng đang hồi sinh'); return; }
       if (h.skillCd > 0) { UI.toast('Kỹ năng đang hồi: ' + Math.ceil(h.skillCd) + 's'); return; }
-      Hero.cast(h);
+      const r = Hero.cast(h); if (!r.ok) { UI.toast(r.msg || 'Chưa dùng được'); AudioSys.play('error'); }
     },
     selectHero() {
       const h = Units.hero; if (!h || h.state === 'dead') { UI.toast('Anh hùng đang hồi sinh'); return; }

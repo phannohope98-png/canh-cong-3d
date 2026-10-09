@@ -38,6 +38,8 @@
       const T = ArtTowers, f = this.anim.face;
       if (this.type === 'archer') return { x: this.x + ((this.anim.k % 2 ? 9 : -9) + 10 * f) * TS, y: this.y + (T.ARCH_TOP[this.level] - 14) * TS };
       if (this.type === 'mage') return { x: this.x + 6 * f * TS, y: this.y + (T.MAGE_TOP[this.level] - 30) * TS };
+      const tip = T.mortarTip && T.mortarTip(this.level, this.anim.aim !== undefined ? this.anim.aim : (f > 0 ? 0.05 : Math.PI - 0.05), f); // đầu nòng súng cối 3D (xoay theo hướng bắn)
+      if (tip) return { x: this.x + tip.x * TS, y: this.y + (T.ART_Y[this.level] + tip.y) * TS };
       return { x: this.x + 15 * TS, y: this.y + (T.ART_Y[this.level] - 24 - this.level) * TS };
     }
     update(dt) {

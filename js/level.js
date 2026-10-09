@@ -268,34 +268,51 @@
     } catch (e) { return null; } // file:// có thể chặn getImageData
   }
 
-  function pickSpots(paths, rivers, count, W, H, PW, chaos, ok) {
-    const samples = [], tmp = {};
-    for (const p of paths) for (let d = 30; d < p.length; d += 36) { p.pointAt(d, tmp); samples.push({ x: tmp.x, y: tmp.y, c: 0 }); }
-    const cand = [];
-    for (const p of paths) for (let d = 110; d < p.length - 140; d += 30) {
-      p.pointAt(d, tmp);
-      for (const sd of [-1, 1]) for (const off of [PW / 2 + 46, PW / 2 + 76]) {
+  /** Chọn ô xây: bám 2 bên đường, ưu tiên khúc cua, chỗ nhánh đường hợp lại và các đoạn còn trống tầm bắn.
+   *  Mỗi đoạn đường được ≥ 2 ô che; ô cách đường ~ nửa bề rộng + 40…100 (lính trụ Người ra tới đường, cung/pháo vẫn phủ cả khúc). */
+  function pickSpots(paths, rivers, count, W, H, PW, chaos, ok, exit) {
+    const S = [], tmp = {}, t1 = {}, t2 = {};
+    paths.forEach((p, pi) => {
+      for (let d = 18; d < p.length; d += 22) {
+        p.pointAt(d, tmp); const x = tmp.x, y = tmp.y; if (x < 0 || x > W || y < 0 || y > H) continue;
+        let dup = null; for (const s of S) if (s.pi !== pi && Math.hypot(s.x - x, s.y - y) < 24) { dup = s; break; }
+        if (dup) { dup.w += 0.45; continue; } // đoạn đường chung của nhiều nhánh: quan trọng hơn
+        p.pointAt(Math.max(0, d - 55), t1); p.pointAt(Math.min(p.length, d + 55), t2);
+        const turn = Math.abs(Math.atan2(t1.tx * t2.ty - t1.ty * t2.tx, t1.tx * t2.tx + t1.ty * t2.ty)); // góc ngoặt quanh điểm này
+        const gate = exit ? Math.hypot(x - exit.x, y - exit.y) : 999;
+        S.push({ x, y, pi, w: (1 + 1.6 * Math.min(1, turn / 1.1)) * (gate < 150 ? 0.45 : 1), cov: 0 });
+      }
+    });
+    const cand = [], offs = [PW / 2 + 42, PW / 2 + 66, PW / 2 + 92];
+    for (const s of S) {
+      const p = paths[s.pi]; const n = p.nearest(s.x, s.y); p.pointAt(n.dist, tmp);
+      for (const sd of [-1, 1]) for (const off of offs) {
         const x = tmp.x + tmp.nx * off * sd, y = tmp.y + tmp.ny * off * sd;
-        if (x < 70 || x > W - 150 || y < 100 || y > H - 80) continue;
-        if (distToPaths(paths, x, y) < PW / 2 + 40) continue;
+        if (x < 90 || x > W - 100 || y < 108 || y > H - 72) continue;
+        if (x < 540 && y > H - 150) continue;                       // nút anh hùng / phép ở góc dưới-trái màn hình
+        if (exit && Math.hypot(x - exit.x, y - exit.y) < 120) continue;
+        if (distToPaths(paths, x, y) < PW / 2 + 36) continue;
         let bad = false; for (const r of rivers) if (r.nearest(x, y).perp < 66) { bad = true; break; }
         if (!bad && ok && !ok(x, y)) bad = true;
-        if (!bad) cand.push({ x, y });
+        if (!bad) cand.push({ x, y, off });
       }
     }
-    const spots = [];
-    while (spots.length < count && cand.length) {
-      let bi = -1, bs = -1;
-      for (let i = 0; i < cand.length; i++) {
-        const c = cand[i]; let near = false;
-        for (const s of spots) if (Math.hypot(s.x - c.x, s.y - c.y) < 116) { near = true; break; }
-        if (near) { cand.splice(i--, 1); continue; }
-        let sc = 0; for (const s of samples) if (Math.hypot(s.x - c.x, s.y - c.y) < 175) sc += 1 / (1 + s.c * 1.6);
-        if (sc > bs) { bs = sc; bi = i; }
+    const R = 168, spots = [];
+    for (let gap = 118; spots.length < count && gap >= 96; gap -= 11) {
+      while (spots.length < count) {
+        let bi = -1, bs = 0;
+        for (let i = 0; i < cand.length; i++) {
+          const c = cand[i]; let near = false;
+          for (const q of spots) if (Math.hypot(q.x - c.x, q.y - c.y) < gap) { near = true; break; }
+          if (near) continue;
+          let sc = 0; for (const s of S) { const d = Math.hypot(s.x - c.x, s.y - c.y); if (d < R) sc += s.w * (1 - d / (R * 1.25)) / (1 + s.cov * 1.8); }
+          sc *= 1 - (c.off - PW / 2 - 42) / 260; // gần đường hơn thì tốt hơn một chút
+          if (sc > bs) { bs = sc; bi = i; }
+        }
+        if (bi < 0 || bs < 0.35) break;
+        const c = cand.splice(bi, 1)[0]; spots.push({ id: spots.length, x: Math.round(c.x), y: Math.round(c.y) });
+        for (const s of S) if (Math.hypot(s.x - c.x, s.y - c.y) < R) s.cov++;
       }
-      if (bi < 0) break;
-      const c = cand.splice(bi, 1)[0]; spots.push({ id: spots.length, x: Math.round(c.x), y: Math.round(c.y) });
-      for (const s of samples) if (Math.hypot(s.x - c.x, s.y - c.y) < 175) s.c++;
     }
     return spots;
   }
@@ -315,7 +332,7 @@
       const chaos = L.theme === 'chaos';
       const coded = !!(B && CONFIG.mapStyle === 'coded' && window.MapArt), feat = coded ? MapArt.prepare(L, B, sc) : null;
       const probe = coded ? MapArt.okSpot(feat, paths) : B && window.ArtImg ? terrainProbe(ArtImg.bg(B.img), W, H) : null;
-      const spots = pickSpots(paths, rivers, L.spots || 14, W, H, PW, chaos, probe);
+      const endP = paths[0].points[paths[0].points.length - 1], spots = pickSpots(paths, rivers, L.spots || 12, W, H, PW, chaos, probe, endP);
 
       // ---- Cây cối / đá / vật trang trí (tránh đường, ô xây, sông) ----
       const decor = [], r2 = K.seeded(index * 31 + 7), mix = DECOR_MIX[L.theme] || DECOR_MIX.forest;

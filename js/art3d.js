@@ -183,6 +183,22 @@
     A.barracks.box = [150, 215, 75, 190]; A.artillery.box = [140, 180, 70, 150]; A.archer.box = [140, 240, 70, 212]; A.mage.box = [140, 250, 70, 222];
   }
   /* hiệu ứng động khớp mô hình 3D (2D cũ vẽ cửa, lan can, cờ ở chỗ khác) */
+  /* súng cối của trụ Người Lùn: dựng riêng, xoay 16 hướng, vẽ cùng nhân vật (chính xác vị trí đầu nòng để bắn đúng chỗ) */
+  const MORT_N = 16, mortCache = new Map(), PI2 = Math.PI * 2;
+  const mortAim = (st, f) => (st.aim !== undefined ? st.aim : f > 0 ? 0.05 : Math.PI - 0.05);
+  /** hướng bắn trên màn hình (rad) → góc xoay quanh trục đứng của mô hình 3D */
+  const mortYaw = aim => Math.atan2(-Math.sin(aim) / Math.sin(EL), Math.cos(aim));
+  function mortarSprite(t, k, ppu) {
+    const key = t + '|' + k + '|' + ppu; let sp = mortCache.get(key);
+    if (sp === undefined) { Chars3D.setInk(1.0); sp = Art3D.sprite(Towers3D.mortar(t, k / MORT_N * PI2), ppu); mortCache.set(key, sp); }
+    return sp;
+  }
+  /** đầu nòng (px, gốc = chân giá súng, y âm = lên cao) khi súng quay về hướng aim */
+  function mortarTip(t, aim, f) {
+    const yaw = Math.round(mortYaw(aim) / PI2 * MORT_N) / MORT_N * PI2, L = 0.3 + t * 0.03 + 0.03, bx = 0.682 * L, by = 0.15 + 0.7317 * L;
+    return { x: f * 7 + bx * Math.cos(yaw) * 40, y: -(by * Math.cos(EL) - (-bx * Math.sin(yaw)) * Math.sin(EL)) * 40 };
+  }
+  if (window.ArtTowers) ArtTowers.mortarTip = (t, aim, f) => (Art3D.enabled && !failed && window.Towers3D && Towers3D.mortar ? mortarTip(t, aim, f) : null);
   const K2 = window.ArtKit, FX3 = {
     archer(g, t, time, st, env) {
       const top = ArtTowers.ARCH_TOP[t], f = st.face || 1, a = st.a === undefined ? -1 : st.a, k = st.k || 0;
@@ -192,11 +208,17 @@
     },
     barracks(g, t, time, st) { if ((st.door || 0) > 0) K2.glow(g, 0, -12, 16, '#ffd080', 0.55); },
     artillery(g, t, time, st, env) {
-      const top = ArtTowers.ART_Y[t], f = st.face || 1, a = st.a === undefined ? -1 : st.a;
-      const fire = a >= 0.48 && a < 0.85 ? 1 - (a - 0.48) / 0.37 : 0, mx = 14, my = top - 22 - t;
+      const top = ArtTowers.ART_Y[t], f = st.face || 1, a = st.a === undefined ? -1 : st.a, aim = mortAim(st, f);
+      const fire = a >= 0.48 && a < 0.85 ? 1 - (a - 0.48) / 0.37 : 0, rec = a >= 0.48 && a < 0.8 ? Math.sin((a - 0.48) / 0.32 * Math.PI) : 0;
       if (t >= 3) for (let i = 0; i < 3; i++) { const p = (time * 0.4 + i / 3) % 1; K2.glow(g, -22 + Math.sin(p * 5 + i) * 3, top - 22 - p * 34, 4 + p * 7, '#b8b2b8', (1 - p) * 0.45); }
-      env.char('dwarf' + t, -12, top + 2, f, a, time);
-      if (fire > 0) { K2.glow(g, mx + 4, my - 4, 12 + fire * 14, '#ffd060', fire); K2.glow(g, mx + 8, my - 10, 8 + (1 - fire) * 16, '#e8e0d8', fire * 0.7); }
+      // súng cối xoay thật theo hướng quái (16 hướng), giật lùi khi bắn; người lùn đứng phía sau súng
+      const tip = mortarTip(t, aim, f), toward = Math.sin(aim) > 0.3, sx = f * 7;
+      const dwarf = () => env.char('dwarf' + t, -f * 13, top + 2, f, a, time);
+      if (toward) dwarf();
+      const res = (window.Painter && Painter.res) || 1, ppu = Math.min(4, Math.max(0.5, Math.ceil(res * 1.1 * 2) / 2)), k = ((Math.round(mortYaw(aim) / (Math.PI * 2) * MORT_N) % MORT_N) + MORT_N) % MORT_N, sp = mortarSprite(t, k, ppu);
+      if (sp) { const dx = tip.x - sx, dy = tip.y - 0, l = Math.hypot(dx, dy) || 1; g.drawImage(sp.c, sx - rec * 5 * dx / l - sp.ox, top - rec * 5 * dy / l - sp.oy, sp.w, sp.h); }
+      if (!toward) dwarf();
+      if (fire > 0) { K2.glow(g, tip.x, top + tip.y, 12 + fire * 14, '#ffd060', fire); K2.glow(g, tip.x + 2 * f, top + tip.y - 6, 8 + (1 - fire) * 16, '#e8e0d8', fire * 0.7); }
     }
   };
   if (window.ArtTowers && window.Towers3D) ['archer', 'mage', 'barracks', 'artillery'].forEach(type => {
@@ -277,14 +299,14 @@
 
   /* ---------- dựng sẵn khung hình lúc rảnh (≤ 6 ms mỗi khung màn hình) để khỏi khựng khi quái mới xuất hiện ---------- */
   const warmQ = []; let warmRaf = 0, scratch = null;
-  const MODES = [['walk', 16], ['atk', 12], ['idle', 10], ['die', 10]];
+  const MODES = [['walk', Painter.N.walk], ['atk', Painter.N.atk], ['idle', Painter.N.idle], ['die', Painter.N.die]];
   Art3D.warm = function (list) {
     if (!Art3D.enabled || failed) return;
     for (const it of list) {
       if (!reg[it.key] || !reg[it.key].__3d) continue;
       for (const [mode, n] of (it.modes ? MODES.filter(m => it.modes.includes(m[0])) : MODES))
         for (let i = 0; i < n; i++) warmQ.push({ key: it.key, scale: it.scale, mode, ph: mode === 'idle' ? (i + 0.5) / n * IDLE : (i + 0.5) / n });
-      if (it.dirs) for (let k = 0; k < 8; k++) { const dk = it.key + '_a' + k; if (!reg[dk]) continue; for (let i = 0; i < 16; i++) warmQ.push({ key: dk, scale: it.scale, mode: 'walk', ph: (i + 0.5) / 16 }); if (k === 2 || k === 6) for (let i = 0; i < 12; i++) warmQ.push({ key: dk, scale: it.scale, mode: 'atk', ph: (i + 0.5) / 12 }); }
+      if (it.dirs) for (let k = 0; k < 8; k++) { const dk = it.key + '_a' + k; if (!reg[dk]) continue; for (let i = 0; i < Painter.N.walk; i++) warmQ.push({ key: dk, scale: it.scale, mode: 'walk', ph: (i + 0.5) / Painter.N.walk }); if (k === 2 || k === 6) for (let i = 0; i < Painter.N.atk; i++) warmQ.push({ key: dk, scale: it.scale, mode: 'atk', ph: (i + 0.5) / Painter.N.atk }); }
     }
     if (!warmRaf && warmQ.length) warmRaf = requestAnimationFrame(pump);
   };
@@ -306,6 +328,11 @@
   Art3D.lights = () => LIGHT[theme] || LIGHT.forest;
   Art3D.renderer = () => gl();
   /** khoá hình theo hướng màn hình aim (rad, 0 = sang phải, π/2 = xuống) → 'key_aK' hoặc null */
+  /** chỉ số hướng liên tục 0..8 (để chọn hướng có độ trễ) */
+  Art3D.dirIndex = function (aim) {
+    if (!Art3D.enabled || failed || aim === undefined || aim === null) return null;
+    return ((Math.atan2(Math.cos(aim), Math.sin(aim) / Math.sin(EL)) / (Math.PI / 4)) % 8 + 8) % 8;
+  };
   Art3D.dirKey = function (type, aim) {
     if (!Art3D.enabled || failed || aim === undefined || aim === null) return null;
     let k = Math.round(Math.atan2(Math.cos(aim), Math.sin(aim) / Math.sin(EL)) / (Math.PI / 4)); k = ((k % 8) + 8) % 8;

@@ -30,8 +30,10 @@ Thắng map trước mới mở map sau; **map 6 của mỗi vùng là BOSS**, h
 | Núi Lửa | Chúa Tể Dung Nham (đập đất, gọi Quỷ Lửa bay) |
 | Cổng Hỗn Mang | Chúa Tể Hỗn Mang (boss cuối) |
 
-- Ghép màn ở `js/campaign.js`: map 1 & 3 dùng bố cục vẽ tay cũ (`js/maps-img.js`), map 4 & 6 là bố cục lật dọc, map 2 & 5 là 12 bố cục mới. Địa hình bố cục mới (sông có cầu, hồ, nhà, lâu đài cổng) tự sinh theo vùng, tránh đường đi.
-- Độ khó: `hpMul` = (0,78 + 0,05 × vùng) × hệ số map (1 → 1,27). Đợt quái map 2/4/5 tự sinh từ bộ quái của vùng; boss chỉ xuất hiện ở map 6.
+- **36 bố cục đường đi riêng, NGẮN cho điện thoại** (`js/layouts.js`): thế giới 1520 × 760 (trước đây ~2200 × 900, đường dài 2300–3900 → nay 1100–2100). Mỗi map một kiểu: chữ S, vòm cầu, chữ Y (2 cửa hợp lại), 3 cửa đổ vào đại lộ, vào từ TRÊN / DƯỚI / PHẢI (đảo ngược, cổng ở trái), chữ U, chữ N, chữ V, chữ W, bậc thang lên/xuống, hai làn ôm núi/hồ/kim tự tháp, ốc sên & xoáy ốc (cổng ở GIỮA map), 2 phía trái–phải cùng đổ về ngai. Toàn bộ đường nhìn gọn trong một màn hình ngang, không cần kéo bản đồ.
+- Địa hình (sông có cầu, hồ, nhà, lâu đài cổng) tự sinh theo vùng, tránh đường đi (`js/campaign.js`). Ảnh nhỏ `assets/art/map_N.jpg` dựng lại từ chính bản đồ 3D.
+- **Ô xây** (`pickSpots` trong `js/level.js`): bám 2 bên đường cách ~nửa bề rộng + 40…100, ưu tiên khúc cua, chỗ nhánh đường hợp lại, mỗi đoạn đường được ≥ 2 ô che tầm bắn, không đè nước/công trình, né vùng nút bấm ở góc màn hình. 10–14 ô mỗi map (ít hơn trước nhưng đặt đúng chỗ).
+- **Độ khó** (tăng mạnh vì trụ nay mạnh hơn nhiều nhờ đồ trụ + nâng cấp sao): `hpMul` = (0,8 + 0,18 × vùng) × hệ số vùng `HARD` (1,7 → 1,15) × hệ số map (1 → 1,3); đợt quái tự sinh dày hơn ~20%. Thử bằng bot dùng đủ 10 trụ + đồ: thắng gọn các map thường đầu vùng, nhưng boss và các map giữa/cuối vùng buộc phải **dẫn anh hùng ra chặn đầu + bấm kỹ năng đúng lúc** mới giữ được mạng.
 - Bản đồ chiến dịch: 6 vùng trên bản đồ thế giới, bấm vùng để mở bảng 6 map. Save cũ (12 màn) tự chuyển: màn chương 1 → map 1, chương 2 → map 3 của vùng.
 
 ## Vật phẩm gắn trụ (Kho đồ)
@@ -59,19 +61,30 @@ Elf bắn cung đúng tư thế: tay cầm cung đưa thẳng, tay kia kéo dây
 Lính/anh hùng giữ mục tiêu đang đánh (không đổi qua lại giữa nhát chém), ưu tiên con quái đang đánh mình, nhát chém chỉ trúng khi quái còn trong tầm, thời gian vung kiếm theo tốc đánh; quái dừng lại đánh đúng lính đang nhắm vào nó → không còn cảnh đứng im nhìn nhau.
 
 ## Anh hùng & trang bị
-4 anh hùng: **Aldric** (hiệp sĩ – Thánh Quang), **Lyra** (xạ thủ Elf – Mưa Tên), **Selene** (đại pháp sư – Bão Băng làm chậm), **Borin** (chiến thần Người Lùn – Địa Chấn làm choáng).
+4 anh hùng, mỗi người một kỹ năng **chạm 1 lần là dùng** (tự nhắm cụm quái đông nhất trong tầm, không có mục tiêu thì không mất thời gian hồi – `js/skills.js`):
+
+| Anh hùng | Kỹ năng | Hiệu ứng |
+|---|---|---|
+| **Aldric** (hiệp sĩ) | Thánh Quang Giáng Thế (hồi 18s) | Trụ sáng giáng xuống, ấn chú vàng xoay dưới chân, vòng sáng lan: sát thương phép, làm quái choáng váng chậm lại, hồi 40% máu + **Giáp Phước** (−30% sát thương, 5s) cho cả quân ta |
+| **Lyra** (xạ thủ Elf) | Mưa Tên Sao Băng (hồi 20s) | Vòng nhắm xoay trên cụm quái, 4 đợt tên rơi xiên từ trời (mũi tên 3D, vệt sáng, cắm xuống đất) rồi 1 mũi tên khổng lồ phát sáng đóng đinh cả cụm; trúng cả quân bay |
+| **Selene** (đại pháp sư) | Bão Tuyết Vĩnh Cửu (hồi 22s) | Quả cầu băng bay tới cụm quái, mở vùng bão tuyết 4,4s: mặt băng, tinh thể băng mọc lên, xoáy tuyết; sát thương phép liên tục + làm chậm 60%; hết giờ vỡ tung đóng băng quái còn trong vùng |
+| **Borin** (chiến thần Lùn) | Rồng Đá Địa Chấn (hồi 20s) | Nhảy vọt tới cụm quái, đáp xuống nứt đất toác (vết nứt cháy đỏ), đá văng, bụi cuộn; choáng 2,6s, rồi dư chấn lần hai |
 Mỗi anh hùng mang 4 ô trang bị: **vũ khí, găng tay, giáp, giày** (3 bậc), mua bằng **Xu** kiếm sau mỗi trận; trang bị đổi hình dạng nhân vật.
 
 ## Phép toàn bản đồ (như Kingdom Rush)
 - **Viện Binh** (hồi 20s): chạm lên đường, gọi 2 lính tạm thời ra chặn quái trong 20 giây.
 - **Mưa Thiên Thạch** (hồi 45s): chạm lên bản đồ, 5 thiên thạch rơi gây sát thương diện rộng.
 
-## Hoạt ảnh
-Nhân vật ảnh art có nhún bước, lấy đà – lao chém – vệt chém, tụ lực khi bắn; trúng đòn nháy trắng; chết thì ngã xuống rồi mờ dần; nổ để lại vết cháy xém; trụ mọc lên từ mặt đất khi xây.
+## Hoạt ảnh (mượt hơn)
+- Trước: quái to (cây ma, troll, golem, boss) có vòng bước kéo dài 2–5 giây nên chỉ đổi tư thế 3–8 lần/giây → giật cục. Nay vòng bước tối đa ~1s và mỗi vòng có 20 khung (đi 20 · đánh 14 · đứng 12 · ngã 14) → quái đi đều, không giật.
+- **Lớp chuyển động phụ** (`js/anim.js`) vẽ trên các khung 3D: đòn đánh có lấy đà → lao tới → thu về (dùng cả cho quái, lính và anh hùng); trúng đòn thì giật lùi + bẹp rồi nảy lại; đang giao chiến thì nhún nhảy qua lại (không đứng đơ như tượng); đi thì hơi chúi người; lính/quái mới xuất hiện nảy phồng lên.
+- Sát thương của quái rơi đúng lúc vung tới (giữa hoạt ảnh), cung thủ thả tên đúng lúc buông dây; boss đập đất nện xuống rồi mới choáng/sát thương.
+- Quay 8 hướng có độ trễ (hysteresis): đường cong không còn làm nhân vật lật hướng qua lại từng khung.
+- Chết thì ngã xuống rồi mờ dần; nổ để lại vết cháy xém; trụ rơi từ trời xuống khi xây.
 
 ## Cách chơi
 - Chạm ô đất có cọc gỗ → menu vòng tròn 5 nhân vật → chọn trụ. Chạm trụ để nâng cấp / bán / dời cờ (Con người).
-- Chạm anh hùng (hoặc ảnh góc trái) rồi chạm bản đồ để di chuyển; nút bên cạnh là kỹ năng.
+- Chạm anh hùng (hoặc ảnh góc trái) rồi chạm bản đồ để di chuyển; nút bên cạnh là kỹ năng (chạm 1 lần, tự nhắm).
 - Bấm đầu lâu đỏ ở cửa vào để gọi đợt quái (gọi sớm được thưởng vàng).
 - Kéo để di chuyển bản đồ, chụm 2 ngón (hoặc lăn chuột) để phóng to.
 - Sao (1–3 mỗi màn) dùng nâng cấp trụ vĩnh viễn.
