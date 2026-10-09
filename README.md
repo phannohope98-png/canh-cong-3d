@@ -75,6 +75,15 @@ Mỗi anh hùng mang 4 ô trang bị: **vũ khí, găng tay, giáp, giày** (3 b
 - **Viện Binh** (hồi 20s): chạm lên đường, gọi 2 lính tạm thời ra chặn quái trong 20 giây.
 - **Mưa Thiên Thạch** (hồi 45s): chạm lên bản đồ, 5 thiên thạch rơi gây sát thương diện rộng.
 
+## Bản cập nhật 3 – trải nghiệm điện thoại
+- **Chạm 2 lần để xây / nâng / bán**: chạm 1 lần chỉ xem trước (vòng tầm bắn hiện trên bản đồ + chỉ số ở tiêu đề, nút sáng có dấu ✔), chạm lần nữa mới tiêu vàng → hết bấm nhầm bằng ngón tay.
+- **3 chế độ chơi** (thẻ màn chơi & Cài đặt): Dễ (quái −28% máu, +15% vàng), Thường, Khó (quái +30%, thưởng Xu ×1,5). Ra trận 2 tướng thì quái +12% để giữ thử thách.
+- **Tốc độ 1x → 2x → 3x**.
+- **Ưu tiên mục tiêu** cho trụ bắn (nút bia bên trái vòng tròn): Đầu đoàn (pháo: chỗ đông nhất) · Quái trâu nhất · Quái gần nhất.
+- **Anh hùng cận chiến tự lao ra** đánh quái trong bán kính ~135 quanh chỗ đứng (trước 80), đỡ phải bấm tay liên tục.
+- **Hướng dẫn nhanh** ở màn đầu (xây trụ → gọi quái → dẫn anh hùng → kỹ năng), chỉ hiện 1 lần.
+- **Rung điện thoại** khi mất mạng và khi boss xuất hiện (theo cài đặt Rung).
+
 ## Bản cập nhật 2 (sửa lỗi theo phản hồi)
 - **Khung tranh không còn cắt cụt**: mỗi nhân vật / quái / boss / tướng được đo khung thật từ mô hình 3D qua mọi tư thế (đứng, đi, đánh, ngã, kỹ năng) — hết cảnh boss nhỏ và tướng bị cắt mất một nửa (kiểm 225 bộ khung, 0 cạnh bị cắt).
 - **Cỡ quái ≥ lính trụ Người**: mọi quái cao ít nhất ~31 (lính trụ Người ~29,5), Goblin / Quỷ Lửa / Sói không còn nhỏ hơn lính.
